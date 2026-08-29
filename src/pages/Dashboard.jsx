@@ -64,12 +64,12 @@ export default function Dashboard({ onNavigate }) {
         </div>
       </div>
 
-      {/* Aaj ka Plan — actionable recommendation */}
+      {/* Today's Plan — actionable recommendation */}
       <div className="plan-card">
         <div className="plan-ico"><Sparkles size={20} /></div>
         <div className="plan-body">
-          <h3>Aaj ka Plan</h3>
-          <p><b>Economics (58%)</b> sabse weak hai — Money & Banking revise karke Subject Quiz do. Isse estimated score +18 ka jump aayega.</p>
+          <h3>Today's Plan</h3>
+          <p><b>Economics (58%)</b> is your weakest — revise Money & Banking, then attempt the Subject Quiz. This can add an estimated <b>+18 marks</b> to your next mock.</p>
         </div>
         <div className="plan-actions">
           <button className="btn btn-ghost-sm" onClick={() => onNavigate('studykit')}>Revise Topic</button>
@@ -135,7 +135,7 @@ export default function Dashboard({ onNavigate }) {
               })}
             </div>
             <div className="ch-pts">
-              {wordPick === null ? '+10 pts' : wordPick === WORD_Q.answer ? <span className="ok">+10 pts ✓ Correct!</span> : <span className="no">Sahi answer: "{WORD_Q.options[WORD_Q.answer]}"</span>}
+              {wordPick === null ? '+10 pts' : wordPick === WORD_Q.answer ? <span className="ok">+10 pts ✓ Correct!</span> : <span className="no">Correct answer: "{WORD_Q.options[WORD_Q.answer]}"</span>}
             </div>
           </div>
 
@@ -151,10 +151,10 @@ export default function Dashboard({ onNavigate }) {
                     return <button key={i} className={cls} onClick={() => pickQuiz(i)} disabled={quizPick !== null}>{o}</button>
                   })}
                 </div>
-                <div className="ch-pts">{quizPick !== null ? (quizPick === QUIZ[quizIdx].answer ? <span className="ok">✓ Sahi!</span> : <span className="no">Galat — sahi answer green</span>) : `Question ${quizIdx + 1}/3 · +20 pts`}</div>
+                <div className="ch-pts">{quizPick !== null ? (quizPick === QUIZ[quizIdx].answer ? <span className="ok">✓ Correct!</span> : <span className="no">Wrong — correct answer is highlighted green</span>) : `Question ${quizIdx + 1}/3 · +20 pts`}</div>
               </>
             ) : (
-              <div className="quiz-done"><b>{quizScore}/3 sahi!</b><p>Economics · Money & Banking — agla quiz kal.</p><span className="ok">+{quizScore * 5} pts added</span></div>
+              <div className="quiz-done"><b>{quizScore}/3 correct!</b><p>Economics · Money & Banking — next quiz tomorrow.</p><span className="ok">+{quizScore * 5} pts added</span></div>
             )}
           </div>
 

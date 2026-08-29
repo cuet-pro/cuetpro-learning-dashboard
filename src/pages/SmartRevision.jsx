@@ -3,19 +3,19 @@ import { Zap, Layers, FlaskConical, RefreshCcw, ArrowRight, CheckCircle2, XCircl
 import './revision.css'
 
 const DAILY_QS = [
-  { q: 'RBI ka main monetary policy tool kaunsa hai?', options: ['Repo Rate', 'Fiscal Deficit', 'GST', 'Import Duty'], a: 0, subj: 'Economics' },
-  { q: '"Elucidate" ka sabse kareeb matlab:', options: ['Confuse', 'Explain clearly', 'Hide', 'Repeat'], a: 1, subj: 'English' },
+  { q: 'Which is the RBI\'s main monetary policy tool?', options: ['Repo Rate', 'Fiscal Deficit', 'GST', 'Import Duty'], a: 0, subj: 'Economics' },
+  { q: '"Elucidate" means:', options: ['Confuse', 'Explain clearly', 'Hide', 'Repeat'], a: 1, subj: 'English' },
   { q: 'Current Ratio = ?', options: ['CA/CL', 'CL/CA', 'Net Profit/Sales', 'Debt/Equity'], a: 0, subj: 'Accountancy' },
-  { q: 'Break-even point pe:', options: ['Loss', 'No profit no loss', 'Max profit', 'Bankrupt'], a: 1, subj: 'Business Studies' },
-  { q: 'First Five Year Plan kis year start hua?', options: ['1947', '1950', '1951', '1956'], a: 2, subj: 'General Test' },
+  { q: 'At the break-even point:', options: ['Loss', 'No profit no loss', 'Max profit', 'Bankrupt'], a: 1, subj: 'Business Studies' },
+  { q: 'The first Five Year Plan started in:', options: ['1947', '1950', '1951', '1956'], a: 2, subj: 'General Test' },
 ]
 
 const CARDS = [
-  { front: 'Repo Rate', back: 'Jis rate pe RBI commercial banks ko short-term loan deta hai' },
-  { front: 'Liquidity', back: 'Asset ka cash me convert hone ki capability' },
-  { front: 'Opportunity Cost', back: 'Agla best option jo chhodna pada' },
-  { front: 'Monetary Policy', back: 'RBI ke actions — money supply & interest rates control' },
-  { front: 'Fiscal Deficit', back: 'Total expenditure − total receipts excluding borrowings' },
+  { front: 'Repo Rate', back: 'The rate at which RBI lends short-term funds to commercial banks' },
+  { front: 'Liquidity', back: 'How quickly an asset can be converted into cash' },
+  { front: 'Opportunity Cost', back: 'The value of the next best alternative you gave up' },
+  { front: 'Monetary Policy', back: 'RBI actions that control money supply and interest rates' },
+  { front: 'Fiscal Deficit', back: 'Total expenditure − total receipts, excluding borrowings' },
   { front: 'Working Capital', back: 'Current Assets − Current Liabilities' },
 ]
 
@@ -32,7 +32,7 @@ export default function SmartRevision() {
       <header className="page-head">
         <div>
           <h1>Smart Revision</h1>
-          <p>Chill Zone ki jagah — light, low-stakes, lekin har din value deta hai. Community & Music hata diya — ye rakha.</p>
+          <p>Replaces Chill Zone — light, low-stakes, but delivers value every day. Community & Music removed; this is what we kept.</p>
         </div>
       </header>
 
@@ -74,10 +74,10 @@ function DailyQuiz() {
               return <button key={i} className={cls} onClick={() => choose(i)} disabled={pick !== null}>{o}</button>
             })}
           </div>
-          <div className="rev-feedback">{pick !== null ? (pick === q.a ? <span className="ok">✓ Sahi! {q.subj}</span> : <span className="no">Galat — sahi answer green hai</span>) : `Q ${idx + 1}/5 · ${q.subj}`}</div>
+          <div className="rev-feedback">{pick !== null ? (pick === q.a ? <span className="ok">✓ Correct! · {q.subj}</span> : <span className="no">Wrong — correct answer is highlighted green</span>) : `Q ${idx + 1}/5 · ${q.subj}`}</div>
         </>
       ) : (
-        <div className="rev-done"><b>{score}/5 sahi!</b><p>Kal naya set — streak mat todo 🔥</p></div>
+        <div className="rev-done"><b>{score}/5 correct!</b><p>New set tomorrow — don't break the streak 🔥</p></div>
       )}
     </section>
   )
@@ -123,7 +123,7 @@ function FormulaDrill() {
           </div>
         ))}
       </div>
-      <p className="rev-hint">Tap a formula to reveal — phir dobara chhupa ke khud bolo.</p>
+      <p className="rev-hint">Tap a formula to reveal — then hide it again and recall it out loud.</p>
     </section>
   )
 }
@@ -131,11 +131,11 @@ function FormulaDrill() {
 function MistakeReplay() {
   return (
     <section className="rev-card">
-      <div className="rev-head"><span className="rev-ico r"><RefreshCcw size={16} /></span><div><h3>Mistake Replay</h3><span className="rev-sub">Analysis se aaye — 3 pending</span></div></div>
+      <div className="rev-head"><span className="rev-ico r"><RefreshCcw size={16} /></span><div><h3>Mistake Replay</h3><span className="rev-sub">From your analysis — 3 pending</span></div></div>
       {[
-        { t: 'Money & Banking', d: 'Repo rate question — 2 baar galat' },
-        { t: 'Production & Costs', d: 'AFC curve — 3 baar galat' },
-        { t: 'Government Budget', d: 'Capital receipts — 1 baar galat' },
+        { t: 'Money & Banking', d: 'Repo rate question — wrong 2 times' },
+        { t: 'Production & Costs', d: 'AFC curve — wrong 3 times' },
+        { t: 'Government Budget', d: 'Capital receipts — wrong 1 time' },
       ].map(m => (
         <div className="mistake-row" key={m.t}>
           <div><b>{m.t}</b><span>{m.d}</span></div>

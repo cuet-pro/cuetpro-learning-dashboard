@@ -59,7 +59,7 @@ function Predictor() {
         <div className="ex-input-row">
           <div>
             <h3 style={{ fontFamily: 'var(--font-display)', fontSize: 15 }}>Enter your estimated CUET score</h3>
-            <p style={{ fontSize: 12, color: 'var(--gray-500)', marginTop: 3 }}>Real 2026 Round-1 UR cutoffs se — eligibility instantly</p>
+            <p style={{ fontSize: 12, color: 'var(--gray-500)', marginTop: 3 }}>Real 2026 Round-1 UR cutoffs — eligibility computed instantly</p>
           </div>
           <input
             className="ex-input" type="number" min="0" max="1000" placeholder="e.g. 512"
@@ -70,13 +70,13 @@ function Predictor() {
       </section>
 
       {n === null ? (
-        <div className="ex-empty"><Search size={26} /><p>Score daalo — eligible colleges, Dream/Target/Safe classification ke saath dikhenge.</p></div>
+        <div className="ex-empty"><Search size={26} /><p>Enter your score to see eligible colleges with Dream / Target / Safe classification.</p></div>
       ) : (
         <>
-          {dream.length > 0 && <ResultGroup title="Dream" desc={`${dream.length} options — cutoff se 25 marks ke andar`} color="var(--green-500)" rows={dream} />}
+          {dream.length > 0 && <ResultGroup title="Dream" desc={`${dream.length} options — within 25 marks of your score`} color="var(--green-500)" rows={dream} />}
           {target.length > 0 && <ResultGroup title="Target" desc={`${target.length} options — 25-60 marks margin`} color="var(--blue-500)" rows={target} />}
           {safe.length > 0 && <ResultGroup title="Safe" desc={`${safe.length} options — 60+ marks margin`} color="var(--amber-500)" rows={safe} />}
-          {results.length === 0 && <div className="ex-empty"><p>Is score pe koi college eligible nahi — score 400+ try karo.</p></div>}
+          {results.length === 0 && <div className="ex-empty"><p>No colleges eligible at this score — try a score above 400.</p></div>}
         </>
       )}
     </div>
@@ -141,7 +141,7 @@ function CutoffExplorer() {
               <span className="mono">{o.seats?.UR?.total ?? '—'}</span>
             </div>
           ))}
-          {rows.length === 0 && <p style={{ padding: '18px 0', fontSize: 12.5, color: 'var(--gray-500)' }}>Koi course nahi mila.</p>}
+          {rows.length === 0 && <p style={{ padding: '18px 0', fontSize: 12.5, color: 'var(--gray-500)' }}>No courses found.</p>}
         </div>
       </section>
     </div>

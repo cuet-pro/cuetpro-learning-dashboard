@@ -27,14 +27,26 @@
 /* Topic rows */
 .an-topic { display: flex; align-items: center; gap: 10px; padding: 9px 0; border-top: 1px solid var(--gray-100); }
 .an-topic:first-of-type { border-top: none; }
-.an-tname { font-size: 12.5px; font-weight: 600; width: 150px; flex-shrink: 0; }
+.an-tname-wrap { width: 150px; flex-shrink: 0; }
+.an-tname { font-size: 12.5px; font-weight: 600; display: block; color: var(--text-primary); }
+.an-tsubj { font-size: 10px; color: var(--text-tertiary); }
 .an-tbar { flex: 1; height: 7px; background: var(--gray-100); border-radius: 6px; overflow: hidden; }
 .an-tbar i { display: block; height: 100%; border-radius: 6px; }
-.an-tbar i.ok { background: var(--green-500); }
-.an-tbar i.weak { background: var(--red-500); }
-.an-tbar i.warn { background: var(--amber-500); }
 .an-tacc { font-family: var(--font-mono); font-size: 12px; width: 42px; text-align: right; }
-.an-tloss { font-size: 10.5px; color: var(--gray-500); width: 84px; text-align: right; }
+.an-tloss { font-size: 10.5px; color: var(--text-tertiary); width: 60px; text-align: right; }
+
+/* 5 subject cards */
+.an-subjects { display: grid; grid-template-columns: repeat(5, 1fr); gap: var(--space-3); }
+.an-subj { background: var(--navy-50); border: 1px solid var(--navy-100); border-radius: var(--radius-lg); padding: var(--space-4); display: flex; flex-direction: column; gap: 8px; }
+.an-subj-head { display: flex; align-items: center; justify-content: space-between; gap: 6px; }
+.an-subj-head b { font-size: 12px; color: var(--text-primary); }
+.an-subj-badge { font-size: 9.5px; font-weight: 800; padding: 3px 8px; border-radius: 20px; letter-spacing: .3px; }
+.an-subj-score b { font-family: var(--font-display); font-size: 24px; display: block; }
+.an-subj-score b span { font-size: 12px; color: var(--text-tertiary); }
+.an-subj-score > span { font-size: 10.5px; color: var(--text-tertiary); }
+.an-subj-bar { height: 6px; background: var(--gray-200); border-radius: 6px; overflow: hidden; }
+.an-subj-bar i { display: block; height: 100%; border-radius: 6px; }
+.an-subj-meta { display: flex; justify-content: space-between; font-size: 10px; color: var(--text-tertiary); }
 
 /* Fix list */
 .an-fix { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-top: 1px solid var(--gray-100); }
@@ -77,4 +89,5 @@
   .an-grid { grid-template-columns: 1fr; }
   .an-score-stats { margin-left: 0; }
   .mist-row { flex-direction: column; align-items: flex-start; }
+  .an-subjects { grid-template-columns: repeat(2, 1fr); }
 }

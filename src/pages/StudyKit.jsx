@@ -66,7 +66,7 @@ export default function StudyKit() {
           {(open === 'mindmaps' || open === 'exercises' || open === 'mocks') && (
             <div className="sk-placeholder">
               <PlayCircle size={30} />
-              <p>Is tool ka working content agle iteration me — design ready hai, content pipeline me hai.</p>
+              <p>Working content for this tool ships in the next iteration — design is ready, content pipeline is in progress.</p>
             </div>
           )}
         </div>
@@ -108,10 +108,10 @@ function NotesView() {
 }
 
 const FLASHCARDS = [
-  { f: 'Repo Rate', b: 'Rate pe RBI banks ko short-term loan deta hai' },
-  { f: 'Liquidity', b: 'Asset ka cash me convert hone ki capability' },
-  { f: 'Opportunity Cost', b: 'Agla best option jo chhodna pada' },
-  { f: 'Fiscal Deficit', b: 'Total expenditure − receipts (minus borrowings)' },
+  { f: 'Repo Rate', b: 'The rate at which RBI lends short-term funds to commercial banks' },
+  { f: 'Liquidity', b: 'How quickly an asset can be converted into cash' },
+  { f: 'Opportunity Cost', b: 'The value of the next best alternative you gave up' },
+  { f: 'Fiscal Deficit', b: 'Total expenditure − total receipts, excluding borrowings' },
 ]
 function FlashView() {
   const [idx, setIdx] = useState(0)
@@ -134,7 +134,7 @@ function FlashView() {
 }
 
 const QUICK_QS = [
-  { q: 'Repo Rate badhne se kya hota hai?', o: ['Loans saste', 'Loans mehenge', 'Kuch nahi', 'GDP badhta hai'], a: 1 },
+  { q: 'What happens when the Repo Rate increases?', o: ['Loans get cheaper', 'Loans get costlier', 'Nothing', 'GDP rises'], a: 1 },
   { q: 'Current Ratio formula:', o: ['CA/CL', 'CL/CA', 'Sales/Profit', 'Debt/Equity'], a: 0 },
 ]
 function QuizView() {
@@ -159,7 +159,7 @@ function QuizView() {
             return <button key={i} className={cls} onClick={() => choose(i)} disabled={pick !== null}>{o}</button>
           })}
         </div>
-        <div className="ch-pts">{pick !== null ? (pick === q.a ? <span className="ok">✓ Sahi!</span> : <span className="no">Galat</span>) : `Q ${idx + 1}/2 · Score ${score}`}</div>
+        <div className="ch-pts">{pick !== null ? (pick === q.a ? <span className="ok">✓ Correct!</span> : <span className="no">Wrong</span>) : `Q ${idx + 1}/2 · Score ${score}`}</div>
       </div>
     </div>
   )
