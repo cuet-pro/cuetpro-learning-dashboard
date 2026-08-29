@@ -1,0 +1,36 @@
+/* CUET Pro — Study Kit (her design: navy-50 cards, space tokens) */
+.sk-stack { display: flex; flex-direction: column; gap: var(--space-6); }
+.sk-group-label { display: flex; align-items: center; gap: 10px; font-family: var(--font-body); font-weight: 700; font-size: 16px; text-transform: uppercase; letter-spacing: var(--tracking-caps); color: var(--navy-500); margin-bottom: var(--space-4); }
+.sk-group-label svg { color: var(--navy-500); }
+.sk-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: var(--space-5); }
+.sk-card { padding: var(--space-6); font-family: var(--font-body); display: flex; flex-direction: column; gap: 12px; background: var(--navy-50); border: 1px solid var(--navy-100); border-radius: var(--radius-lg); cursor: pointer; transition: all .15s; }
+.sk-card:hover { border-color: var(--green-500); transform: translateY(-1px); box-shadow: var(--shadow-card); }
+.sk-ico { width: 40px; height: 40px; border-radius: var(--radius-md); background: var(--gray-0); display: flex; align-items: center; justify-content: center; color: var(--navy-500); }
+.sk-card h3 { font-family: var(--font-display); font-size: var(--text-heading-sm); color: var(--text-primary); }
+.sk-card p { font-size: 13px; color: var(--text-secondary); line-height: var(--leading-relaxed); }
+
+/* Sub views */
+.sk-toolview { padding-top: 4px; }
+.sk-subgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: var(--space-5); }
+.sk-subcard { background: var(--navy-50); border: 1px solid var(--navy-100); border-radius: var(--radius-lg); padding: var(--space-5); }
+.sk-subhead { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+.sk-subhead b { font-size: 13.5px; color: var(--text-primary); }
+.sk-prog { font-size: 11px; font-weight: 700; color: var(--green-600); background: var(--green-50); padding: 3px 9px; border-radius: 20px; }
+.sk-bar { height: 5px; background: var(--gray-200); border-radius: 5px; overflow: hidden; margin-bottom: 12px; }
+.sk-bar i { display: block; height: 100%; background: var(--green-500); border-radius: 5px; }
+.sk-chapter { display: flex; align-items: center; gap: 8px; font-size: 12.5px; color: var(--text-primary); padding: 7px 0; border-top: 1px solid rgba(34, 57, 92, 0.08); }
+.sk-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.sk-placeholder { text-align: center; padding: 50px 20px; color: var(--text-tertiary); background: var(--navy-50); border: 1px dashed var(--navy-100); border-radius: var(--radius-lg); }
+.sk-placeholder svg { margin-bottom: 10px; opacity: .5; }
+.sk-placeholder p { font-size: 13px; }
+
+/* Flashcard */
+.sk-flash { perspective: 800px; height: 160px; cursor: pointer; }
+.sk-fc-inner { position: relative; width: 100%; height: 100%; transition: transform .35s; transform-style: preserve-3d; }
+.sk-flash.flip .sk-fc-inner { transform: rotateY(180deg); }
+.sk-fc-face { position: absolute; inset: 0; backface-visibility: hidden; border-radius: var(--radius-md); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; border: 1px solid var(--navy-100); }
+.sk-fc-front { background: var(--navy-600); color: #fff; }
+.sk-fc-front b { font-family: var(--font-display); font-size: 17px; }
+.sk-fc-front span, .sk-fc-back span { font-size: 10px; color: var(--navy-200); }
+.sk-fc-back { background: var(--green-50); border-color: var(--green-100); transform: rotateY(180deg); padding: var(--space-4); }
+.sk-fc-back p { font-size: 13px; color: var(--text-primary); text-align: center; line-height: 1.5; }

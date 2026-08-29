@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { LayoutDashboard, GraduationCap, BarChart3, Sparkles, Compass, Settings, Bell } from 'lucide-react'
 import Dashboard from './pages/Dashboard.jsx'
+import StudyKit from './pages/StudyKit.jsx'
 import Analysis from './pages/Analysis.jsx'
 import SmartRevision from './pages/SmartRevision.jsx'
 import Explorer from './pages/Explorer.jsx'
@@ -23,7 +24,7 @@ export default function App() {
       <Sidebar active={page} onNavigate={setPage} />
       <main className="shell-main">
         {page === 'dashboard' && <Dashboard onNavigate={setPage} />}
-        {page === 'studykit' && <ComingSoon title="Study Kit" desc="Learning tools to build understanding, testing tools to prove it." onNavigate={setPage} />}
+        {page === 'studykit' && <StudyKit />}
         {page === 'analysis' && <Analysis />}
         {page === 'revision' && <SmartRevision />}
         {page === 'explorer' && <Explorer />}
