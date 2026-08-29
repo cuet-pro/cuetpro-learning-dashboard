@@ -171,15 +171,25 @@ export default function Dashboard({ onNavigate }) {
       <div className="dash-section">
         <h2 className="dash-section-title">Manifestation Board</h2>
         <div className="cuet-card manifest">
-          <div className="m-row">
-            <div className="m-seat"><b>SEAT</b><span>CUET 2027-A</span></div>
-            <div className="m-flow"><span className="m-lbl">FROM</span><b>You</b><ArrowRight size={14} /><span className="m-lbl to">TO</span><b>SRCC</b></div>
-            <div className="m-src"><b>Shri Ram College of Commerce (SRCC)</b><span>North Campus · Est. 1926 · sample data</span></div>
+          <div className="m-head">
+            <h3 style={{ fontFamily: 'var(--font-display)', fontSize: 'var(--text-heading-sm)', color: 'var(--text-primary)' }}>Manifestation Board</h3>
+            <span className="m-seat">SEAT CUET 2027-A</span>
           </div>
-          <div className="m-cols">
-            <div><span className="m-label">DID YOU KNOW</span><p>One of DU's oldest commerce colleges — routinely posts the highest CUET cutoffs for B.Com (Hons) in the country.</p></div>
-            <div><span className="m-label">IN-FLIGHT QUOTE</span><p>"Your Class 12 board score is one input. Your consistency is the bigger one."</p></div>
-            <div><span className="m-label">TARGET SCORE</span><p className="m-score">B.Com (Hons) · last year, Round 1<br /><b>95.1%ile</b></p><button className="btn btn-outline-sm" onClick={() => onNavigate('explorer')}>Explore colleges →</button></div>
+          <div className="m-body">
+            <div className="m-flow">
+              <div className="m-side"><span className="m-lbl">FROM</span><b>You</b></div>
+              <ArrowRight size={18} />
+              <div className="m-side right"><span className="m-lbl to">TO</span><b>SRCC</b></div>
+            </div>
+            <div className="m-photo">
+              <img src="/images/target-college.jpg" alt="Target college — SRCC" />
+            </div>
+            <div className="m-src"><b>Shri Ram College of Commerce (SRCC)</b><span>North Campus · Est. 1926 · sample data</span></div>
+            <div className="m-cols">
+              <div><span className="m-label">DID YOU KNOW</span><p>One of DU's oldest commerce colleges — routinely posts the highest CUET cutoffs for B.Com (Hons) in the country.</p></div>
+              <div><span className="m-label">IN-FLIGHT QUOTE</span><p>"Your Class 12 board score is one input. Your consistency is the bigger one."</p></div>
+              <div><span className="m-label">TARGET SCORE</span><p className="m-score">B.Com (Hons) · last year, Round 1<br /><b>95.1%ile</b></p><button className="btn btn-outline-sm" onClick={() => onNavigate('explorer')}>Explore colleges →</button></div>
+            </div>
           </div>
         </div>
       </div>
