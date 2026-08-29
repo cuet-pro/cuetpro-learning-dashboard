@@ -1,0 +1,56 @@
+/* CUET Pro — Smart Revision */
+.rev-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.rev-card { background: var(--gray-0); border: 1px solid var(--gray-200); border-radius: var(--radius-lg); box-shadow: var(--shadow-card); padding: 18px; display: flex; flex-direction: column; }
+.rev-head { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+.rev-ico { width: 34px; height: 34px; border-radius: 10px; display: grid; place-items: center; flex-shrink: 0; }
+.rev-ico.g { background: var(--green-100); color: var(--green-600); }
+.rev-ico.b { background: var(--blue-100); color: var(--blue-500); }
+.rev-ico.p { background: #F3E8FF; color: #7E22CE; }
+.rev-ico.r { background: var(--amber-100); color: var(--amber-600); }
+.rev-head h3 { font-family: var(--font-display); font-size: 14.5px; font-weight: 700; }
+.rev-sub { font-size: 11px; color: var(--gray-500); }
+.rev-pts { margin-left: auto; font-size: 10.5px; font-weight: 800; background: var(--green-50); color: var(--green-700); padding: 4px 10px; border-radius: 20px; }
+
+.rev-q { font-size: 13.5px; font-weight: 600; margin-bottom: 12px; line-height: 1.5; }
+.rev-opts { display: flex; flex-direction: column; gap: 7px; margin-bottom: 12px; }
+.rev-opt { text-align: left; font-size: 12.5px; font-weight: 600; padding: 9px 12px; border-radius: 9px; border: 1px solid var(--gray-200); background: var(--gray-0); color: var(--navy-700); transition: all .15s; }
+.rev-opt:hover:not(:disabled) { border-color: var(--green-500); background: var(--green-50); }
+.rev-opt.c { border-color: var(--green-500); background: var(--green-100); color: var(--green-700); }
+.rev-opt.w { border-color: var(--red-500); background: var(--red-100); color: var(--red-600); }
+.rev-feedback { font-size: 11.5px; font-weight: 700; color: var(--gray-500); margin-top: auto; }
+.rev-feedback .ok { color: var(--green-600); }
+.rev-feedback .no { color: var(--red-600); }
+.rev-done { text-align: center; padding: 22px 0; }
+.rev-done b { font-family: var(--font-display); font-size: 20px; display: block; margin-bottom: 5px; }
+.rev-done p { font-size: 12px; color: var(--gray-500); }
+
+/* Flashcard */
+.flashcard { perspective: 800px; height: 150px; cursor: pointer; margin-bottom: 12px; }
+.fc-inner { position: relative; width: 100%; height: 100%; transition: transform .35s; transform-style: preserve-3d; }
+.flashcard.flip .fc-inner { transform: rotateY(180deg); }
+.fc-face { position: absolute; inset: 0; backface-visibility: hidden; border-radius: var(--radius-md); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; border: 1px solid var(--gray-200); }
+.fc-front { background: linear-gradient(135deg, var(--navy-700), var(--navy-500)); color: #fff; }
+.fc-front b { font-family: var(--font-display); font-size: 16px; }
+.fc-back { background: var(--green-50); border-color: var(--green-100); transform: rotateY(180deg); padding: 16px; }
+.fc-back p { font-size: 13px; color: var(--navy-700); text-align: center; line-height: 1.5; }
+.fc-hint { font-size: 10px; color: rgba(255,255,255,.5); }
+.fc-back .fc-hint { color: var(--gray-500); }
+.fc-actions { display: flex; gap: 8px; }
+.fc-actions .btn { flex: 1; justify-content: center; }
+
+/* Formula */
+.formula-list { display: flex; flex-direction: column; }
+.formula-row { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-top: 1px solid var(--gray-100); cursor: pointer; }
+.formula-row:first-of-type { border-top: none; }
+.formula-row b { font-size: 12.5px; flex: 1; }
+.formula-ans { font-family: var(--font-mono); font-size: 12px; color: var(--green-600); font-weight: 600; text-align: right; }
+.rev-hint { font-size: 11px; color: var(--gray-500); margin-top: 10px; }
+
+/* Mistake replay */
+.mistake-row { display: flex; align-items: center; gap: 12px; padding: 11px 0; border-top: 1px solid var(--gray-100); }
+.mistake-row:first-of-type { border-top: none; }
+.mistake-row b { font-size: 13px; display: block; }
+.mistake-row span { font-size: 11px; color: var(--gray-500); }
+.mistake-row .btn { flex-shrink: 0; }
+
+@media (max-width: 900px) { .rev-grid { grid-template-columns: 1fr; } }

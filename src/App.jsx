@@ -1,6 +1,9 @@
 import { useState } from 'react'
 import { LayoutDashboard, GraduationCap, BarChart3, Sparkles, Compass, Settings, Bell } from 'lucide-react'
 import Dashboard from './pages/Dashboard.jsx'
+import Analysis from './pages/Analysis.jsx'
+import SmartRevision from './pages/SmartRevision.jsx'
+import Explorer from './pages/Explorer.jsx'
 import './tokens.css'
 import './shell.css'
 
@@ -8,7 +11,7 @@ const NAV = [
   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { id: 'studykit', label: 'Study Kit', icon: GraduationCap },
   { id: 'analysis', label: 'Analysis', icon: BarChart3 },
-  { id: 'chill', label: 'Chill Zone', icon: Sparkles },
+  { id: 'revision', label: 'Smart Revision', icon: Sparkles },
   { id: 'explorer', label: 'DU Admissions Explorer', icon: Compass },
   { id: 'profile', label: 'Profile & Settings', icon: Settings },
 ]
@@ -21,9 +24,9 @@ export default function App() {
       <main className="shell-main">
         {page === 'dashboard' && <Dashboard onNavigate={setPage} />}
         {page === 'studykit' && <ComingSoon title="Study Kit" desc="Learning tools to build understanding, testing tools to prove it." onNavigate={setPage} />}
-        {page === 'analysis' && <ComingSoon title="Analysis" desc="Where you're gaining marks, where there's opportunity — and a straight line back into practice." onNavigate={setPage} />}
-        {page === 'chill' && <ComingSoon title="Chill Zone" desc="Optional, low-stakes — an escape valve, not another to-do." onNavigate={setPage} />}
-        {page === 'explorer' && <ComingSoon title="DU Admissions Explorer" desc="College & Course Predictor · Preference Sheet Maker · Cutoff Explorer." onNavigate={setPage} />}
+        {page === 'analysis' && <Analysis />}
+        {page === 'revision' && <SmartRevision />}
+        {page === 'explorer' && <Explorer />}
         {page === 'profile' && <ComingSoon title="Profile & Settings" desc="Everything here personalizes your dashboard, predictor & manifestation board." onNavigate={setPage} />}
       </main>
     </div>
