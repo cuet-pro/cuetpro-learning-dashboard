@@ -1,0 +1,60 @@
+/* CUET Pro — Design tokens (preserved from existing design) */
+:root {
+  --navy-900: #0E1B30;
+  --navy-800: #13233C;
+  --navy-700: #172A48;
+  --navy-600: #1A2C49;
+  --navy-500: #22395C;
+  --navy-300: #55709C;
+  --navy-200: #B3C2D9;
+  --navy-100: #D9E2EF;
+
+  --green-700: #078054;
+  --green-600: #00A669;
+  --green-500: #00C97F;
+  --green-400: #52DCA8;
+  --green-100: #E5FBF3;
+  --green-50: #F0FDF8;
+
+  --blue-700: #1D4ED8;
+  --blue-500: #2F6FED;
+  --blue-100: #EAF1FE;
+
+  --amber-600: #C77700;
+  --amber-500: #F5A623;
+  --amber-100: #FDF3E2;
+
+  --red-600: #C0392B;
+  --red-500: #E5484D;
+  --red-100: #FDF2F1;
+
+  --gray-0: #FFFFFF;
+  --gray-50: #F5F7FA;
+  --gray-100: #EEF1F6;
+  --gray-200: #E3E8F0;
+  --gray-300: #C9D2DF;
+  --gray-500: #7C889B;
+  --gray-600: #5B667A;
+  --gray-700: #3B4658;
+
+  --font-display: 'Sora', 'Segoe UI', sans-serif;
+  --font-body: 'Plus Jakarta Sans', -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
+
+  --radius-lg: 18px;
+  --radius-md: 12px;
+  --radius-sm: 8px;
+  --shadow-card: 0 1px 2px rgba(14, 27, 48, 0.05), 0 4px 14px rgba(14, 27, 48, 0.06);
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body { height: 100%; }
+body {
+  font-family: var(--font-body);
+  background: var(--gray-0);
+  color: var(--navy-700);
+  -webkit-font-smoothing: antialiased;
+}
+button { font-family: inherit; cursor: pointer; border: none; background: none; }
+a { text-decoration: none; color: inherit; }
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-thumb { background: var(--gray-300); border-radius: 8px; }
