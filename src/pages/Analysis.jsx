@@ -1,224 +1,199 @@
 import { useState } from 'react'
-import { ArrowRight, BookOpen, Target, AlertTriangle, Repeat, TrendingUp, Timer } from 'lucide-react'
+import { ArrowLeft, BookOpen, Target, TrendingUp, TrendingDown, Minus, AlertTriangle } from 'lucide-react'
 import './analysis.css'
 
-const MOCK = {
-  name: 'CUET Mock Test #7 · Full Syllabus',
-  total: 512, max: 800,
+/* ── Data model (preview) ──
+ * Question bank: every question tagged { subject, sub_skill }
+ * Attempt log: per question { qId, subject, sub_skill, correct, timeTaken }
+ * Aggregation: sub-skill accuracy = correct / attempted (across last N mocks)
+ */
+
+const MOCKS_TAKEN = 7
+
+const SUBJECTS = [
+  {
+    name: 'English', acc: 88, attempts: 350,
+    subSkills: [
+      { name: 'Vocabulary', acc: 74 },
+      { name: 'Grammar & usage', acc: 68 },
+      { name: 'Reading comprehension', acc: 88 },
+      { name: 'Para-jumbles & odd sentence', acc: 55 },
+      { name: 'Sentence correction', acc: 72 },
+    ],
+  },
+  {
+    name: 'Economics', acc: 61, attempts: 350,
+    subSkills: [
+      { name: 'National income', acc: 62 },
+      { name: 'Money & banking', acc: 48 },
+      { name: 'Microeconomics', acc: 58 },
+      { name: 'Current affairs', acc: 51 },
+    ],
+  },
+  {
+    name: 'Accountancy', acc: 81, attempts: 350,
+    subSkills: [
+      { name: 'Journal & ledger', acc: 78 },
+      { name: 'Financial statements', acc: 84 },
+      { name: 'Partnership accounts', acc: 76 },
+      { name: 'Company accounts', acc: 70 },
+    ],
+  },
+  {
+    name: 'Business Studies', acc: 64, attempts: 350,
+    subSkills: [
+      { name: 'Principles of management', acc: 66 },
+      { name: 'Business environment', acc: 58 },
+      { name: 'Marketing', acc: 52 },
+    ],
+  },
+  {
+    name: 'General Test', acc: 45, attempts: 350,
+    subSkills: [
+      { name: 'Data interpretation', acc: 60 },
+      { name: 'Logical reasoning', acc: 55 },
+      { name: 'General knowledge', acc: 51 },
+      { name: 'Quantitative ability', acc: 38 },
+    ],
+  },
+]
+
+const TREND = [
+  { mock: 'M2', pct: 55.2 },
+  { mock: 'M3', pct: 58.4 },
+  { mock: 'M4', pct: 63.1 },
+  { mock: 'M5', pct: 60.8 },
+  { mock: 'M6', pct: 67.5 },
+  { mock: 'M7', pct: 71.8 },
+]
+const TARGET_PCT = 85
+
+const MISTAKES = [
+  { topic: 'Money & banking', subj: 'Economics', count: 4 },
+  { topic: 'Quantitative ability', subj: 'General Test', count: 3 },
+  { topic: 'Marketing', subj: 'Business Studies', count: 2 },
+  { topic: 'Grammar & usage', subj: 'English', count: 2 },
+]
+
+const TOPPERS = [
+  { label: 'You', acc: 64, time: 36 },
+  { label: 'Top 10 average', acc: 78, time: 28 },
+  { label: 'Topper', acc: 91, time: 22 },
+]
+
+const OVERVIEW = {
   accuracy: 64,
   percentile: 71.8,
-  timeUsed: 47, timeMax: 60,
-  subjects: [
-    { name: 'English', score: 92, max: 100, acc: 92, attempts: 50, time: '28 min', status: 'Strong' },
-    { name: 'Economics', score: 61, max: 100, acc: 61, attempts: 50, time: '32 min', status: 'Needs work' },
-    { name: 'Accountancy', score: 81, max: 100, acc: 81, attempts: 50, time: '30 min', status: 'Good' },
-    { name: 'Business Studies', score: 64, max: 100, acc: 64, attempts: 50, time: '31 min', status: 'Needs work' },
-    { name: 'General Test', score: 45, max: 100, acc: 45, attempts: 50, time: '26 min', status: 'Weak' },
-  ],
-  topics: [
-    { name: 'Money & Banking', subj: 'Economics', acc: 48, weight: 10, attempts: 21 },
-    { name: 'Production & Costs', subj: 'Economics', acc: 42, weight: 8, attempts: 18 },
-    { name: 'Quantitative Reasoning', subj: 'General Test', acc: 38, weight: 12, attempts: 25 },
-    { name: 'Current Affairs', subj: 'General Test', acc: 51, weight: 10, attempts: 19 },
-    { name: 'Marketing Management', subj: 'Business Studies', acc: 52, weight: 9, attempts: 17 },
-    { name: 'National Income Accounting', subj: 'Economics', acc: 68, weight: 12, attempts: 25 },
-    { name: 'Vocabulary & Idioms', subj: 'English', acc: 74, weight: 8, attempts: 16 },
-    { name: 'Reading Comprehension', subj: 'English', acc: 88, weight: 12, attempts: 24 },
-  ],
-  dots: [
-    { x: 12, y: 130, tag: 'Fast + Wrong', label: 'Rushed' },
-    { x: 45, y: 90, tag: 'Fast + Right', label: 'Mastered' },
-    { x: 78, y: 140, tag: 'Slow + Wrong', label: 'Concept gap' },
-    { x: 30, y: 30, tag: 'Slow + Right', label: 'Needs speed' },
-  ],
-  mistakes: [
-    { q: 'Q12 — Repo rate changes impact:', topic: 'Money & Banking', subj: 'Economics', wrong: 'Money supply increases', right: 'Banks borrow costlier', time: '38s', repeat: 2 },
-    { q: 'Q23 — AFC curve shape:', topic: 'Production & Costs', subj: 'Economics', wrong: 'U-shaped', right: 'Rectangular hyperbola', time: '29s', repeat: 3 },
-    { q: 'Q34 — Syllogism premise:', topic: 'Quantitative Reasoning', subj: 'General Test', wrong: 'All A are B, so B are A', right: 'Cannot be concluded', time: '44s', repeat: 2 },
-    { q: 'Q18 — Capital receipts include:', topic: 'Government Budget', subj: 'Economics', wrong: 'Interest payments', right: 'Recovery of loans', time: '51s', repeat: 1 },
-  ],
+  avgTime: 36,
+  weakTopics: 5,
 }
 
-function lossScore(t) { return Math.round(t.weight * (100 - t.acc) / 10) }
-function statusColor(s) {
-  if (s === 'Strong' || s === 'Good') return 'var(--green-600)'
-  if (s === 'Needs work') return 'var(--warning-500)'
-  return 'var(--red-500)'
+/* Status thresholds: ≥75 green · 50–74 amber · <50 red */
+function status(acc) {
+  if (acc >= 75) return { color: 'var(--green-500)', label: 'on track' }
+  if (acc >= 50) return { color: 'var(--warning-500)', label: 'needs attention' }
+  return { color: 'var(--red-500)', label: 'weak' }
 }
+
+function pct(v) { return Math.round(v) }
+function pct1(v) { return v.toFixed(1) }
 
 export default function Analysis() {
-  const [tab, setTab] = useState('Overall Analysis')
+  const [subject, setSubject] = useState(null)
+  if (subject) return <SubjectDrillDown subject={subject} onBack={() => setSubject(null)} />
+  return <Overview onOpenSubject={setSubject} />
+}
+
+/* ═══════════ Overview ═══════════ */
+function Overview({ onOpenSubject }) {
   return (
     <div className="page">
       <header className="page-head">
         <div>
           <h1>Analysis</h1>
-          <p>Where you're gaining marks, where there's opportunity — and a straight line back into practice.</p>
+          <p>How you're performing across mocks — subject-wise, sub-skill-wise, and against the class.</p>
         </div>
       </header>
 
-      <div className="an-tabs">
-        {['Overall Analysis', 'Paper Analysis', 'My Mistakes / Revision Bank'].map(t => (
-          <button key={t} className={tab === t ? 'on' : ''} onClick={() => setTab(t)}>{t}</button>
-        ))}
-      </div>
-
-      {tab === 'Overall Analysis' && <Overall />}
-      {tab === 'Paper Analysis' && <Paper />}
-      {tab === 'My Mistakes / Revision Bank' && <Mistakes />}
-    </div>
-  )
-}
-
-/* ── Overall: 5-subject mock breakdown ── */
-function Overall() {
-  const weak = MOCK.topics.filter(t => t.acc < 60).sort((a, b) => lossScore(b) - lossScore(a))
-  const totalLoss = weak.reduce((s, t) => s + lossScore(t), 0)
-  return (
-    <div className="an-stack">
-      {/* Score header */}
-      <section className="cuet-card">
-        <div className="an-score-row">
-          <div className="an-score">
-            <b>{MOCK.total}/{MOCK.max}</b>
-            <span>{MOCK.name}</span>
-          </div>
-          <div className="an-score-stats">
-            <div><b>{MOCK.percentile}%ile</b><span>vs cohort</span></div>
-            <div><b>{MOCK.accuracy}%</b><span>overall accuracy</span></div>
-            <div><b>{MOCK.timeUsed}/{MOCK.timeMax} min</b><span>time used</span></div>
-          </div>
+      {/* A. Top metric strip */}
+      <section className="metric-strip">
+        <div className="metric-card">
+          <span className="metric-label">Overall accuracy</span>
+          <b className="metric-value" style={{ color: status(OVERVIEW.accuracy).color }}>{pct(OVERVIEW.accuracy)}%</b>
+          <span className="metric-sub">across {MOCKS_TAKEN} mocks</span>
+        </div>
+        <div className="metric-card">
+          <span className="metric-label">Current percentile</span>
+          <b className="metric-value">{pct1(OVERVIEW.percentile)}%ile</b>
+          <span className="metric-sub">target {TARGET_PCT}%ile</span>
+        </div>
+        <div className="metric-card">
+          <span className="metric-label">Avg time per question</span>
+          <b className="metric-value">{OVERVIEW.avgTime}s</b>
+          <span className="metric-sub">toppers avg 22s</span>
+        </div>
+        <div className="metric-card">
+          <span className="metric-label">Weak topics flagged</span>
+          <b className="metric-value" style={{ color: 'var(--red-500)' }}>{OVERVIEW.weakTopics}</b>
+          <span className="metric-sub">fix these first</span>
         </div>
       </section>
 
-      {/* Recommendation — from the weak subjects */}
-      <section className="rec-card">
-        <div className="rec-ico"><Target size={20} /></div>
-        <div className="rec-body">
-          <h3>Recommendation — {totalLoss} marks of potential gain</h3>
-          <p>
-            <b>General Test (45%)</b> and <b>Economics (61%)</b> are pulling your score down.
-            Fix <b>Quantitative Reasoning</b> and <b>Money & Banking</b> first — together they cost you the most marks.
-            Revise the basics, then attempt 15 easy-medium questions per topic.
-          </p>
-          <div className="rec-actions">
-            <button className="btn btn-outline-sm"><BookOpen size={14} /> Revise Topics</button>
-            <button className="btn btn-primary-sm">Practice Now <ArrowRight size={14} /></button>
-          </div>
-        </div>
+      {/* B. Section-wise accuracy */}
+      <section className="an-card">
+        <h3 className="an-card-title">Section-wise accuracy</h3>
+        <p className="an-card-sub">Tap a subject for its sub-skill breakdown</p>
+        {SUBJECTS.map(s => {
+          const st = status(s.acc)
+          return (
+            <button className="subject-row" key={s.name} onClick={() => onOpenSubject(s.name)}>
+              <span className="status-dot" style={{ background: st.color }} />
+              <span className="subject-name">{s.name}</span>
+              <span className="subject-bar"><i style={{ width: s.acc + '%', background: st.color }} /></span>
+              <b className="subject-acc" style={{ color: st.color }}>{pct(s.acc)}%</b>
+              <span className="subject-status" style={{ color: st.color }}>{st.label}</span>
+            </button>
+          )
+        })}
       </section>
 
-      {/* 5 subject cards */}
-      <div className="an-subjects">
-        {MOCK.subjects.map(s => (
-          <div className="an-subj" key={s.name}>
-            <div className="an-subj-head">
-              <b>{s.name}</b>
-              <span className="an-subj-badge" style={{ background: statusColor(s.status) + '1a', color: statusColor(s.status) }}>{s.status}</span>
-            </div>
-            <div className="an-subj-score">
-              <b style={{ color: s.acc < 50 ? 'var(--red-500)' : s.acc < 70 ? 'var(--warning-500)' : 'var(--green-600)' }}>{s.score}<span>/{s.max}</span></b>
-              <span>{s.acc}% accuracy</span>
-            </div>
-            <div className="an-subj-bar"><i style={{ width: s.acc + '%', background: s.acc < 50 ? 'var(--red-500)' : s.acc < 70 ? 'var(--warning-500)' : 'var(--green-500)' }} /></div>
-            <div className="an-subj-meta"><span>{s.attempts} attempts</span><span>{s.time}</span></div>
-          </div>
-        ))}
-      </div>
+      {/* C. Percentile trend */}
+      <section className="an-card">
+        <h3 className="an-card-title">Percentile trend</h3>
+        <p className="an-card-sub">Last {TREND.length} mocks vs target percentile</p>
+        <TrendChart />
+      </section>
 
       <div className="an-grid">
-        {/* Topic analysis */}
-        <section className="cuet-card">
-          <div className="card-head"><h3>Topic Analysis</h3><span className="card-sub">Sorted by marks-loss potential</span></div>
-          {MOCK.topics.sort((a, b) => lossScore(b) - lossScore(a)).map(t => (
-            <div className="an-topic" key={t.name}>
-              <div className="an-tname-wrap">
-                <b className="an-tname">{t.name}</b>
-                <span className="an-tsubj">{t.subj}</span>
+        {/* D. Mistake tracker */}
+        <section className="an-card">
+          <h3 className="an-card-title">Mistake tracker</h3>
+          <p className="an-card-sub">Topics where you repeat the same errors</p>
+          {MISTAKES.map(m => (
+            <div className="mistake-row" key={m.topic}>
+              <span className="status-dot" style={{ background: 'var(--red-500)' }} />
+              <div className="mistake-info">
+                <b>{m.topic}</b>
+                <span>{m.subj} · repeated {m.count}× across mocks</span>
               </div>
-              <div className="an-tbar"><i style={{ width: t.acc + '%', background: t.acc < 50 ? 'var(--red-500)' : t.acc < 70 ? 'var(--warning-500)' : 'var(--green-500)' }} /></div>
-              <b className="an-tacc" style={{ color: t.acc < 50 ? 'var(--red-500)' : t.acc < 70 ? 'var(--warning-500)' : 'var(--green-600)' }}>{t.acc}%</b>
-              <span className="an-tloss">{lossScore(t)} marks</span>
+              <button className="btn btn-outline-sm" onClick={() => alert('Deep-link → practice flow, pre-filtered to: ' + m.topic)}>Review</button>
             </div>
           ))}
         </section>
 
-        {/* Fix first */}
-        <section className="cuet-card">
-          <div className="card-head"><h3>Fix These First</h3><span className="card-sub">Weak topics — most marks at stake</span></div>
-          {weak.map(t => (
-            <div className="an-fix" key={t.name}>
-              <div className="an-fix-info">
-                <b>{t.name}</b>
-                <span>{t.subj} · weight {t.weight}% · {t.attempts} attempts · {t.acc}% accuracy</span>
+        {/* E. You vs toppers */}
+        <section className="an-card">
+          <h3 className="an-card-title">You vs toppers</h3>
+          <p className="an-card-sub">How you stack up on the key metrics</p>
+          <div className="vs-table">
+            <div className="vs-head"><span></span><span>Accuracy</span><span>Avg time/q</span></div>
+            {TOPPERS.map(t => (
+              <div className={'vs-row' + (t.label === 'You' ? ' you' : '')} key={t.label}>
+                <b>{t.label}</b>
+                <span>{pct(t.acc)}%</span>
+                <span>{t.time}s</span>
               </div>
-              <div className="an-fix-actions">
-                <button className="btn btn-outline-sm">Revise</button>
-                <button className="btn btn-primary-sm">Practice</button>
-              </div>
-            </div>
-          ))}
-        </section>
-      </div>
-    </div>
-  )
-}
-
-/* ── Paper Analysis ── */
-function Paper() {
-  return (
-    <div className="an-stack">
-      <section className="cuet-card">
-        <div className="card-head"><h3>Why marks were lost — time vs accuracy</h3><span className="card-sub">One dot per attempted question</span></div>
-        <div className="quad-wrap">
-          <div className="quad-grid">
-            <div className="quad-cell q-tl"><b>Fast + Wrong</b><span>— rushed</span></div>
-            <div className="quad-cell q-tr"><b>Fast + Right</b><span>— mastered</span></div>
-            <div className="quad-cell q-bl"><b>Slow + Wrong</b><span>— concept gap</span></div>
-            <div className="quad-cell q-br"><b>Slow + Right</b><span>— needs speed</span></div>
-          </div>
-          <svg viewBox="0 0 100 100" className="quad-svg">
-            {MOCK.dots.map((d, i) => (
-              <g key={i}>
-                <circle cx={d.x} cy={d.y} r="2.4" fill={d.tag.includes('Right') ? '#00C97F' : '#E5484D'} opacity=".85" />
-                <title>{d.tag}</title>
-              </g>
             ))}
-          </svg>
-          <div className="quad-legend">
-            <span><i style={{ background: '#00C97F' }} /> Correct</span>
-            <span><i style={{ background: '#E5484D' }} /> Incorrect</span>
-          </div>
-        </div>
-      </section>
-
-      <div className="an-grid">
-        <section className="cuet-card">
-          <div className="card-head"><h3>Subject breakdown</h3><span className="card-sub">{MOCK.name}</span></div>
-          {MOCK.subjects.map(s => (
-            <div className="an-topic" key={s.name}>
-              <b className="an-tname">{s.name}</b>
-              <div className="an-tbar"><i style={{ width: s.acc + '%', background: s.acc < 50 ? 'var(--red-500)' : s.acc < 70 ? 'var(--warning-500)' : 'var(--green-500)' }} /></div>
-              <b className="an-tacc">{s.score}/{s.max}</b>
-            </div>
-          ))}
-        </section>
-        <section className="cuet-card">
-          <div className="card-head"><h3>Question by question</h3><span className="card-sub">Q1 → Q50 · full mock</span></div>
-          <div className="qgrid">
-            {Array.from({ length: 50 }, (_, i) => {
-              const wrong = [3, 11, 17, 23, 28, 34, 41, 47]
-              const skipped = [9, 19, 39]
-              let cls = 'qcell'
-              if (wrong.includes(i)) cls += ' w'
-              if (skipped.includes(i)) cls += ' s'
-              return <span key={i} className={cls}>{i + 1}</span>
-            })}
-          </div>
-          <div className="quad-legend" style={{ marginTop: 12 }}>
-            <span><i style={{ background: 'var(--green-500)' }} /> Correct</span>
-            <span><i style={{ background: 'var(--red-500)' }} /> Wrong</span>
-            <span><i style={{ background: 'var(--gray-200)' }} /> Skipped</span>
           </div>
         </section>
       </div>
@@ -226,38 +201,111 @@ function Paper() {
   )
 }
 
-/* ── Mistakes / Revision Bank ── */
-function Mistakes() {
+function TrendChart() {
+  const W = 560, H = 170, PAD = 28
+  const min = 40, max = 100
+  const x = i => PAD + (i / (TREND.length - 1)) * (W - PAD * 2)
+  const y = v => H - PAD - ((v - min) / (max - min)) * (H - PAD * 2)
+  const line = TREND.map((p, i) => `${i === 0 ? 'M' : 'L'}${x(i).toFixed(1)},${y(p.pct).toFixed(1)}`).join(' ')
+  const targetY = y(TARGET_PCT)
   return (
-    <div className="an-stack">
-      <div className="rec-card" style={{ background: 'linear-gradient(120deg,#1A2C49,#2E4A75)' }}>
-        <div className="rec-ico"><AlertTriangle size={20} /></div>
-        <div className="rec-body">
-          <h3>Revision Bank — 4 mistakes, 3 repeated topics</h3>
-          <p>Re-attempt these within 48 hours — repeated mistakes mean guaranteed marks lost in the exam. A similar-question set is ready for each.</p>
+    <div className="trend-wrap">
+      <svg viewBox={`0 0 ${W} ${H}`} className="trend-svg">
+        {[50, 60, 70, 80, 90, 100].map(g => (
+          <line key={g} x1={PAD} x2={W - PAD} y1={y(g)} y2={y(g)} stroke="#EEF1F6" strokeWidth="1" />
+        ))}
+        {/* dashed target line */}
+        <line x1={PAD} x2={W - PAD} y1={targetY} y2={targetY} stroke="#F5A623" strokeWidth="1.5" strokeDasharray="6 5" />
+        <text x={W - PAD} y={targetY - 6} textAnchor="end" fontSize="10" fontWeight="700" fill="#C77700">target {TARGET_PCT}%ile</text>
+        {/* area + line */}
+        <path d={`${line} L${x(TREND.length - 1).toFixed(1)},${H - PAD} L${x(0).toFixed(1)},${H - PAD} Z`} fill="url(#trendArea)" opacity="0.5" />
+        <path d={line} fill="none" stroke="#00C97F" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+        {TREND.map((p, i) => (
+          <g key={p.mock}>
+            <circle cx={x(i)} cy={y(p.pct)} r="3.5" fill="#00C97F" />
+            <text x={x(i)} y={y(p.pct) - 8} textAnchor="middle" fontSize="9.5" fontWeight="600" fill="#5B667A">{p.pct}%</text>
+            <text x={x(i)} y={H - 10} textAnchor="middle" fontSize="9.5" fill="#7C889B">{p.mock}</text>
+          </g>
+        ))}
+        <defs>
+          <linearGradient id="trendArea" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#00C97F" stopOpacity="0.25" />
+            <stop offset="100%" stopColor="#00C97F" stopOpacity="0" />
+          </linearGradient>
+        </defs>
+      </svg>
+    </div>
+  )
+}
+
+/* ═══════════ Subject drill-down ═══════════ */
+function SubjectDrillDown({ subject, onBack }) {
+  const subj = SUBJECTS.find(s => s.name === subject)
+  const sorted = [...subj.subSkills].sort((a, b) => a.acc - b.acc)
+  const weakest = sorted[0]
+  const st = status(subj.acc)
+  const prevWeak = weakest.acc + 4 /* trend: improving if last mocks better */
+
+  /* low-data state: fewer than 3 mocks → no reliable breakdown */
+  if (MOCKS_TAKEN < 3) {
+    return (
+      <div className="page">
+        <header className="page-head">
+          <div>
+            <h1>Analysis · {subj.name}</h1>
+          </div>
+        </header>
+        <div className="an-card">
+          <p className="low-data">Attempt more mocks to unlock a reliable sub-skill breakdown — {MOCKS_TAKEN} mock logged so far.</p>
         </div>
       </div>
-      {MOCK.mistakes.map(m => (
-        <section className="cuet-card" key={m.q}>
-          <div className="mist-row">
-            <div className="mist-q">
-              <div className="mist-head">
-                <span className="mist-topic"><Repeat size={12} /> {m.topic} · {m.subj} {m.repeat > 1 && <span className="mist-rep">repeated ×{m.repeat}</span>}</span>
-                <span className="mist-time">{m.time}</span>
-              </div>
-              <p className="mist-text">{m.q}</p>
-              <div className="mist-ans">
-                <span className="mist-wrong">✗ {m.wrong}</span>
-                <span className="mist-right">✓ {m.right}</span>
-              </div>
+    )
+  }
+
+  return (
+    <div className="page">
+      <header className="page-head">
+        <div>
+          <button className="btn btn-outline-sm" onClick={onBack} style={{ marginBottom: 14 }}><ArrowLeft size={14} /> All subjects</button>
+          <h1>{subj.name}</h1>
+          <p>Average of last {MOCKS_TAKEN} mocks · {pct(subj.acc)}% accuracy · {subj.attempts} questions attempted</p>
+        </div>
+      </header>
+
+      {/* Sub-skill breakdown */}
+      <section className="an-card">
+        <h3 className="an-card-title">Sub-skill breakdown</h3>
+        <p className="an-card-sub">Weakest first · aggregated across all mocks</p>
+        {sorted.map(sk => {
+          const s = status(sk.acc)
+          return (
+            <div className="subject-row" key={sk.name}>
+              <span className="status-dot" style={{ background: s.color }} />
+              <span className="subject-name">{sk.name}</span>
+              <span className="subject-bar"><i style={{ width: sk.acc + '%', background: s.color }} /></span>
+              <b className="subject-acc" style={{ color: s.color }}>{pct(sk.acc)}%</b>
+              {sk.name === weakest.name && <span className="weakest-tag">weakest</span>}
             </div>
-            <div className="mist-actions">
-              <button className="btn btn-outline-sm"><BookOpen size={13} /> Revise</button>
-              <button className="btn btn-primary-sm">5 similar questions</button>
-            </div>
-          </div>
-        </section>
-      ))}
+          )
+        })}
+      </section>
+
+      {/* Focus area callout */}
+      <section className="focus-card" style={{ background: status(weakest.acc).color + '14', borderColor: status(weakest.acc).color }}>
+        <div className="focus-ico" style={{ background: status(weakest.acc).color, color: '#fff' }}><Target size={18} /></div>
+        <div className="focus-body">
+          <h3>Focus area — {weakest.name}</h3>
+          <p>
+            Your accuracy here is <b>{pct(weakest.acc)}%</b> — the lowest in {subj.name}.
+            {prevWeak >= weakest.acc
+              ? <> It's <b className="imp">improving</b> across recent mocks — keep going.</>
+              : <> It's <b className="flat">flat</b> across recent mocks — a targeted fix is needed.</>}
+          </p>
+        </div>
+        <button className="btn btn-primary-sm" onClick={() => alert('Deep-link → practice session, filtered to: ' + subj.name + ' · ' + weakest.name)}>
+          Start {weakest.name} practice <BookOpen size={14} />
+        </button>
+      </section>
     </div>
   )
 }
