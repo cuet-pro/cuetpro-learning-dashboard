@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { ArrowLeft, BookOpen, Target, TrendingUp, TrendingDown, Minus, AlertTriangle } from 'lucide-react'
+import { ArrowLeft, BookOpen, Target, TrendingUp, TrendingDown, Minus, AlertTriangle, ChevronRight } from 'lucide-react'
 import './analysis.css'
 
 /* ── Data model (preview) ──
@@ -142,7 +142,7 @@ function Overview({ onOpenSubject }) {
       {/* B. Section-wise accuracy */}
       <section className="an-card">
         <h3 className="an-card-title">Section-wise accuracy</h3>
-        <p className="an-card-sub">Tap a subject for its sub-skill breakdown</p>
+        <p className="an-card-sub">Tap any subject to open its sub-skill breakdown <span className="tap-hint">→</span></p>
         {SUBJECTS.map(s => {
           const st = status(s.acc)
           return (
@@ -152,6 +152,7 @@ function Overview({ onOpenSubject }) {
               <span className="subject-bar"><i style={{ width: s.acc + '%', background: st.color }} /></span>
               <b className="subject-acc" style={{ color: st.color }}>{pct(s.acc)}%</b>
               <span className="subject-status" style={{ color: st.color }}>{st.label}</span>
+              <span className="row-chevron"><ChevronRight size={15} /></span>
             </button>
           )
         })}
@@ -279,7 +280,7 @@ function SubjectDrillDown({ subject, onBack }) {
         {sorted.map(sk => {
           const s = status(sk.acc)
           return (
-            <div className="subject-row" key={sk.name}>
+            <div className="subject-row static" key={sk.name}>
               <span className="status-dot" style={{ background: s.color }} />
               <span className="subject-name">{sk.name}</span>
               <span className="subject-bar"><i style={{ width: sk.acc + '%', background: s.color }} /></span>
