@@ -416,53 +416,111 @@ function TrendChart({ mocks, target }) {
 /* ═══════════ 5. Boost plan (unique) ═══════════ */
 function BoostTab({ subject }) {
   const isAll = subject === 'all'
+  const [showAll, setShowAll] = useState(false)
   const skills = allSubSkills(subject)
 
-  /* score_gain_per_hour = (exam_weight% × improvement_gap) / estimated_hours_to_fix */
+  /* score_gain_per_hour = (exam_weight% × improvement_gap) / estimated_hours_to_fix — unchanged */
   const ranked = skills
     .filter(sk => sk.attempts >= MIN_ATTEMPTS)
-    .map(sk => ({
-      ...sk,
-      gain: (sk.weight * (CEILING - sk.acc)) / (sk.hours * 10),
-    }))
+    .map(sk => ({ ...sk, gap: CEILING - sk.acc, gain: (sk.weight * (CEILING - sk.acc)) / (sk.hours * 10) }))
     .sort((a, b) => b.gain - a.gain)
 
   const lowData = skills.length - ranked.length
-  const top = ranked[0]
+  const hero = ranked[0]
+  const secondary = ranked.slice(1, 5)
+  const rest = ranked.slice(5)
+
+  /* top third of weights → "high weight" */
+  const sortedW = [...ranked].map(r => r.weight).sort((a, b) => b - a)
+  const highW = sortedW.length ? sortedW[Math.max(0, Math.ceil(sortedW.length / 3) - 1)] : 99
+
+  const reason = r => {
+    if (r.acc >= 80) return 'Already strong, little to gain'
+    const bigGap = r.gap >= 35
+    const heavy = r.weight >= highW
+    if (heavy && bigGap) return 'Worth a good chunk of marks'
+    if (bigGap) return "You're falling behind here"
+    if (heavy) return 'Small topic, easy marks — you are already close'
+    return 'Worth fixing — every mark counts'
+  }
+  const tier = (r, i) => {
+    if (r.acc >= 80) return 'low'
+    const n = ranked.length
+    if (i < Math.ceil(n / 3)) return 'high'
+    if (i < Math.ceil(n * 2 / 3)) return 'medium'
+    return 'low'
+  }
 
   return (
     <>
       <section className="boost-banner">
         <Zap size={18} />
         <p>
-          <b>Ranks topics by score gain per hour</b> — not just readiness. Formula: (exam weight × improvement gap) ÷ estimated hours to fix.
+          <b>Your best next hour</b> — ranked by score gain per hour, not just readiness.
           <span className="boost-tag">unique to CUET Pro</span>
         </p>
       </section>
 
-      <section className="an-card">
-        <h3 className="an-card-title">Boost plan — one hour, best return</h3>
-        <p className="an-card-sub">{isAll ? 'All subjects' : subject} · sorted by estimated score gain per study hour</p>
-        {ranked.length === 0 && <p className="muted-empty">No topics can be ranked yet — attempt more questions first.</p>}
-        {ranked.map((sk, i) => (
-          <button className="boost-row" key={sk.name + sk.subject} onClick={() => alert('Deep-link → boost session: ' + sk.name)}>
-            <span className="boost-rank">{i + 1}</span>
-            <span className="status-dot" style={{ background: status(sk.acc).color }} />
-            <span className="boost-name">{sk.name}<small>{sk.subject} · weight {sk.weight}% · accuracy {pct(sk.acc)}%</small></span>
-            <b className="boost-gain">+{pct1(sk.gain)}% score/hr</b>
+      {/* A. Hero recommendation */}
+      {hero && (
+        <section className="boost-hero">
+          <span className="boost-hero-badge">Best pick right now</span>
+          <h3>{hero.name}</h3>
+          <p className="boost-hero-reason">{reason(hero)}</p>
+          <button className="btn btn-primary boost-hero-cta" onClick={() => alert('Deep-link → practice session: ' + hero.name)}>
+            Study this first <BookOpen size={15} />
           </button>
-        ))}
-      </section>
+          {!isAll && <span className="boost-hero-subject">{subject}</span>}
+        </section>
+      )}
+
+      {/* B. Also worth your time */}
+      {secondary.length > 0 && (
+        <section className="an-card">
+          <h3 className="an-card-title">Also worth your time</h3>
+          <p className="an-card-sub">Good returns in the next hour or two</p>
+          {secondary.map((r, i) => (
+            <button className="boost-row" key={r.name + r.subject} onClick={() => alert('Deep-link → practice session: ' + r.name)}>
+              <span className="status-dot" style={{ background: status(r.acc).color }} />
+              <span className="boost-name">{r.name}<small>{r.subject}</small></span>
+              <span className="boost-reason">{reason(r)}</span>
+              <ImpactBadge tier={tier(r, i + 1)} />
+            </button>
+          ))}
+        </section>
+      )}
+
+      {/* C. Collapsed full list */}
+      {rest.length > 0 && (
+        <>
+          <button className="see-full" onClick={() => setShowAll(s => !s)}>
+            {showAll ? 'Hide full list' : `See full list · ${rest.length} more topics`}
+          </button>
+          {showAll && (
+            <section className="an-card">
+              <h3 className="an-card-title">Full list</h3>
+              <p className="an-card-sub">All ranked topics — deeper detail</p>
+              {rest.map((r, i) => (
+                <button className="boost-row" key={r.name + r.subject} onClick={() => alert('Deep-link → practice session: ' + r.name)}>
+                  <span className="status-dot" style={{ background: status(r.acc).color }} />
+                  <span className="boost-name">{r.name}<small>{r.subject} · weight {r.weight}% · accuracy {pct(r.acc)}%</small></span>
+                  <ImpactBadge tier={tier(r, i + 5)} />
+                </button>
+              ))}
+            </section>
+          )}
+        </>
+      )}
 
       {lowData > 0 && (
         <p className="boost-note">{lowData} topic{lowData > 1 ? 's' : ''} need more attempts before they can be ranked.</p>
       )}
-
-      {top && (
-        <button className="btn btn-primary boost-cta" onClick={() => alert('Deep-link → boost session: ' + top.name)}>
-          Start top boost session · {top.name} <Zap size={15} />
-        </button>
-      )}
     </>
   )
+}
+
+function ImpactBadge({ tier }) {
+  if (tier === 'high') return <span className="impact-badge high">high impact</span>
+  if (tier === 'medium') return <span className="impact-badge medium">medium impact</span>
+  return <span className="impact-badge low">low impact</span>
 }
