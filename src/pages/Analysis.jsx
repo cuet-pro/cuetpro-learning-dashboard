@@ -1,78 +1,9 @@
 import { useState } from 'react'
 import { Home, Grid3x3, ListChecks, TrendingUp, Zap, ChevronRight, Target, AlertTriangle, BookOpen, Info } from 'lucide-react'
+import { SUBJECTS, status, allSubSkills, boostRanking, boostReason } from '../lib/analysisData'
 import './analysis.css'
 
-/* ═══════════ Data model (preview) ═══════════
- * Every topic/sub-skill: { name, acc, weight (share of total exam %), hours (est. to fix), attempts }
- * Every question tagged subject + sub_skill; attempts logged per question.
- * SWOT + Boost are pure computations over this same data.
- */
-
-const TABS = [
-  { id: 'overview', label: 'Overview', icon: Home },
-  { id: 'swot', label: 'SWOT', icon: Grid3x3 },
-  { id: 'subskills', label: 'Sub-skills', icon: ListChecks },
-  { id: 'trend', label: 'Trend', icon: TrendingUp },
-  { id: 'boost', label: 'Boost plan', icon: Zap },
-]
-
-const SUBJECTS = [
-  {
-    name: 'English', acc: 88, attempts: 350, avgTime: 24, weight: 25,
-    trend: [82, 84, 86, 85, 87, 88],
-    mistakes: [{ topic: 'Grammar & usage', count: 2 }],
-    subSkills: [
-      { name: 'Vocabulary', acc: 74, weight: 8, hours: 5, attempts: 90 },
-      { name: 'Grammar & usage', acc: 68, weight: 6, hours: 6, attempts: 70 },
-      { name: 'Reading comprehension', acc: 88, weight: 6, hours: 4, attempts: 80 },
-      { name: 'Para-jumbles & odd sentence', acc: 55, weight: 3, hours: 4, attempts: 40 },
-      { name: 'Sentence correction', acc: 72, weight: 2, hours: 3, attempts: 35 },
-    ],
-  },
-  {
-    name: 'Economics', acc: 61, attempts: 350, avgTime: 36, weight: 25,
-    trend: [52, 55, 58, 56, 60, 61],
-    mistakes: [{ topic: 'Money & banking', count: 4 }],
-    subSkills: [
-      { name: 'National income', acc: 62, weight: 7, hours: 6, attempts: 85 },
-      { name: 'Money & banking', acc: 48, weight: 6, hours: 8, attempts: 78 },
-      { name: 'Microeconomics', acc: 58, weight: 7, hours: 7, attempts: 90 },
-      { name: 'Current affairs (eco)', acc: 51, weight: 5, hours: 9, attempts: 60 },
-    ],
-  },
-  {
-    name: 'Accountancy', acc: 81, attempts: 350, avgTime: 30, weight: 25,
-    trend: [74, 76, 78, 77, 80, 81],
-    mistakes: [],
-    subSkills: [
-      { name: 'Journal & ledger', acc: 78, weight: 7, hours: 5, attempts: 85 },
-      { name: 'Financial statements', acc: 84, weight: 7, hours: 4, attempts: 92 },
-      { name: 'Partnership accounts', acc: 76, weight: 6, hours: 6, attempts: 75 },
-      { name: 'Company accounts', acc: 70, weight: 5, hours: 6, attempts: 60 },
-    ],
-  },
-  {
-    name: 'Business Studies', acc: 64, attempts: 350, avgTime: 31, weight: 12.5,
-    trend: [58, 60, 62, 61, 63, 64],
-    mistakes: [{ topic: 'Marketing', count: 2 }],
-    subSkills: [
-      { name: 'Principles of management', acc: 66, weight: 5, hours: 5, attempts: 70 },
-      { name: 'Business environment', acc: 58, weight: 4, hours: 4, attempts: 55 },
-      { name: 'Marketing', acc: 52, weight: 3.5, hours: 4, attempts: 60 },
-    ],
-  },
-  {
-    name: 'General Test', acc: 45, attempts: 350, avgTime: 42, weight: 12.5,
-    trend: [38, 40, 41, 43, 44, 45],
-    mistakes: [{ topic: 'Quantitative ability', count: 3 }],
-    subSkills: [
-      { name: 'Data interpretation', acc: 60, weight: 4, hours: 6, attempts: 80 },
-      { name: 'Logical reasoning', acc: 55, weight: 3.5, hours: 5, attempts: 75 },
-      { name: 'General knowledge', acc: 51, weight: 3, hours: 10, attempts: 70 },
-      { name: 'Quantitative ability', acc: 38, weight: 2, hours: 8, attempts: 62 },
-    ],
-  },
-]
+/* ═══════════ Shared data + boost logic lives in src/lib/analysisData.js ═══════════ */
 
 const OVERALL = {
   acc: 64, percentile: 71.8, avgTime: 36, weakTopics: 5,
@@ -85,24 +16,21 @@ const TOPPERS = [
   { label: 'Topper', acc: 91, time: 22 },
 ]
 const HIGH_WEIGHT = 5 /* exam-weight threshold for urgent (Threat/Opportunity) */
-const CEILING = 90 /* realistic achievable accuracy ceiling */
-const MIN_ATTEMPTS = 15 /* below this → exclude from boost ranking */
 
-function status(acc) {
-  if (acc >= 75) return { color: 'var(--green-500)', label: 'on track' }
-  if (acc >= 50) return { color: 'var(--warning-500)', label: 'needs attention' }
-  return { color: 'var(--red-500)', label: 'weak' }
-}
 const pct = v => Math.round(v)
 const pct1 = v => v.toFixed(1)
+
+const TABS = [
+  { id: 'overview', label: 'Overview', icon: Home },
+  { id: 'swot', label: 'SWOT', icon: Grid3x3 },
+  { id: 'subskills', label: 'Sub-skills', icon: ListChecks },
+  { id: 'trend', label: 'Trend', icon: TrendingUp },
+  { id: 'boost', label: 'Boost plan', icon: Zap },
+]
 
 function selectedSubjects(subject) {
   if (subject === 'all') return SUBJECTS
   return SUBJECTS.filter(s => s.name === subject)
-}
-
-function allSubSkills(subject) {
-  return selectedSubjects(subject).flatMap(s => s.subSkills.map(sk => ({ ...sk, subject: s.name })))
 }
 
 export default function Analysis() {
@@ -420,11 +348,8 @@ function BoostTab({ subject }) {
   const [showInfo, setShowInfo] = useState(false)
   const skills = allSubSkills(subject)
 
-  /* score_gain_per_hour = (exam_weight% × improvement_gap) / estimated_hours_to_fix — unchanged */
-  const ranked = skills
-    .filter(sk => sk.attempts >= MIN_ATTEMPTS)
-    .map(sk => ({ ...sk, gap: CEILING - sk.acc, gain: (sk.weight * (CEILING - sk.acc)) / (sk.hours * 10) }))
-    .sort((a, b) => b.gain - a.gain)
+  /* score_gain_per_hour — shared logic from lib/analysisData */
+  const ranked = boostRanking(subject)
 
   const lowData = skills.length - ranked.length
   const hero = ranked[0]
@@ -435,17 +360,7 @@ function BoostTab({ subject }) {
   const sortedW = [...ranked].map(r => r.weight).sort((a, b) => b - a)
   const highW = sortedW.length ? sortedW[Math.max(0, Math.ceil(sortedW.length / 3) - 1)] : 99
 
-  /* plain-language reason — dominant factor only */
-  const reason = r => {
-    if (r.acc >= 80) return 'Already strong, little to gain'
-    const bigGap = r.gap >= 35
-    const heavy = r.weight >= highW
-    const tinyGap = r.gap < 15
-    if (heavy && bigGap) return 'Worth a good chunk of marks'
-    if (bigGap) return "You're falling behind here"
-    if (heavy && tinyGap) return 'Small topic, easy marks — you are already close'
-    return 'Worth fixing — steady improvement here'
-  }
+  const reason = r => boostReason(r, highW)
   const tier = (r, i) => {
     if (r.acc >= 80) return 'low'
     const n = ranked.length
@@ -460,7 +375,6 @@ function BoostTab({ subject }) {
         <Zap size={18} />
         <p>
           <b>Your best next hour</b> — ranked by how much you can improve, not just readiness.
-          <span className="boost-tag">unique to CUET Pro</span>
         </p>
         <button className="boost-info" onClick={() => setShowInfo(s => !s)} aria-label="How this ranking works">
           <Info size={16} />
