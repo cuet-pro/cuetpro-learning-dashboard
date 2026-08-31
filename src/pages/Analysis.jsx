@@ -1,111 +1,113 @@
 import { useState } from 'react'
-import { ArrowLeft, BookOpen, Target, TrendingUp, TrendingDown, Minus, AlertTriangle, ChevronRight } from 'lucide-react'
+import { Home, Grid3x3, ListChecks, TrendingUp, Zap, ChevronRight, Target, AlertTriangle, BookOpen } from 'lucide-react'
 import './analysis.css'
 
-/* ── Data model (preview) ──
- * Question bank: every question tagged { subject, sub_skill }
- * Attempt log: per question { qId, subject, sub_skill, correct, timeTaken }
- * Aggregation: sub-skill accuracy = correct / attempted (across last N mocks)
+/* ═══════════ Data model (preview) ═══════════
+ * Every topic/sub-skill: { name, acc, weight (share of total exam %), hours (est. to fix), attempts }
+ * Every question tagged subject + sub_skill; attempts logged per question.
+ * SWOT + Boost are pure computations over this same data.
  */
 
-const MOCKS_TAKEN = 7
+const TABS = [
+  { id: 'overview', label: 'Overview', icon: Home },
+  { id: 'swot', label: 'SWOT', icon: Grid3x3 },
+  { id: 'subskills', label: 'Sub-skills', icon: ListChecks },
+  { id: 'trend', label: 'Trend', icon: TrendingUp },
+  { id: 'boost', label: 'Boost plan', icon: Zap },
+]
 
 const SUBJECTS = [
   {
-    name: 'English', acc: 88, attempts: 350,
+    name: 'English', acc: 88, attempts: 350, avgTime: 24, weight: 25,
+    trend: [82, 84, 86, 85, 87, 88],
+    mistakes: [{ topic: 'Grammar & usage', count: 2 }],
     subSkills: [
-      { name: 'Vocabulary', acc: 74 },
-      { name: 'Grammar & usage', acc: 68 },
-      { name: 'Reading comprehension', acc: 88 },
-      { name: 'Para-jumbles & odd sentence', acc: 55 },
-      { name: 'Sentence correction', acc: 72 },
+      { name: 'Vocabulary', acc: 74, weight: 8, hours: 5, attempts: 90 },
+      { name: 'Grammar & usage', acc: 68, weight: 6, hours: 6, attempts: 70 },
+      { name: 'Reading comprehension', acc: 88, weight: 6, hours: 4, attempts: 80 },
+      { name: 'Para-jumbles & odd sentence', acc: 55, weight: 3, hours: 4, attempts: 40 },
+      { name: 'Sentence correction', acc: 72, weight: 2, hours: 3, attempts: 35 },
     ],
   },
   {
-    name: 'Economics', acc: 61, attempts: 350,
+    name: 'Economics', acc: 61, attempts: 350, avgTime: 36, weight: 25,
+    trend: [52, 55, 58, 56, 60, 61],
+    mistakes: [{ topic: 'Money & banking', count: 4 }],
     subSkills: [
-      { name: 'National income', acc: 62 },
-      { name: 'Money & banking', acc: 48 },
-      { name: 'Microeconomics', acc: 58 },
-      { name: 'Current affairs', acc: 51 },
+      { name: 'National income', acc: 62, weight: 7, hours: 6, attempts: 85 },
+      { name: 'Money & banking', acc: 48, weight: 6, hours: 8, attempts: 78 },
+      { name: 'Microeconomics', acc: 58, weight: 7, hours: 7, attempts: 90 },
+      { name: 'Current affairs (eco)', acc: 51, weight: 5, hours: 9, attempts: 60 },
     ],
   },
   {
-    name: 'Accountancy', acc: 81, attempts: 350,
+    name: 'Accountancy', acc: 81, attempts: 350, avgTime: 30, weight: 25,
+    trend: [74, 76, 78, 77, 80, 81],
+    mistakes: [],
     subSkills: [
-      { name: 'Journal & ledger', acc: 78 },
-      { name: 'Financial statements', acc: 84 },
-      { name: 'Partnership accounts', acc: 76 },
-      { name: 'Company accounts', acc: 70 },
+      { name: 'Journal & ledger', acc: 78, weight: 7, hours: 5, attempts: 85 },
+      { name: 'Financial statements', acc: 84, weight: 7, hours: 4, attempts: 92 },
+      { name: 'Partnership accounts', acc: 76, weight: 6, hours: 6, attempts: 75 },
+      { name: 'Company accounts', acc: 70, weight: 5, hours: 6, attempts: 60 },
     ],
   },
   {
-    name: 'Business Studies', acc: 64, attempts: 350,
+    name: 'Business Studies', acc: 64, attempts: 350, avgTime: 31, weight: 12.5,
+    trend: [58, 60, 62, 61, 63, 64],
+    mistakes: [{ topic: 'Marketing', count: 2 }],
     subSkills: [
-      { name: 'Principles of management', acc: 66 },
-      { name: 'Business environment', acc: 58 },
-      { name: 'Marketing', acc: 52 },
+      { name: 'Principles of management', acc: 66, weight: 5, hours: 5, attempts: 70 },
+      { name: 'Business environment', acc: 58, weight: 4, hours: 4, attempts: 55 },
+      { name: 'Marketing', acc: 52, weight: 3.5, hours: 4, attempts: 60 },
     ],
   },
   {
-    name: 'General Test', acc: 45, attempts: 350,
+    name: 'General Test', acc: 45, attempts: 350, avgTime: 42, weight: 12.5,
+    trend: [38, 40, 41, 43, 44, 45],
+    mistakes: [{ topic: 'Quantitative ability', count: 3 }],
     subSkills: [
-      { name: 'Data interpretation', acc: 60 },
-      { name: 'Logical reasoning', acc: 55 },
-      { name: 'General knowledge', acc: 51 },
-      { name: 'Quantitative ability', acc: 38 },
+      { name: 'Data interpretation', acc: 60, weight: 4, hours: 6, attempts: 80 },
+      { name: 'Logical reasoning', acc: 55, weight: 3.5, hours: 5, attempts: 75 },
+      { name: 'General knowledge', acc: 51, weight: 3, hours: 10, attempts: 70 },
+      { name: 'Quantitative ability', acc: 38, weight: 2, hours: 8, attempts: 62 },
     ],
   },
 ]
 
-const TREND = [
-  { mock: 'M2', pct: 55.2 },
-  { mock: 'M3', pct: 58.4 },
-  { mock: 'M4', pct: 63.1 },
-  { mock: 'M5', pct: 60.8 },
-  { mock: 'M6', pct: 67.5 },
-  { mock: 'M7', pct: 71.8 },
-]
+const OVERALL = {
+  acc: 64, percentile: 71.8, avgTime: 36, weakTopics: 5,
+  trend: [55.2, 58.4, 63.1, 60.8, 67.5, 71.8],
+}
 const TARGET_PCT = 85
-
-const MISTAKES = [
-  { topic: 'Money & banking', subj: 'Economics', count: 4 },
-  { topic: 'Quantitative ability', subj: 'General Test', count: 3 },
-  { topic: 'Marketing', subj: 'Business Studies', count: 2 },
-  { topic: 'Grammar & usage', subj: 'English', count: 2 },
-]
-
 const TOPPERS = [
   { label: 'You', acc: 64, time: 36 },
   { label: 'Top 10 average', acc: 78, time: 28 },
   { label: 'Topper', acc: 91, time: 22 },
 ]
+const HIGH_WEIGHT = 5 /* exam-weight threshold for urgent (Threat/Opportunity) */
+const CEILING = 90 /* realistic achievable accuracy ceiling */
+const MIN_ATTEMPTS = 15 /* below this → exclude from boost ranking */
 
-const OVERVIEW = {
-  accuracy: 64,
-  percentile: 71.8,
-  avgTime: 36,
-  weakTopics: 5,
-}
-
-/* Status thresholds: ≥75 green · 50–74 amber · <50 red */
 function status(acc) {
   if (acc >= 75) return { color: 'var(--green-500)', label: 'on track' }
   if (acc >= 50) return { color: 'var(--warning-500)', label: 'needs attention' }
   return { color: 'var(--red-500)', label: 'weak' }
 }
+const pct = v => Math.round(v)
+const pct1 = v => v.toFixed(1)
 
-function pct(v) { return Math.round(v) }
-function pct1(v) { return v.toFixed(1) }
-
-export default function Analysis() {
-  const [subject, setSubject] = useState(null)
-  if (subject) return <SubjectDrillDown subject={subject} onBack={() => setSubject(null)} />
-  return <Overview onOpenSubject={setSubject} />
+function selectedSubjects(subject) {
+  if (subject === 'all') return SUBJECTS
+  return SUBJECTS.filter(s => s.name === subject)
 }
 
-/* ═══════════ Overview ═══════════ */
-function Overview({ onOpenSubject }) {
+function allSubSkills(subject) {
+  return selectedSubjects(subject).flatMap(s => s.subSkills.map(sk => ({ ...sk, subject: s.name })))
+}
+
+export default function Analysis() {
+  const [subject, setSubject] = useState('all')
+  const [tab, setTab] = useState('overview')
   return (
     <div className="page">
       <header className="page-head">
@@ -115,63 +117,93 @@ function Overview({ onOpenSubject }) {
         </div>
       </header>
 
-      {/* A. Top metric strip */}
+      {/* A. Subject selector */}
+      <div className="subj-pills">
+        <button className={'subj-pill' + (subject === 'all' ? ' on' : '')} onClick={() => setSubject('all')}>All subjects</button>
+        {SUBJECTS.map(s => (
+          <button key={s.name} className={'subj-pill' + (subject === s.name ? ' on' : '')} onClick={() => setSubject(s.name)}>{s.name}</button>
+        ))}
+      </div>
+
+      {/* B. Tab strip */}
+      <div className="an-tabs">
+        {TABS.map(t => (
+          <button key={t.id} className={tab === t.id ? 'on' : ''} onClick={() => setTab(t.id)}>
+            <t.icon size={14} /> {t.label}
+          </button>
+        ))}
+      </div>
+
+      {tab === 'overview' && <OverviewTab subject={subject} />}
+      {tab === 'swot' && <SwotTab subject={subject} />}
+      {tab === 'subskills' && <SubSkillsTab subject={subject} />}
+      {tab === 'trend' && <TrendTab subject={subject} />}
+      {tab === 'boost' && <BoostTab subject={subject} />}
+    </div>
+  )
+}
+
+/* ═══════════ 1. Overview ═══════════ */
+function OverviewTab({ subject }) {
+  const subs = selectedSubjects(subject)
+  const isAll = subject === 'all'
+  const acc = isAll ? OVERALL.acc : Math.round(subs.reduce((s, x) => s + x.acc, 0) / subs.length)
+  const mistakes = subs.flatMap(s => s.mistakes.map(m => ({ ...m, subj: s.name })))
+  const weakTopics = allSubSkills(subject).filter(sk => sk.acc < 50).length
+
+  return (
+    <>
+      {/* Metric strip */}
       <section className="metric-strip">
         <div className="metric-card">
           <span className="metric-label">Overall accuracy</span>
-          <b className="metric-value" style={{ color: status(OVERVIEW.accuracy).color }}>{pct(OVERVIEW.accuracy)}%</b>
-          <span className="metric-sub">across {MOCKS_TAKEN} mocks</span>
+          <b className="metric-value" style={{ color: status(acc).color }}>{pct(acc)}%</b>
+          <span className="metric-sub">{isAll ? 'across 7 mocks' : subject + ' · last 7 mocks'}</span>
         </div>
         <div className="metric-card">
           <span className="metric-label">Current percentile</span>
-          <b className="metric-value">{pct1(OVERVIEW.percentile)}%ile</b>
+          <b className="metric-value">{pct1(isAll ? OVERALL.percentile : OVERALL.percentile - 8)}%ile</b>
           <span className="metric-sub">target {TARGET_PCT}%ile</span>
         </div>
         <div className="metric-card">
           <span className="metric-label">Avg time per question</span>
-          <b className="metric-value">{OVERVIEW.avgTime}s</b>
+          <b className="metric-value">{isAll ? OVERALL.avgTime : subs[0].avgTime}s</b>
           <span className="metric-sub">toppers avg 22s</span>
         </div>
         <div className="metric-card">
           <span className="metric-label">Weak topics flagged</span>
-          <b className="metric-value" style={{ color: 'var(--red-500)' }}>{OVERVIEW.weakTopics}</b>
+          <b className="metric-value" style={{ color: 'var(--red-500)' }}>{weakTopics}</b>
           <span className="metric-sub">fix these first</span>
         </div>
       </section>
 
-      {/* B. Section-wise accuracy */}
+      {/* Section-wise accuracy */}
       <section className="an-card">
         <h3 className="an-card-title">Section-wise accuracy</h3>
-        <p className="an-card-sub">Tap any subject to open its sub-skill breakdown <span className="tap-hint">→</span></p>
-        {SUBJECTS.map(s => {
+        <p className="an-card-sub">Tap any subject to focus it above, then open Sub-skills <span className="tap-hint">→</span></p>
+        {subs.map(s => {
           const st = status(s.acc)
           return (
-            <button className="subject-row" key={s.name} onClick={() => onOpenSubject(s.name)}>
+            <div className="subject-row static" key={s.name}>
               <span className="status-dot" style={{ background: st.color }} />
               <span className="subject-name">{s.name}</span>
               <span className="subject-bar"><i style={{ width: s.acc + '%', background: st.color }} /></span>
               <b className="subject-acc" style={{ color: st.color }}>{pct(s.acc)}%</b>
               <span className="subject-status" style={{ color: st.color }}>{st.label}</span>
-              <span className="row-chevron"><ChevronRight size={15} /></span>
-            </button>
+              {!isAll && <span className="row-chevron"><ChevronRight size={15} /></span>}
+            </div>
           )
         })}
       </section>
 
-      {/* C. Percentile trend */}
-      <section className="an-card">
-        <h3 className="an-card-title">Percentile trend</h3>
-        <p className="an-card-sub">Last {TREND.length} mocks vs target percentile</p>
-        <TrendChart />
-      </section>
-
       <div className="an-grid">
-        {/* D. Mistake tracker */}
+        {/* Mistake tracker */}
         <section className="an-card">
           <h3 className="an-card-title">Mistake tracker</h3>
           <p className="an-card-sub">Topics where you repeat the same errors</p>
-          {MISTAKES.map(m => (
-            <div className="mistake-row" key={m.topic}>
+          {mistakes.length === 0 && <p className="muted-empty">No repeated mistakes logged for {subject === 'all' ? 'your subjects' : subject}.</p>}
+          {mistakes.map(m => (
+            <div className="mistake-row" key={m.topic + m.subj}>
               <span className="status-dot" style={{ background: 'var(--red-500)' }} />
               <div className="mistake-info">
                 <b>{m.topic}</b>
@@ -182,7 +214,7 @@ function Overview({ onOpenSubject }) {
           ))}
         </section>
 
-        {/* E. You vs toppers */}
+        {/* You vs toppers */}
         <section className="an-card">
           <h3 className="an-card-title">You vs toppers</h3>
           <p className="an-card-sub">How you stack up on the key metrics</p>
@@ -198,33 +230,175 @@ function Overview({ onOpenSubject }) {
           </div>
         </section>
       </div>
-    </div>
+    </>
   )
 }
 
-function TrendChart() {
+/* ═══════════ 2. SWOT ═══════════ */
+function SwotTab({ subject }) {
+  const [level, setLevel] = useState('subtopics')
+  const isAll = subject === 'all'
+
+  const items = level === 'topics'
+    ? selectedSubjects(subject).map(s => ({ name: s.name, acc: s.acc, weight: s.weight, sub: s.subSkills }))
+    : allSubSkills(subject)
+
+  const classify = it => {
+    if (it.acc >= 75) return 'S'
+    if (it.acc < 50) return it.weight >= HIGH_WEIGHT ? 'T' : 'W'
+    return it.weight >= HIGH_WEIGHT ? 'O' : 'W'
+  }
+  const quads = {
+    S: items.filter(i => classify(i) === 'S'),
+    W: items.filter(i => classify(i) === 'W'),
+    T: items.filter(i => classify(i) === 'T'),
+    O: items.filter(i => classify(i) === 'O'),
+  }
+
+  return (
+    <>
+      <div className="swot-toggle">
+        <button className={level === 'topics' ? 'on' : ''} onClick={() => setLevel('topics')}>Topics</button>
+        <button className={level === 'subtopics' ? 'on' : ''} onClick={() => setLevel('subtopics')}>Sub-topics</button>
+      </div>
+      <div className="swot-grid">
+        <SwotQuad title="Strengths" desc="accuracy ≥ 75%" color="var(--green-500)" rows={quads.S} level={level} />
+        <SwotQuad title="Weaknesses" desc="low exam weight — not urgent" color="var(--warning-500)" rows={quads.W} level={level} />
+        <SwotQuad title="Threats" desc="low accuracy × high weight — costing marks" color="var(--red-500)" rows={quads.T} level={level} />
+        <SwotQuad title="Opportunities" desc="quick wins if fixed" color="var(--blue-500)" rows={quads.O} level={level} />
+      </div>
+      <p className="swot-note">
+        {isAll
+          ? 'Classified by accuracy and exam weight together — a 40% topic worth 3% of the exam is a Weakness, not a Threat.'
+          : `Showing ${subject} at the ${level === 'topics' ? 'subject' : 'sub-topic'} level.`}
+      </p>
+    </>
+  )
+}
+
+function SwotQuad({ title, desc, color, rows, level }) {
+  const [open, setOpen] = useState(null)
+  return (
+    <section className="swot-quad" style={{ borderTopColor: color }}>
+      <div className="swot-head"><b style={{ color }}>{title}</b><span>{desc}</span></div>
+      {rows.length === 0 ? (
+        <p className="muted-empty">No topics</p>
+      ) : (
+        rows.map(r => (
+          <div key={r.name}>
+            <div className="swot-row">
+              <span className="status-dot" style={{ background: color }} />
+              <span className="swot-name">{r.name}</span>
+              <span className="swot-meta">weight {r.weight}%</span>
+              <b className="swot-acc">{pct(r.acc)}%</b>
+              {level === 'topics' && r.sub && (
+                <button className="swot-expand" onClick={() => setOpen(open === r.name ? null : r.name)}>
+                  <ChevronRight size={14} style={{ transform: open === r.name ? 'rotate(90deg)' : 'none', transition: 'transform .15s' }} />
+                </button>
+              )}
+            </div>
+            {level === 'topics' && r.sub && open === r.name && (
+              <div className="swot-sub">
+                {r.sub.map(sk => (
+                  <span key={sk.name} className="swot-subchip" style={{ color: status(sk.acc).color }}>{sk.name} · {pct(sk.acc)}%</span>
+                ))}
+              </div>
+            )}
+          </div>
+        ))
+      )}
+    </section>
+  )
+}
+
+/* ═══════════ 3. Sub-skills ═══════════ */
+function SubSkillsTab({ subject }) {
+  const isAll = subject === 'all'
+  const subs = selectedSubjects(subject)
+  const skList = allSubSkills(subject).sort((a, b) => a.acc - b.acc)
+  const weakest = skList[0]
+
+  if (!weakest) return <p className="muted-empty">No sub-skill data yet.</p>
+
+  return (
+    <>
+      {isAll && (
+        <p className="an-card-sub" style={{ margin: '0 0 14px' }}>
+          All subjects combined — pick a subject above to focus its drill-down and focus area.
+        </p>
+      )}
+      <section className="an-card">
+        <h3 className="an-card-title">Sub-skill breakdown</h3>
+        <p className="an-card-sub">Weakest first · aggregated across all mocks</p>
+        {skList.map(sk => {
+          const s = status(sk.acc)
+          return (
+            <div className="subject-row static" key={sk.name + sk.subject}>
+              <span className="status-dot" style={{ background: s.color }} />
+              <span className="subject-name">{sk.name}</span>
+              <span className="subject-subj">{sk.subject}</span>
+              <span className="subject-bar"><i style={{ width: sk.acc + '%', background: s.color }} /></span>
+              <b className="subject-acc" style={{ color: s.color }}>{pct(sk.acc)}%</b>
+              {sk.name === weakest.name && <span className="weakest-tag">weakest</span>}
+            </div>
+          )
+        })}
+      </section>
+
+      {/* Focus area callout */}
+      {!isAll && subs.length === 1 && (
+        <section className="focus-card" style={{ background: status(weakest.acc).color + '14', borderColor: status(weakest.acc).color }}>
+          <div className="focus-ico" style={{ background: status(weakest.acc).color, color: '#fff' }}><Target size={18} /></div>
+          <div className="focus-body">
+            <h3>Focus area — {weakest.name}</h3>
+            <p>
+              Your accuracy here is <b>{pct(weakest.acc)}%</b> — the lowest in {subject}. It's <b className="flat">flat</b> across recent mocks — a targeted fix is needed.
+            </p>
+          </div>
+          <button className="btn btn-primary-sm" onClick={() => alert('Deep-link → practice session, filtered to: ' + subject + ' · ' + weakest.name)}>
+            Start {weakest.name} practice <BookOpen size={14} />
+          </button>
+        </section>
+      )}
+    </>
+  )
+}
+
+/* ═══════════ 4. Trend ═══════════ */
+function TrendTab({ subject }) {
+  const isAll = subject === 'all'
+  const data = isAll ? OVERALL.trend : selectedSubjects(subject)[0].trend
+  const mocks = data.map((v, i) => ({ mock: 'M' + (i + 2), pct: v }))
+  return (
+    <section className="an-card">
+      <h3 className="an-card-title">Percentile trend</h3>
+      <p className="an-card-sub">{isAll ? 'Last 6 mocks vs target percentile' : subject + ' · last 6 mocks vs target percentile'}</p>
+      <TrendChart mocks={mocks} target={TARGET_PCT} />
+    </section>
+  )
+}
+
+function TrendChart({ mocks, target }) {
   const W = 560, H = 170, PAD = 28
-  const min = 40, max = 100
-  const x = i => PAD + (i / (TREND.length - 1)) * (W - PAD * 2)
+  const min = 30, max = 100
+  const x = i => PAD + (i / (mocks.length - 1)) * (W - PAD * 2)
   const y = v => H - PAD - ((v - min) / (max - min)) * (H - PAD * 2)
-  const line = TREND.map((p, i) => `${i === 0 ? 'M' : 'L'}${x(i).toFixed(1)},${y(p.pct).toFixed(1)}`).join(' ')
-  const targetY = y(TARGET_PCT)
+  const line = mocks.map((p, i) => `${i === 0 ? 'M' : 'L'}${x(i).toFixed(1)},${y(p.pct).toFixed(1)}`).join(' ')
+  const targetY = y(target)
   return (
     <div className="trend-wrap">
       <svg viewBox={`0 0 ${W} ${H}`} className="trend-svg">
-        {[50, 60, 70, 80, 90, 100].map(g => (
+        {[40, 50, 60, 70, 80, 90, 100].map(g => (
           <line key={g} x1={PAD} x2={W - PAD} y1={y(g)} y2={y(g)} stroke="#EEF1F6" strokeWidth="1" />
         ))}
-        {/* dashed target line */}
         <line x1={PAD} x2={W - PAD} y1={targetY} y2={targetY} stroke="#F5A623" strokeWidth="1.5" strokeDasharray="6 5" />
-        <text x={W - PAD} y={targetY - 6} textAnchor="end" fontSize="10" fontWeight="700" fill="#C77700">target {TARGET_PCT}%ile</text>
-        {/* area + line */}
-        <path d={`${line} L${x(TREND.length - 1).toFixed(1)},${H - PAD} L${x(0).toFixed(1)},${H - PAD} Z`} fill="url(#trendArea)" opacity="0.5" />
+        <text x={W - PAD} y={targetY - 6} textAnchor="end" fontSize="10" fontWeight="700" fill="#C77700">target {target}%ile</text>
+        <path d={`${line} L${x(mocks.length - 1).toFixed(1)},${H - PAD} L${x(0).toFixed(1)},${H - PAD} Z`} fill="url(#trendArea)" opacity="0.5" />
         <path d={line} fill="none" stroke="#00C97F" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-        {TREND.map((p, i) => (
+        {mocks.map((p, i) => (
           <g key={p.mock}>
             <circle cx={x(i)} cy={y(p.pct)} r="3.5" fill="#00C97F" />
-            <text x={x(i)} y={y(p.pct) - 8} textAnchor="middle" fontSize="9.5" fontWeight="600" fill="#5B667A">{p.pct}%</text>
+            <text x={x(i)} y={y(p.pct) - 8} textAnchor="middle" fontSize="9.5" fontWeight="600" fill="#5B667A">{pct1(p.pct)}%</text>
             <text x={x(i)} y={H - 10} textAnchor="middle" fontSize="9.5" fill="#7C889B">{p.mock}</text>
           </g>
         ))}
@@ -239,74 +413,56 @@ function TrendChart() {
   )
 }
 
-/* ═══════════ Subject drill-down ═══════════ */
-function SubjectDrillDown({ subject, onBack }) {
-  const subj = SUBJECTS.find(s => s.name === subject)
-  const sorted = [...subj.subSkills].sort((a, b) => a.acc - b.acc)
-  const weakest = sorted[0]
-  const st = status(subj.acc)
-  const prevWeak = weakest.acc + 4 /* trend: improving if last mocks better */
+/* ═══════════ 5. Boost plan (unique) ═══════════ */
+function BoostTab({ subject }) {
+  const isAll = subject === 'all'
+  const skills = allSubSkills(subject)
 
-  /* low-data state: fewer than 3 mocks → no reliable breakdown */
-  if (MOCKS_TAKEN < 3) {
-    return (
-      <div className="page">
-        <header className="page-head">
-          <div>
-            <h1>Analysis · {subj.name}</h1>
-          </div>
-        </header>
-        <div className="an-card">
-          <p className="low-data">Attempt more mocks to unlock a reliable sub-skill breakdown — {MOCKS_TAKEN} mock logged so far.</p>
-        </div>
-      </div>
-    )
-  }
+  /* score_gain_per_hour = (exam_weight% × improvement_gap) / estimated_hours_to_fix */
+  const ranked = skills
+    .filter(sk => sk.attempts >= MIN_ATTEMPTS)
+    .map(sk => ({
+      ...sk,
+      gain: (sk.weight * (CEILING - sk.acc)) / (sk.hours * 10),
+    }))
+    .sort((a, b) => b.gain - a.gain)
+
+  const lowData = skills.length - ranked.length
+  const top = ranked[0]
 
   return (
-    <div className="page">
-      <header className="page-head">
-        <div>
-          <button className="btn btn-outline-sm" onClick={onBack} style={{ marginBottom: 14 }}><ArrowLeft size={14} /> All subjects</button>
-          <h1>{subj.name}</h1>
-          <p>Average of last {MOCKS_TAKEN} mocks · {pct(subj.acc)}% accuracy · {subj.attempts} questions attempted</p>
-        </div>
-      </header>
+    <>
+      <section className="boost-banner">
+        <Zap size={18} />
+        <p>
+          <b>Ranks topics by score gain per hour</b> — not just readiness. Formula: (exam weight × improvement gap) ÷ estimated hours to fix.
+          <span className="boost-tag">unique to CUET Pro</span>
+        </p>
+      </section>
 
-      {/* Sub-skill breakdown */}
       <section className="an-card">
-        <h3 className="an-card-title">Sub-skill breakdown</h3>
-        <p className="an-card-sub">Weakest first · aggregated across all mocks</p>
-        {sorted.map(sk => {
-          const s = status(sk.acc)
-          return (
-            <div className="subject-row static" key={sk.name}>
-              <span className="status-dot" style={{ background: s.color }} />
-              <span className="subject-name">{sk.name}</span>
-              <span className="subject-bar"><i style={{ width: sk.acc + '%', background: s.color }} /></span>
-              <b className="subject-acc" style={{ color: s.color }}>{pct(sk.acc)}%</b>
-              {sk.name === weakest.name && <span className="weakest-tag">weakest</span>}
-            </div>
-          )
-        })}
+        <h3 className="an-card-title">Boost plan — one hour, best return</h3>
+        <p className="an-card-sub">{isAll ? 'All subjects' : subject} · sorted by estimated score gain per study hour</p>
+        {ranked.length === 0 && <p className="muted-empty">No topics can be ranked yet — attempt more questions first.</p>}
+        {ranked.map((sk, i) => (
+          <button className="boost-row" key={sk.name + sk.subject} onClick={() => alert('Deep-link → boost session: ' + sk.name)}>
+            <span className="boost-rank">{i + 1}</span>
+            <span className="status-dot" style={{ background: status(sk.acc).color }} />
+            <span className="boost-name">{sk.name}<small>{sk.subject} · weight {sk.weight}% · accuracy {pct(sk.acc)}%</small></span>
+            <b className="boost-gain">+{pct1(sk.gain)}% score/hr</b>
+          </button>
+        ))}
       </section>
 
-      {/* Focus area callout */}
-      <section className="focus-card" style={{ background: status(weakest.acc).color + '14', borderColor: status(weakest.acc).color }}>
-        <div className="focus-ico" style={{ background: status(weakest.acc).color, color: '#fff' }}><Target size={18} /></div>
-        <div className="focus-body">
-          <h3>Focus area — {weakest.name}</h3>
-          <p>
-            Your accuracy here is <b>{pct(weakest.acc)}%</b> — the lowest in {subj.name}.
-            {prevWeak >= weakest.acc
-              ? <> It's <b className="imp">improving</b> across recent mocks — keep going.</>
-              : <> It's <b className="flat">flat</b> across recent mocks — a targeted fix is needed.</>}
-          </p>
-        </div>
-        <button className="btn btn-primary-sm" onClick={() => alert('Deep-link → practice session, filtered to: ' + subj.name + ' · ' + weakest.name)}>
-          Start {weakest.name} practice <BookOpen size={14} />
+      {lowData > 0 && (
+        <p className="boost-note">{lowData} topic{lowData > 1 ? 's' : ''} need more attempts before they can be ranked.</p>
+      )}
+
+      {top && (
+        <button className="btn btn-primary boost-cta" onClick={() => alert('Deep-link → boost session: ' + top.name)}>
+          Start top boost session · {top.name} <Zap size={15} />
         </button>
-      </section>
-    </div>
+      )}
+    </>
   )
 }
