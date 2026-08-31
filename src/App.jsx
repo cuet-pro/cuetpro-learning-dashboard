@@ -1,9 +1,10 @@
 import { useState } from 'react'
-import { LayoutDashboard, GraduationCap, BarChart3, Sparkles, Compass, Settings, Bell } from 'lucide-react'
+import { LayoutDashboard, GraduationCap, BarChart3, Sparkles, Compass, Settings, Bell, Coffee } from 'lucide-react'
 import Dashboard from './pages/Dashboard.jsx'
 import StudyKit from './pages/StudyKit.jsx'
 import Analysis from './pages/Analysis.jsx'
 import SmartRevision from './pages/SmartRevision.jsx'
+import ChillZone from './pages/ChillZone.jsx'
 import Explorer from './pages/Explorer.jsx'
 import './tokens.css'
 import './shell.css'
@@ -13,6 +14,7 @@ const NAV = [
   { id: 'studykit', label: 'Study Kit', icon: GraduationCap },
   { id: 'analysis', label: 'Analysis', icon: BarChart3 },
   { id: 'revision', label: 'Smart Revision', icon: Sparkles },
+  { id: 'chill', label: 'Chill Zone', icon: Coffee },
   { id: 'explorer', label: 'DU Admissions Explorer', icon: Compass },
   { id: 'profile', label: 'Profile & Settings', icon: Settings },
 ]
@@ -27,6 +29,7 @@ export default function App() {
         {page === 'studykit' && <StudyKit />}
         {page === 'analysis' && <Analysis />}
         {page === 'revision' && <SmartRevision />}
+        {page === 'chill' && <ChillZone />}
         {page === 'explorer' && <Explorer />}
         {page === 'profile' && <ComingSoon title="Profile & Settings" desc="Everything here personalizes your dashboard, predictor & manifestation board." onNavigate={setPage} />}
       </main>
