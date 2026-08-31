@@ -1,147 +1,193 @@
 import { useState } from 'react'
-import { Zap, Layers, FlaskConical, RefreshCcw, ArrowRight, CheckCircle2, XCircle } from 'lucide-react'
+import { CalendarDays, PlayCircle, Flame, CheckCircle2, Layers, FileText, ChevronRight, ArrowLeft, RotateCcw, Check, X } from 'lucide-react'
+import { defaultDeck, paceBadge, todayISO, addDaysISO, daysUntil, review, isDue, generateQueue, cheatSheets } from '../lib/spacedRepetition'
+import { boostRanking } from '../lib/analysisData'
 import './revision.css'
 
-const DAILY_QS = [
-  { q: 'Which is the RBI\'s main monetary policy tool?', options: ['Repo Rate', 'Fiscal Deficit', 'GST', 'Import Duty'], a: 0, subj: 'Economics' },
-  { q: '"Elucidate" means:', options: ['Confuse', 'Explain clearly', 'Hide', 'Repeat'], a: 1, subj: 'English' },
-  { q: 'Current Ratio = ?', options: ['CA/CL', 'CL/CA', 'Net Profit/Sales', 'Debt/Equity'], a: 0, subj: 'Accountancy' },
-  { q: 'At the break-even point:', options: ['Loss', 'No profit no loss', 'Max profit', 'Bankrupt'], a: 1, subj: 'Business Studies' },
-  { q: 'The first Five Year Plan started in:', options: ['1947', '1950', '1951', '1956'], a: 2, subj: 'General Test' },
-]
-
-const CARDS = [
-  { front: 'Repo Rate', back: 'The rate at which RBI lends short-term funds to commercial banks' },
-  { front: 'Liquidity', back: 'How quickly an asset can be converted into cash' },
-  { front: 'Opportunity Cost', back: 'The value of the next best alternative you gave up' },
-  { front: 'Monetary Policy', back: 'RBI actions that control money supply and interest rates' },
-  { front: 'Fiscal Deficit', back: 'Total expenditure − total receipts, excluding borrowings' },
-  { front: 'Working Capital', back: 'Current Assets − Current Liabilities' },
-]
-
-const FORMULAS = [
-  { name: 'Gross Profit Ratio', f: 'Gross Profit / Net Sales × 100' },
-  { name: 'Current Ratio', f: 'Current Assets / Current Liabilities' },
-  { name: 'Debt-Equity Ratio', f: 'Total Debt / Shareholder Equity' },
-  { name: 'Break-Even Point', f: 'Fixed Costs / (Price − Variable Cost)' },
+const MISTAKES = [
+  { topic: 'Money & banking', subj: 'Economics', count: 4 },
+  { topic: 'Quantitative ability', subj: 'General Test', count: 3 },
+  { topic: 'Marketing', subj: 'Business Studies', count: 2 },
+  { topic: 'Grammar & usage', subj: 'English', count: 2 },
 ]
 
 export default function SmartRevision() {
+  const [examDate, setExamDate] = useState(() => localStorage.getItem('cp_exam_date') || '2027-05-15')
+  const [deck, setDeck] = useState(() => {
+    try { const d = localStorage.getItem('cp_deck'); return d ? JSON.parse(d) : defaultDeck() } catch { return defaultDeck() }
+  })
+  const [sessionIdx, setSessionIdx] = useState(null) /* null = not in session */
+  const [session, setSession] = useState([])
+  const [flip, setFlip] = useState(false)
+  const [correctCount, setCorrectCount] = useState(0)
+  const [done, setDone] = useState(null) /* { correct, total } */
+
+  const saveDeck = d => { setDeck(d); localStorage.setItem('cp_deck', JSON.stringify(d)) }
+  const setExamAndSave = v => { setExamDate(v); localStorage.setItem('cp_exam_date', v) }
+
+  const daysLeft = daysUntil(examDate)
+  const pace = paceBadge(daysLeft)
+  const boost = boostRanking('all')
+  const queue = generateQueue({ deck, boost, daysLeft })
+  const dueCount = queue.filter(c => c.type !== 'topic').length
+  const weakCount = queue.filter(c => c.type === 'topic').length
+  const masteredCount = deck.filter(c => c.state === 'mastered').length
+  const dueToday = deck.filter(c => isDue(c)).length
+  const dueWeek = deck.filter(c => c.next && c.next <= addDaysISO(7) && c.state !== 'mastered').length
+  const sheets = cheatSheets(MISTAKES)
+
+  /* cheat sheets float to top in final sprint */
+  const showSheetsTop = daysLeft <= 7
+
+  const startSession = () => {
+    setSession(queue)
+    setSessionIdx(0)
+    setFlip(false)
+    setCorrectCount(0)
+    setDone(null)
+  }
+  const answer = correct => {
+    const item = session[sessionIdx]
+    if (correct) setCorrectCount(c => c + 1)
+    if (item.type !== 'topic') {
+      const updated = review(item, correct)
+      const d = deck.map(c => c.id === updated.id ? updated : c)
+      saveDeck(d)
+    }
+    setFlip(false)
+    if (sessionIdx + 1 >= session.length) {
+      setDone({ correct: correctCount + (correct ? 1 : 0), total: session.length })
+      setSessionIdx(null)
+    } else {
+      setSessionIdx(sessionIdx + 1)
+    }
+  }
+
+  const sheetBlock = (
+    <section className="rv-sheets">
+      <h3 className="rv-section-title">Cheat sheets <span className="rv-hint">last-mile review — dense, no explanations</span></h3>
+      {sheets.map(s => (
+        <div className="rv-sheet" key={s.subject}>
+          <span className="rv-sheet-ico"><FileText size={16} /></span>
+          <div className="rv-sheet-info">
+            <b>{s.subject}</b>
+            <span>{s.items}</span>
+          </div>
+          <span className="rv-sheet-time">{s.lastUpdated}</span>
+          <button className="btn btn-outline-sm" onClick={() => alert('Deep-link → cheat sheet: ' + s.subject)}>View</button>
+        </div>
+      ))}
+    </section>
+  )
+
+  /* session player */
+  if (sessionIdx !== null && session.length) {
+    const item = session[sessionIdx]
+    return (
+      <div className="page">
+        <header className="page-head">
+          <div>
+            <button className="btn btn-outline-sm" onClick={() => { setSessionIdx(null); setSession([]) }} style={{ marginBottom: 14 }}><ArrowLeft size={14} /> Exit revision</button>
+            <h1>Smart Revision</h1>
+            <p>Mixed session — recall + weak topics · {sessionIdx + 1}/{session.length}</p>
+          </div>
+        </header>
+        <div className="rv-progress"><i style={{ width: ((sessionIdx) / session.length * 100) + '%' }} /></div>
+        <div className={`rv-card-flash ${flip ? 'flip' : ''}`} onClick={() => setFlip(f => !f)}>
+          <div className="rv-fc-inner">
+            <div className="rv-fc-face rv-fc-front">
+              <span className="rv-fc-subj">{item.subj}{item.type === 'topic' ? ' · weak topic' : ''}</span>
+              <b>{item.front}</b>
+              <span className="rv-fc-tip">tap to reveal</span>
+            </div>
+            <div className="rv-fc-face rv-fc-back">
+              <p>{item.back}</p>
+              <span className="rv-fc-tip">tap to flip back</span>
+            </div>
+          </div>
+        </div>
+        {flip && (
+          <div className="rv-answer-row">
+            <button className="btn rv-no" onClick={() => answer(false)}><X size={16} /> Not yet</button>
+            <button className="btn btn-primary-sm rv-yes" onClick={() => answer(true)}><Check size={16} /> Got it</button>
+          </div>
+        )}
+        {!flip && <p className="rv-flip-hint">Flip the card, recall it, then rate yourself</p>}
+      </div>
+    )
+  }
+
   return (
     <div className="page">
       <header className="page-head">
         <div>
           <h1>Smart Revision</h1>
-          <p>Replaces Chill Zone — light, low-stakes, but delivers value every day. Community & Music removed; this is what we kept.</p>
+          <p>Keep what you've studied fresh — spaced repetition that intensifies as the exam nears.</p>
         </div>
       </header>
 
-      <div className="rev-grid">
-        <DailyQuiz />
-        <FlashcardSprint />
-        <FormulaDrill />
-        <MistakeReplay />
-      </div>
-    </div>
-  )
-}
+      {/* A. Exam countdown header */}
+      <section className="rv-countdown">
+        <div className="rv-count-ico"><CalendarDays size={22} /></div>
+        <div className="rv-count-info">
+          <b>{daysLeft} days left</b>
+          <span>CUET 2027 · <input type="date" value={examDate} onChange={e => setExamAndSave(e.target.value)} aria-label="Exam date" /></span>
+        </div>
+        <span className="rv-pace" style={{ background: pace.bg, color: pace.color }}>{pace.label}</span>
+      </section>
 
-function DailyQuiz() {
-  const [idx, setIdx] = useState(0)
-  const [pick, setPick] = useState(null)
-  const [score, setScore] = useState(0)
-  const [done, setDone] = useState(false)
-  const q = DAILY_QS[idx]
-  const choose = (i) => {
-    if (pick !== null) return
-    setPick(i)
-    if (i === q.a) setScore(s => s + 1)
-    setTimeout(() => {
-      if (idx + 1 < DAILY_QS.length) { setIdx(idx + 1); setPick(null) }
-      else setDone(true)
-    }, 800)
-  }
-  return (
-    <section className="rev-card">
-      <div className="rev-head"><span className="rev-ico g"><Zap size={16} /></span><div><h3>Daily Quiz</h3><span className="rev-sub">5 Qs · rotating subjects</span></div><span className="rev-pts">+20 pts</span></div>
-      {!done ? (
-        <>
-          <p className="rev-q">{idx + 1}. {q.q}</p>
-          <div className="rev-opts">
-            {q.options.map((o, i) => {
-              let cls = 'rev-opt'
-              if (pick !== null) { if (i === q.a) cls += ' c'; else if (i === pick) cls += ' w' }
-              return <button key={i} className={cls} onClick={() => choose(i)} disabled={pick !== null}>{o}</button>
-            })}
+      {/* B. Today's revision queue */}
+      {done && (
+        <section className="rv-done">
+          <CheckCircle2 size={26} style={{ color: 'var(--green-500)' }} />
+          <div>
+            <b>Revision complete — {done.correct}/{done.total} recalled</b>
+            <span>Recalled items now review later; missed items are back due tomorrow.</span>
           </div>
-          <div className="rev-feedback">{pick !== null ? (pick === q.a ? <span className="ok">✓ Correct! · {q.subj}</span> : <span className="no">Wrong — correct answer is highlighted green</span>) : `Q ${idx + 1}/5 · ${q.subj}`}</div>
-        </>
-      ) : (
-        <div className="rev-done"><b>{score}/5 correct!</b><p>New set tomorrow — don't break the streak 🔥</p></div>
+          <button className="btn btn-outline-sm" onClick={() => setDone(null)}>Done</button>
+        </section>
       )}
-    </section>
-  )
-}
-
-function FlashcardSprint() {
-  const [idx, setIdx] = useState(0)
-  const [flip, setFlip] = useState(false)
-  const [learned, setLearned] = useState([])
-  const c = CARDS[idx]
-  const next = (ok) => {
-    if (ok) setLearned(l => [...l, c.front])
-    setFlip(false)
-    setIdx(i => (i + 1) % CARDS.length)
-  }
-  return (
-    <section className="rev-card">
-      <div className="rev-head"><span className="rev-ico b"><Layers size={16} /></span><div><h3>Flashcard Sprint</h3><span className="rev-sub">Spaced repetition · {learned.length}/{CARDS.length} learned</span></div></div>
-      <div className={`flashcard ${flip ? 'flip' : ''}`} onClick={() => setFlip(f => !f)}>
-        <div className="fc-inner">
-          <div className="fc-face fc-front"><b>{c.front}</b><span className="fc-hint">tap to flip</span></div>
-          <div className="fc-face fc-back"><p>{c.back}</p><span className="fc-hint">tap to flip back</span></div>
+      <section className="rv-queue">
+        <div className="rv-queue-head">
+          <h3>Today's revision queue</h3>
+          <span className="rv-queue-counts">
+            <b style={{ color: 'var(--green-600)' }}>{dueCount} due for recall</b>
+            <span>·</span>
+            <b style={{ color: 'var(--warning-600)' }}>{weakCount} weak topics</b>
+          </span>
         </div>
-      </div>
-      <div className="fc-actions">
-        <button className="btn btn-outline btn-sm" onClick={() => next(false)}><XCircle size={13} /> Again</button>
-        <button className="btn btn-primary btn-sm" onClick={() => next(true)}><CheckCircle2 size={13} /> Got it</button>
-      </div>
-    </section>
-  )
-}
-
-function FormulaDrill() {
-  const [show, setShow] = useState(null)
-  return (
-    <section className="rev-card">
-      <div className="rev-head"><span className="rev-ico p"><FlaskConical size={16} /></span><div><h3>Formula Drill</h3><span className="rev-sub">2-min quick recall</span></div></div>
-      <div className="formula-list">
-        {FORMULAS.map((f, i) => (
-          <div className="formula-row" key={f.name} onClick={() => setShow(show === i ? null : i)}>
-            <b>{f.name}</b>
-            <span className="formula-ans">{show === i ? f.f : '—'}</span>
-          </div>
-        ))}
-      </div>
-      <p className="rev-hint">Tap a formula to reveal — then hide it again and recall it out loud.</p>
-    </section>
-  )
-}
-
-function MistakeReplay() {
-  return (
-    <section className="rev-card">
-      <div className="rev-head"><span className="rev-ico r"><RefreshCcw size={16} /></span><div><h3>Mistake Replay</h3><span className="rev-sub">From your analysis — 3 pending</span></div></div>
-      {[
-        { t: 'Money & Banking', d: 'Repo rate question — wrong 2 times' },
-        { t: 'Production & Costs', d: 'AFC curve — wrong 3 times' },
-        { t: 'Government Budget', d: 'Capital receipts — wrong 1 time' },
-      ].map(m => (
-        <div className="mistake-row" key={m.t}>
-          <div><b>{m.t}</b><span>{m.d}</span></div>
-          <button className="btn btn-primary btn-sm">Replay <ArrowRight size={13} /></button>
+        <p className="rv-queue-desc">
+          {daysLeft <= 7
+            ? 'Final sprint — high-exam-weight and weak topics first. Cheat sheets on top for last-mile review.'
+            : daysLeft <= 21
+              ? 'Ramping up — more weak and high-exam-weight topics mixed into your recall set.'
+              : 'Normal pace — mostly spaced-repetition recall, with a light touch of weak topics.'}
+        </p>
+        <div className="rv-queue-preview">
+          {queue.slice(0, 6).map((c, i) => (
+            <span key={c.id} className={'rv-qchip ' + (c.type === 'topic' ? 'topic' : '')}>{c.type === 'topic' ? c.front : c.front}</span>
+          ))}
+          {queue.length > 6 && <span className="rv-qchip more">+{queue.length - 6} more</span>}
         </div>
-      ))}
-    </section>
+        <button className="btn btn-primary rv-start" onClick={startSession}><PlayCircle size={17} /> Start revision · {queue.length} cards</button>
+      </section>
+
+      {/* C. Retention status */}
+      <section className="rv-stats">
+        <div className="rv-stat"><b>{dueToday}</b><span>Due today</span></div>
+        <div className="rv-stat"><b>{dueWeek}</b><span>Due this week</span></div>
+        <div className="rv-stat"><b style={{ color: 'var(--green-600)' }}>{masteredCount}</b><span>Mastered</span></div>
+      </section>
+
+      {/* D. Cheat sheets — top in final sprint, bottom otherwise */}
+      {showSheetsTop && sheetBlock}
+
+      <section className="rv-session-note">
+        <Flame size={15} />
+        <span>Each correct recall pushes the next review further out (1 → 3 → 7 → 14 → 30 days). A miss resets it to tomorrow.</span>
+      </section>
+
+      {!showSheetsTop && sheetBlock}
+    </div>
   )
 }
