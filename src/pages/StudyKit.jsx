@@ -1,9 +1,8 @@
 import { useState } from 'react'
 import { NotebookText, Layers, Map as MapIcon, Dumbbell, Timer, FileQuestion, Archive, ArrowLeft, BookOpen, PlayCircle, ListChecks, Video, Sigma, Zap, ChevronRight, Flame, Target, CheckSquare } from 'lucide-react'
-import { boostRanking, weakTopicNames, STREAMS } from '../lib/analysisData'
+import { boostRanking, weakTopicNames } from '../lib/analysisData'
+import { useProfile, STREAMS } from '../lib/profile'
 import './studykit.css'
-
-const STREAM_NAMES = ['Commerce', 'Humanities', 'Science']
 
 const NOTES_BY_STREAM = {
   Commerce: [
@@ -38,8 +37,9 @@ const TESTING_TOOLS = [
   { id: 'pyqs', icon: Archive, title: 'Previous Year Questions', desc: 'Shift-wise & topic-wise PYQ bank, filterable.' },
 ]
 
-export default function StudyKit() {
-  const [stream, setStream] = useState(() => localStorage.getItem('cp_stream') || 'Commerce')
+export default function StudyKit({ onNavigate }) {
+  const [profile] = useProfile()
+  const stream = profile.stream
   const [open, setOpen] = useState(null)
   const [weakOnly, setWeakOnly] = useState(false)
   const [examMode, setExamMode] = useState(false)
@@ -47,7 +47,6 @@ export default function StudyKit() {
     try { return JSON.parse(localStorage.getItem('cp_last') || 'null') } catch { return null }
   })
 
-  const setStreamAndSave = s => { setStream(s); localStorage.setItem('cp_stream', s) }
   const record = item => {
     const v = { ...item, ts: Date.now() }
     setLastActivity(v)
@@ -73,12 +72,11 @@ export default function StudyKit() {
         </div>
       </header>
 
-      {/* A. Stream selector */}
+      {/* A. Stream — single source of truth, set in Profile */}
       <div className="sk-stream">
-        <label htmlFor="sk-stream-select">Your stream</label>
-        <select id="sk-stream-select" className="sk-select" value={stream} onChange={e => setStreamAndSave(e.target.value)}>
-          {STREAM_NAMES.map(s => <option key={s} value={s}>{s}</option>)}
-        </select>
+        <label>Your stream</label>
+        <span className="sk-stream-value">{stream}</span>
+        <button className="btn btn-outline-sm" onClick={() => onNavigate('profile')}>Change in Profile</button>
         <span className="sk-stream-subjects">{STREAMS[stream].join(' · ')}</span>
       </div>
 

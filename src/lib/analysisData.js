@@ -69,7 +69,7 @@ export const STREAMS = {
 const STREAM_SUBJECTS = {
   Science: [
     {
-      name: 'Physics', acc: 61, weight: 15,
+      name: 'Physics', acc: 61, weight: 15, mistakes: [],
       subSkills: [
         { name: 'Mechanics', acc: 62, weight: 4, hours: 6, attempts: 80 },
         { name: 'Electrostatics', acc: 58, weight: 4, hours: 5, attempts: 70 },
@@ -78,7 +78,7 @@ const STREAM_SUBJECTS = {
       ],
     },
     {
-      name: 'Chemistry', acc: 58, weight: 15,
+      name: 'Chemistry', acc: 58, weight: 15, mistakes: [],
       subSkills: [
         { name: 'Atomic structure', acc: 68, weight: 3.5, hours: 5, attempts: 75 },
         { name: 'Organic chemistry', acc: 55, weight: 4, hours: 7, attempts: 80 },
@@ -87,7 +87,7 @@ const STREAM_SUBJECTS = {
       ],
     },
     {
-      name: 'Biology', acc: 63, weight: 15,
+      name: 'Biology', acc: 63, weight: 15, mistakes: [],
       subSkills: [
         { name: 'Cell biology', acc: 72, weight: 4, hours: 4, attempts: 85 },
         { name: 'Genetics', acc: 60, weight: 4, hours: 6, attempts: 70 },
@@ -96,7 +96,7 @@ const STREAM_SUBJECTS = {
       ],
     },
     {
-      name: 'Mathematics', acc: 64, weight: 15,
+      name: 'Mathematics', acc: 64, weight: 15, mistakes: [],
       subSkills: [
         { name: 'Algebra', acc: 66, weight: 4, hours: 6, attempts: 85 },
         { name: 'Calculus', acc: 58, weight: 4, hours: 7, attempts: 80 },
@@ -107,7 +107,7 @@ const STREAM_SUBJECTS = {
   ],
   Humanities: [
     {
-      name: 'History', acc: 60, weight: 20,
+      name: 'History', acc: 60, weight: 20, mistakes: [],
       subSkills: [
         { name: 'Ancient India', acc: 65, weight: 7, hours: 5, attempts: 70 },
         { name: 'Medieval India', acc: 60, weight: 6, hours: 6, attempts: 65 },
@@ -115,21 +115,21 @@ const STREAM_SUBJECTS = {
       ],
     },
     {
-      name: 'Political Science', acc: 66, weight: 20,
+      name: 'Political Science', acc: 66, weight: 20, mistakes: [],
       subSkills: [
         { name: 'Indian constitution', acc: 70, weight: 10, hours: 5, attempts: 85 },
         { name: 'Political theory', acc: 62, weight: 10, hours: 6, attempts: 70 },
       ],
     },
     {
-      name: 'Geography', acc: 64, weight: 20,
+      name: 'Geography', acc: 64, weight: 20, mistakes: [],
       subSkills: [
         { name: 'Physical geography', acc: 60, weight: 10, hours: 6, attempts: 75 },
         { name: 'Human geography', acc: 68, weight: 10, hours: 5, attempts: 65 },
       ],
     },
     {
-      name: 'Psychology', acc: 61, weight: 20,
+      name: 'Psychology', acc: 61, weight: 20, mistakes: [],
       subSkills: [
         { name: 'Psychological foundations', acc: 64, weight: 10, hours: 5, attempts: 60 },
         { name: 'Social psychology', acc: 58, weight: 10, hours: 6, attempts: 55 },
@@ -147,14 +147,20 @@ export function status(acc) {
   return { color: 'var(--red-500)', label: 'weak' }
 }
 
-/* subjects for a scope: 'all' | stream name | subject name */
+/* subjects for a scope: 'all' | stream name | subject name (base or stream) */
 export function subjectsFor(scope = 'all') {
   if (scope === 'all' || scope === 'Commerce') return SUBJECTS
   if (scope === 'Science' || scope === 'Humanities') {
     const common = SUBJECTS.filter(s => s.name === 'English' || s.name === 'General Test')
     return [...common, ...STREAM_SUBJECTS[scope]]
   }
-  return SUBJECTS.filter(s => s.name === scope)
+  const fromBase = SUBJECTS.filter(s => s.name === scope)
+  if (fromBase.length) return fromBase
+  for (const list of Object.values(STREAM_SUBJECTS)) {
+    const m = list.filter(s => s.name === scope)
+    if (m.length) return m
+  }
+  return []
 }
 
 export function allSubSkills(scope = 'all') {

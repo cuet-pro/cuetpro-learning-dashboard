@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Flame, Archive, TrendingUp, Trophy, ArrowRight, BookOpen, Zap, CheckCircle2, XCircle, Sparkles } from 'lucide-react'
+import { useProfile, dreamCollegeShort } from '../lib/profile'
 import './dashboard.css'
 
 const SUBJECTS = [
@@ -30,6 +31,9 @@ function sc(s) {
 }
 
 export default function Dashboard({ onNavigate }) {
+  const [profile] = useProfile()
+  const college = profile.dreamCollege
+  const collegeShort = dreamCollegeShort(college)
   const [wordPick, setWordPick] = useState(null)
   const [quizIdx, setQuizIdx] = useState(0)
   const [quizPick, setQuizPick] = useState(null)
@@ -179,12 +183,12 @@ export default function Dashboard({ onNavigate }) {
             <div className="m-flow">
               <div className="m-side"><span className="m-lbl">FROM</span><b>You</b></div>
               <ArrowRight size={18} />
-              <div className="m-side right"><span className="m-lbl to">TO</span><b>SRCC</b></div>
+              <div className="m-side right"><span className="m-lbl to">TO</span><b>{collegeShort}</b></div>
             </div>
             <div className="m-photo">
-              <img src="/images/target-college.jpg" alt="Target college — SRCC" />
+              <img src="/images/target-college.jpg" alt={'Target college — ' + collegeShort} />
             </div>
-            <div className="m-src"><b>Shri Ram College of Commerce (SRCC)</b><span>North Campus · Est. 1926 · sample data</span></div>
+            <div className="m-src"><b>{college}</b><span>Dream college · set in Profile</span></div>
             <div className="m-cols">
               <div><span className="m-label">DID YOU KNOW</span><p>One of DU's oldest commerce colleges — routinely posts the highest CUET cutoffs for B.Com (Hons) in the country.</p></div>
               <div><span className="m-label">IN-FLIGHT QUOTE</span><p>"Your Class 12 board score is one input. Your consistency is the bigger one."</p></div>

@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Home, Grid3x3, ListChecks, TrendingUp, Zap, ChevronRight, Target, AlertTriangle, BookOpen, Info } from 'lucide-react'
-import { SUBJECTS, status, allSubSkills, boostRanking, boostReason } from '../lib/analysisData'
+import { status, allSubSkills, boostRanking, boostReason, subjectsFor } from '../lib/analysisData'
+import { useProfile } from '../lib/profile'
 import './analysis.css'
 
 /* ═══════════ Shared data + boost logic lives in src/lib/analysisData.js ═══════════ */
@@ -9,7 +10,6 @@ const OVERALL = {
   acc: 64, percentile: 71.8, avgTime: 36, weakTopics: 5,
   trend: [55.2, 58.4, 63.1, 60.8, 67.5, 71.8],
 }
-const TARGET_PCT = 85
 const TOPPERS = [
   { label: 'You', acc: 64, time: 36 },
   { label: 'Top 10 average', acc: 78, time: 28 },
@@ -28,14 +28,19 @@ const TABS = [
   { id: 'boost', label: 'Boost plan', icon: Zap },
 ]
 
-function selectedSubjects(subject) {
-  if (subject === 'all') return SUBJECTS
-  return SUBJECTS.filter(s => s.name === subject)
+function selectedSubjects(scope) {
+  return subjectsFor(scope)
 }
 
 export default function Analysis() {
+  const [profile] = useProfile()
   const [subject, setSubject] = useState('all')
   const [tab, setTab] = useState('overview')
+
+  /* single source of truth: scope = selected pill, falling back to profile stream for 'all' */
+  const scope = subject === 'all' ? profile.stream : subject
+  const pills = subjectsFor(profile.stream)
+
   return (
     <div className="page">
       <header className="page-head">
@@ -45,10 +50,10 @@ export default function Analysis() {
         </div>
       </header>
 
-      {/* A. Subject selector */}
+      {/* A. Subject selector — stream comes from Profile */}
       <div className="subj-pills">
         <button className={'subj-pill' + (subject === 'all' ? ' on' : '')} onClick={() => setSubject('all')}>All subjects</button>
-        {SUBJECTS.map(s => (
+        {pills.map(s => (
           <button key={s.name} className={'subj-pill' + (subject === s.name ? ' on' : '')} onClick={() => setSubject(s.name)}>{s.name}</button>
         ))}
       </div>
@@ -62,21 +67,21 @@ export default function Analysis() {
         ))}
       </div>
 
-      {tab === 'overview' && <OverviewTab subject={subject} />}
-      {tab === 'swot' && <SwotTab subject={subject} />}
-      {tab === 'subskills' && <SubSkillsTab subject={subject} />}
-      {tab === 'trend' && <TrendTab subject={subject} />}
-      {tab === 'boost' && <BoostTab subject={subject} />}
+      {tab === 'overview' && <OverviewTab subject={scope} target={profile.targetPercentile} />}
+      {tab === 'swot' && <SwotTab subject={scope} />}
+      {tab === 'subskills' && <SubSkillsTab subject={scope} />}
+      {tab === 'trend' && <TrendTab subject={scope} target={profile.targetPercentile} />}
+      {tab === 'boost' && <BoostTab subject={scope} single={subjectsFor(scope).length === 1} />}
     </div>
   )
 }
 
 /* ═══════════ 1. Overview ═══════════ */
-function OverviewTab({ subject }) {
+function OverviewTab({ subject, target }) {
   const subs = selectedSubjects(subject)
-  const isAll = subject === 'all'
+  const isAll = subs.length > 1
   const acc = isAll ? OVERALL.acc : Math.round(subs.reduce((s, x) => s + x.acc, 0) / subs.length)
-  const mistakes = subs.flatMap(s => s.mistakes.map(m => ({ ...m, subj: s.name })))
+  const mistakes = subs.flatMap(s => (s.mistakes || []).map(m => ({ ...m, subj: s.name })))
   const weakTopics = allSubSkills(subject).filter(sk => sk.acc < 50).length
 
   return (
@@ -91,7 +96,7 @@ function OverviewTab({ subject }) {
         <div className="metric-card">
           <span className="metric-label">Current percentile</span>
           <b className="metric-value">{pct1(isAll ? OVERALL.percentile : OVERALL.percentile - 8)}%ile</b>
-          <span className="metric-sub">target {TARGET_PCT}%ile</span>
+          <span className="metric-sub">target {target}%ile</span>
         </div>
         <div className="metric-card">
           <span className="metric-label">Avg time per question</span>
@@ -129,7 +134,7 @@ function OverviewTab({ subject }) {
         <section className="an-card">
           <h3 className="an-card-title">Mistake tracker</h3>
           <p className="an-card-sub">Topics where you repeat the same errors</p>
-          {mistakes.length === 0 && <p className="muted-empty">No repeated mistakes logged for {subject === 'all' ? 'your subjects' : subject}.</p>}
+          {mistakes.length === 0 && <p className="muted-empty">No repeated mistakes logged for {isAll ? 'your subjects' : subject}.</p>}
           {mistakes.map(m => (
             <div className="mistake-row" key={m.topic + m.subj}>
               <span className="status-dot" style={{ background: 'var(--red-500)' }} />
@@ -165,7 +170,7 @@ function OverviewTab({ subject }) {
 /* ═══════════ 2. SWOT ═══════════ */
 function SwotTab({ subject }) {
   const [level, setLevel] = useState('subtopics')
-  const isAll = subject === 'all'
+  const isAll = selectedSubjects(subject).length > 1
 
   const items = level === 'topics'
     ? selectedSubjects(subject).map(s => ({ name: s.name, acc: s.acc, weight: s.weight, sub: s.subSkills }))
@@ -241,8 +246,8 @@ function SwotQuad({ title, desc, color, rows, level }) {
 
 /* ═══════════ 3. Sub-skills ═══════════ */
 function SubSkillsTab({ subject }) {
-  const isAll = subject === 'all'
   const subs = selectedSubjects(subject)
+  const isAll = subs.length > 1
   const skList = allSubSkills(subject).sort((a, b) => a.acc - b.acc)
   const weakest = skList[0]
 
@@ -293,15 +298,16 @@ function SubSkillsTab({ subject }) {
 }
 
 /* ═══════════ 4. Trend ═══════════ */
-function TrendTab({ subject }) {
-  const isAll = subject === 'all'
-  const data = isAll ? OVERALL.trend : selectedSubjects(subject)[0].trend
+function TrendTab({ subject, target }) {
+  const subs = selectedSubjects(subject)
+  const isAll = subs.length > 1
+  const data = isAll ? OVERALL.trend : subs[0].trend
   const mocks = data.map((v, i) => ({ mock: 'M' + (i + 2), pct: v }))
   return (
     <section className="an-card">
       <h3 className="an-card-title">Percentile trend</h3>
       <p className="an-card-sub">{isAll ? 'Last 6 mocks vs target percentile' : subject + ' · last 6 mocks vs target percentile'}</p>
-      <TrendChart mocks={mocks} target={TARGET_PCT} />
+      <TrendChart mocks={mocks} target={target} />
     </section>
   )
 }
@@ -342,8 +348,7 @@ function TrendChart({ mocks, target }) {
 }
 
 /* ═══════════ 5. Boost plan (unique) ═══════════ */
-function BoostTab({ subject }) {
-  const isAll = subject === 'all'
+function BoostTab({ subject, single }) {
   const [showAll, setShowAll] = useState(false)
   const [showInfo, setShowInfo] = useState(false)
   const skills = allSubSkills(subject)
@@ -395,7 +400,7 @@ function BoostTab({ subject }) {
           <button className="btn btn-primary boost-hero-cta" onClick={() => alert('Deep-link → practice session: ' + hero.name)}>
             Study this first <BookOpen size={15} />
           </button>
-          {!isAll && <span className="boost-hero-subject">{subject}</span>}
+          {single && <span className="boost-hero-subject">{subject}</span>}
         </section>
       )}
 

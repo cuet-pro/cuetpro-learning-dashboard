@@ -6,6 +6,7 @@ import Analysis from './pages/Analysis.jsx'
 import SmartRevision from './pages/SmartRevision.jsx'
 import ChillZone from './pages/ChillZone.jsx'
 import Explorer from './pages/Explorer.jsx'
+import Profile from './pages/Profile.jsx'
 import './tokens.css'
 import './shell.css'
 
@@ -26,12 +27,12 @@ export default function App() {
       <Sidebar active={page} onNavigate={setPage} />
       <main className="shell-main">
         {page === 'dashboard' && <Dashboard onNavigate={setPage} />}
-        {page === 'studykit' && <StudyKit />}
+        {page === 'studykit' && <StudyKit onNavigate={setPage} />}
         {page === 'analysis' && <Analysis />}
         {page === 'revision' && <SmartRevision />}
         {page === 'chill' && <ChillZone />}
         {page === 'explorer' && <Explorer />}
-        {page === 'profile' && <ComingSoon title="Profile & Settings" desc="Everything here personalizes your dashboard, predictor & manifestation board." onNavigate={setPage} />}
+        {page === 'profile' && <Profile />}
       </main>
     </div>
   )

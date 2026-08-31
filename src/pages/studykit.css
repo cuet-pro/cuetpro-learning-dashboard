@@ -6,6 +6,7 @@
 .sk-stream label { font-size: 12px; font-weight: 700; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: .5px; }
 .sk-select { font-family: var(--font-body); font-size: 13.5px; font-weight: 700; padding: 8px 12px; border: 1.5px solid var(--gray-200); border-radius: 9px; background: var(--gray-0); color: var(--text-primary); outline: none; }
 .sk-select:focus { border-color: var(--green-500); }
+.sk-stream-value { font-size: 13.5px; font-weight: 700; color: var(--text-primary); }
 .sk-stream-subjects { font-size: 11px; color: var(--text-tertiary); }
 
 /* Continue strip */

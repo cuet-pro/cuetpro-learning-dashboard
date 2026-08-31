@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { CalendarDays, PlayCircle, Flame, CheckCircle2, Layers, FileText, ChevronRight, ArrowLeft, RotateCcw, Check, X } from 'lucide-react'
 import { defaultDeck, paceBadge, todayISO, addDaysISO, daysUntil, review, isDue, generateQueue, cheatSheets } from '../lib/spacedRepetition'
 import { boostRanking } from '../lib/analysisData'
+import { useProfile } from '../lib/profile'
 import './revision.css'
 
 const MISTAKES = [
@@ -12,7 +13,8 @@ const MISTAKES = [
 ]
 
 export default function SmartRevision() {
-  const [examDate, setExamDate] = useState(() => localStorage.getItem('cp_exam_date') || '2027-05-15')
+  const [profile] = useProfile()
+  const examDate = profile.examDate
   const [deck, setDeck] = useState(() => {
     try { const d = localStorage.getItem('cp_deck'); return d ? JSON.parse(d) : defaultDeck() } catch { return defaultDeck() }
   })
@@ -23,7 +25,6 @@ export default function SmartRevision() {
   const [done, setDone] = useState(null) /* { correct, total } */
 
   const saveDeck = d => { setDeck(d); localStorage.setItem('cp_deck', JSON.stringify(d)) }
-  const setExamAndSave = v => { setExamDate(v); localStorage.setItem('cp_exam_date', v) }
 
   const daysLeft = daysUntil(examDate)
   const pace = paceBadge(daysLeft)
@@ -126,12 +127,12 @@ export default function SmartRevision() {
         </div>
       </header>
 
-      {/* A. Exam countdown header */}
+      {/* A. Exam countdown header — date comes from Profile */}
       <section className="rv-countdown">
         <div className="rv-count-ico"><CalendarDays size={22} /></div>
         <div className="rv-count-info">
           <b>{daysLeft} days left</b>
-          <span>CUET 2027 · <input type="date" value={examDate} onChange={e => setExamAndSave(e.target.value)} aria-label="Exam date" /></span>
+          <span>CUET 2027 · exam date {examDate} · set in Profile</span>
         </div>
         <span className="rv-pace" style={{ background: pace.bg, color: pace.color }}>{pace.label}</span>
       </section>
