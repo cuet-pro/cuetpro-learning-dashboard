@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Home, Grid3x3, ListChecks, TrendingUp, Zap, ChevronRight, Target, AlertTriangle, BookOpen } from 'lucide-react'
+import { Home, Grid3x3, ListChecks, TrendingUp, Zap, ChevronRight, Target, AlertTriangle, BookOpen, Info } from 'lucide-react'
 import './analysis.css'
 
 /* ═══════════ Data model (preview) ═══════════
@@ -263,13 +263,13 @@ function SwotTab({ subject }) {
       </div>
       <div className="swot-grid">
         <SwotQuad title="Strengths" desc="accuracy ≥ 75%" color="var(--green-500)" rows={quads.S} level={level} />
-        <SwotQuad title="Weaknesses" desc="low exam weight — not urgent" color="var(--warning-500)" rows={quads.W} level={level} />
-        <SwotQuad title="Threats" desc="low accuracy × high weight — costing marks" color="var(--red-500)" rows={quads.T} level={level} />
+        <SwotQuad title="Weaknesses" desc="covers little of the exam — not urgent" color="var(--warning-500)" rows={quads.W} level={level} />
+        <SwotQuad title="Threats" desc="low accuracy × big exam share — costing marks" color="var(--red-500)" rows={quads.T} level={level} />
         <SwotQuad title="Opportunities" desc="quick wins if fixed" color="var(--blue-500)" rows={quads.O} level={level} />
       </div>
       <p className="swot-note">
         {isAll
-          ? 'Classified by accuracy and exam weight together — a 40% topic worth 3% of the exam is a Weakness, not a Threat.'
+          ? 'Classified by accuracy and how much of the exam a topic covers — a 40% topic worth only 3% of the exam is a Weakness, not a Threat.'
           : `Showing ${subject} at the ${level === 'topics' ? 'subject' : 'sub-topic'} level.`}
       </p>
     </>
@@ -289,7 +289,7 @@ function SwotQuad({ title, desc, color, rows, level }) {
             <div className="swot-row">
               <span className="status-dot" style={{ background: color }} />
               <span className="swot-name">{r.name}</span>
-              <span className="swot-meta">weight {r.weight}%</span>
+              <span className="swot-meta">{level === 'topics' ? r.weight + '% of the exam' : r.weight + '% of subject marks'}</span>
               <b className="swot-acc">{pct(r.acc)}%</b>
               {level === 'topics' && r.sub && (
                 <button className="swot-expand" onClick={() => setOpen(open === r.name ? null : r.name)}>
@@ -417,6 +417,7 @@ function TrendChart({ mocks, target }) {
 function BoostTab({ subject }) {
   const isAll = subject === 'all'
   const [showAll, setShowAll] = useState(false)
+  const [showInfo, setShowInfo] = useState(false)
   const skills = allSubSkills(subject)
 
   /* score_gain_per_hour = (exam_weight% × improvement_gap) / estimated_hours_to_fix — unchanged */
@@ -434,14 +435,16 @@ function BoostTab({ subject }) {
   const sortedW = [...ranked].map(r => r.weight).sort((a, b) => b - a)
   const highW = sortedW.length ? sortedW[Math.max(0, Math.ceil(sortedW.length / 3) - 1)] : 99
 
+  /* plain-language reason — dominant factor only */
   const reason = r => {
     if (r.acc >= 80) return 'Already strong, little to gain'
     const bigGap = r.gap >= 35
     const heavy = r.weight >= highW
+    const tinyGap = r.gap < 15
     if (heavy && bigGap) return 'Worth a good chunk of marks'
     if (bigGap) return "You're falling behind here"
-    if (heavy) return 'Small topic, easy marks — you are already close'
-    return 'Worth fixing — every mark counts'
+    if (heavy && tinyGap) return 'Small topic, easy marks — you are already close'
+    return 'Worth fixing — steady improvement here'
   }
   const tier = (r, i) => {
     if (r.acc >= 80) return 'low'
@@ -456,10 +459,18 @@ function BoostTab({ subject }) {
       <section className="boost-banner">
         <Zap size={18} />
         <p>
-          <b>Your best next hour</b> — ranked by score gain per hour, not just readiness.
+          <b>Your best next hour</b> — ranked by how much you can improve, not just readiness.
           <span className="boost-tag">unique to CUET Pro</span>
         </p>
+        <button className="boost-info" onClick={() => setShowInfo(s => !s)} aria-label="How this ranking works">
+          <Info size={16} />
+        </button>
       </section>
+      {showInfo && (
+        <p className="boost-info-line">
+          Ranked using how much of the exam this topic covers, how far behind you are, and how long it typically takes to fix — combined into one score.
+        </p>
+      )}
 
       {/* A. Hero recommendation */}
       {hero && (
@@ -503,7 +514,7 @@ function BoostTab({ subject }) {
               {rest.map((r, i) => (
                 <button className="boost-row" key={r.name + r.subject} onClick={() => alert('Deep-link → practice session: ' + r.name)}>
                   <span className="status-dot" style={{ background: status(r.acc).color }} />
-                  <span className="boost-name">{r.name}<small>{r.subject} · weight {r.weight}% · accuracy {pct(r.acc)}%</small></span>
+                  <span className="boost-name">{r.name}<small>{r.subject} · {r.weight}% of this subject's marks · accuracy {pct(r.acc)}%</small></span>
                   <ImpactBadge tier={tier(r, i + 5)} />
                 </button>
               ))}

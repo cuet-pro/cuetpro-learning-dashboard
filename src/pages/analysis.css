@@ -98,8 +98,11 @@
 /* Boost plan */
 .boost-banner { display: flex; align-items: center; gap: 12px; background: var(--navy-700); color: #fff; border-radius: 12px; padding: 14px 18px; margin-bottom: var(--space-4); }
 .boost-banner svg { color: var(--green-400); flex-shrink: 0; }
-.boost-banner p { font-size: 12.5px; line-height: 1.5; color: rgba(255,255,255,.85); }
+.boost-banner p { font-size: 12.5px; line-height: 1.5; color: rgba(255,255,255,.85); flex: 1; }
 .boost-tag { display: inline-block; margin-left: 8px; font-size: 9.5px; font-weight: 800; letter-spacing: .5px; text-transform: uppercase; background: rgba(0,201,127,.2); color: var(--green-400); padding: 3px 9px; border-radius: 20px; }
+.boost-info { display: grid; place-items: center; width: 28px; height: 28px; border-radius: 8px; color: var(--navy-200); background: rgba(255,255,255,.08); flex-shrink: 0; transition: all .15s; }
+.boost-info:hover { background: rgba(255,255,255,.18); color: #fff; }
+.boost-info-line { font-size: 12px; color: var(--text-secondary); background: var(--gray-50); border: 1px solid var(--gray-200); border-radius: 10px; padding: 12px 16px; margin: -6px 0 var(--space-4); line-height: 1.5; }
 
 /* Hero recommendation */
 .boost-hero { position: relative; background: linear-gradient(120deg, var(--navy-700), var(--navy-500)); color: #fff; border-radius: 16px; padding: 26px 28px; margin-bottom: var(--space-5); box-shadow: var(--shadow-card); }
