@@ -54,9 +54,13 @@ export default function StudyKit() {
     localStorage.setItem('cp_last', JSON.stringify(v))
   }
 
-  const ranked = boostRanking('all')
+  const ranked = boostRanking(stream)
   const top3 = ranked.slice(0, 3)
-  const weakTopics = weakTopicNames('all')
+  const weakTopics = weakTopicNames(stream)
+  const streamSubjects = STREAMS[stream] || []
+
+  /* continue strip respects the current stream */
+  const showContinue = lastActivity && (!lastActivity.subject || streamSubjects.includes(lastActivity.subject))
 
   const tool = LEARNING_TOOLS.find(t => t.id === open) || TESTING_TOOLS.find(t => t.id === open)
 
@@ -79,7 +83,7 @@ export default function StudyKit() {
       </div>
 
       {/* B. Continue where you left off */}
-      {lastActivity && (
+      {showContinue && (
         <section className="sk-continue">
           <div className="sk-continue-ico"><PlayCircle size={18} /></div>
           <div className="sk-continue-info">
@@ -105,9 +109,9 @@ export default function StudyKit() {
             <div className="sk-rec-row" key={t.name + t.subject}>
               <span className="status-dot" style={{ background: t.acc < 50 ? 'var(--red-500)' : t.acc < 75 ? 'var(--warning-500)' : 'var(--green-500)' }} />
               <span className="sk-rec-name">{t.name}<small>{t.subject}</small></span>
-              <button className="btn btn-outline-sm" onClick={() => { record({ title: t.name + ' — notes', detail: t.subject + ' · chapter 1', pct: 15 }); alert('Deep-link → notes: ' + t.name) }}>Notes</button>
-              <button className="btn btn-outline-sm" onClick={() => { record({ title: t.name + ' — flashcards', detail: t.subject + ' · deck', pct: 30 }); alert('Deep-link → flashcards: ' + t.name) }}>Flashcards</button>
-              <button className="btn btn-outline-sm" onClick={() => { record({ title: t.name + ' — exercises', detail: t.subject + ' · set 1', pct: 40 }); alert('Deep-link → exercises: ' + t.name) }}>Exercises</button>
+              <button className="btn btn-outline-sm" onClick={() => { record({ title: t.name + ' — notes', subject: t.subject, detail: t.subject + ' · chapter 1', pct: 15 }); alert('Deep-link → notes: ' + t.name) }}>Notes</button>
+              <button className="btn btn-outline-sm" onClick={() => { record({ title: t.name + ' — flashcards', subject: t.subject, detail: t.subject + ' · deck', pct: 30 }); alert('Deep-link → flashcards: ' + t.name) }}>Flashcards</button>
+              <button className="btn btn-outline-sm" onClick={() => { record({ title: t.name + ' — exercises', subject: t.subject, detail: t.subject + ' · set 1', pct: 40 }); alert('Deep-link → exercises: ' + t.name) }}>Exercises</button>
             </div>
           ))}
         </section>
@@ -234,7 +238,7 @@ function NotesView({ stream, record }) {
           </div>
           <div className="sk-bar"><i style={{ width: (n.done / n.chapters.length * 100) + '%' }} /></div>
           {n.chapters.map(c => (
-            <button className="sk-chapter" key={c} onClick={() => { record({ title: n.s + ' notes', detail: c, pct: 60 }); alert('Deep-link → ' + n.s + ' notes: ' + c) }}>
+            <button className="sk-chapter" key={c} onClick={() => { record({ title: n.s + ' notes', subject: n.s, detail: c, pct: 60 }); alert('Deep-link → ' + n.s + ' notes: ' + c) }}>
               <span className="sk-dot" style={{ background: n.chapters.indexOf(c) < n.done ? 'var(--green-500)' : 'var(--gray-200)' }} />
               {c}
               <ChevronRight size={13} className="sk-ch-chev" />

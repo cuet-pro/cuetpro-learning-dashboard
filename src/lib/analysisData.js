@@ -65,6 +65,79 @@ export const STREAMS = {
   Science: ['English', 'Physics', 'Chemistry', 'Biology', 'Mathematics', 'General Test'],
 }
 
+/* Non-Commerce stream subjects (sub-skill data for boost/SWOT/PYQ computations) */
+const STREAM_SUBJECTS = {
+  Science: [
+    {
+      name: 'Physics', acc: 61, weight: 15,
+      subSkills: [
+        { name: 'Mechanics', acc: 62, weight: 4, hours: 6, attempts: 80 },
+        { name: 'Electrostatics', acc: 58, weight: 4, hours: 5, attempts: 70 },
+        { name: 'Optics', acc: 70, weight: 4, hours: 4, attempts: 60 },
+        { name: 'Modern physics', acc: 55, weight: 3, hours: 6, attempts: 65 },
+      ],
+    },
+    {
+      name: 'Chemistry', acc: 58, weight: 15,
+      subSkills: [
+        { name: 'Atomic structure', acc: 68, weight: 3.5, hours: 5, attempts: 75 },
+        { name: 'Organic chemistry', acc: 55, weight: 4, hours: 7, attempts: 80 },
+        { name: 'Thermodynamics', acc: 60, weight: 3.5, hours: 5, attempts: 60 },
+        { name: 'Chemical equilibrium', acc: 50, weight: 4, hours: 6, attempts: 70 },
+      ],
+    },
+    {
+      name: 'Biology', acc: 63, weight: 15,
+      subSkills: [
+        { name: 'Cell biology', acc: 72, weight: 4, hours: 4, attempts: 85 },
+        { name: 'Genetics', acc: 60, weight: 4, hours: 6, attempts: 70 },
+        { name: 'Ecology', acc: 65, weight: 3.5, hours: 4, attempts: 55 },
+        { name: 'Human physiology', acc: 58, weight: 3.5, hours: 5, attempts: 60 },
+      ],
+    },
+    {
+      name: 'Mathematics', acc: 64, weight: 15,
+      subSkills: [
+        { name: 'Algebra', acc: 66, weight: 4, hours: 6, attempts: 85 },
+        { name: 'Calculus', acc: 58, weight: 4, hours: 7, attempts: 80 },
+        { name: 'Trigonometry', acc: 70, weight: 3.5, hours: 4, attempts: 65 },
+        { name: 'Coordinate geometry', acc: 62, weight: 3.5, hours: 5, attempts: 60 },
+      ],
+    },
+  ],
+  Humanities: [
+    {
+      name: 'History', acc: 60, weight: 20,
+      subSkills: [
+        { name: 'Ancient India', acc: 65, weight: 7, hours: 5, attempts: 70 },
+        { name: 'Medieval India', acc: 60, weight: 6, hours: 6, attempts: 65 },
+        { name: 'Modern India', acc: 55, weight: 7, hours: 7, attempts: 80 },
+      ],
+    },
+    {
+      name: 'Political Science', acc: 66, weight: 20,
+      subSkills: [
+        { name: 'Indian constitution', acc: 70, weight: 10, hours: 5, attempts: 85 },
+        { name: 'Political theory', acc: 62, weight: 10, hours: 6, attempts: 70 },
+      ],
+    },
+    {
+      name: 'Geography', acc: 64, weight: 20,
+      subSkills: [
+        { name: 'Physical geography', acc: 60, weight: 10, hours: 6, attempts: 75 },
+        { name: 'Human geography', acc: 68, weight: 10, hours: 5, attempts: 65 },
+      ],
+    },
+    {
+      name: 'Psychology', acc: 61, weight: 20,
+      subSkills: [
+        { name: 'Psychological foundations', acc: 64, weight: 10, hours: 5, attempts: 60 },
+        { name: 'Social psychology', acc: 58, weight: 10, hours: 6, attempts: 55 },
+      ],
+    },
+  ],
+}
+
 export const CEILING = 90
 export const MIN_ATTEMPTS = 15
 
@@ -74,14 +147,23 @@ export function status(acc) {
   return { color: 'var(--red-500)', label: 'weak' }
 }
 
-export function allSubSkills(subject = 'all') {
-  const subs = subject === 'all' ? SUBJECTS : SUBJECTS.filter(s => s.name === subject)
-  return subs.flatMap(s => s.subSkills.map(sk => ({ ...sk, subject: s.name })))
+/* subjects for a scope: 'all' | stream name | subject name */
+export function subjectsFor(scope = 'all') {
+  if (scope === 'all' || scope === 'Commerce') return SUBJECTS
+  if (scope === 'Science' || scope === 'Humanities') {
+    const common = SUBJECTS.filter(s => s.name === 'English' || s.name === 'General Test')
+    return [...common, ...STREAM_SUBJECTS[scope]]
+  }
+  return SUBJECTS.filter(s => s.name === scope)
+}
+
+export function allSubSkills(scope = 'all') {
+  return subjectsFor(scope).flatMap(s => s.subSkills.map(sk => ({ ...sk, subject: s.name })))
 }
 
 /* score_gain_per_hour = (exam_weight% × improvement_gap) / estimated_hours_to_fix */
-export function boostRanking(subject = 'all') {
-  return allSubSkills(subject)
+export function boostRanking(scope = 'all') {
+  return allSubSkills(scope)
     .filter(sk => sk.attempts >= MIN_ATTEMPTS)
     .map(sk => ({ ...sk, gap: CEILING - sk.acc, gain: (sk.weight * (CEILING - sk.acc)) / (sk.hours * 10) }))
     .sort((a, b) => b.gain - a.gain)
@@ -100,6 +182,6 @@ export function boostReason(r, highW) {
 }
 
 /* topics flagged weak (acc < 50) — used by PYQ weak-topic filter */
-export function weakTopicNames(subject = 'all') {
-  return allSubSkills(subject).filter(sk => sk.acc < 50).map(sk => sk.name)
+export function weakTopicNames(scope = 'all') {
+  return allSubSkills(scope).filter(sk => sk.acc < 50).map(sk => sk.name)
 }
