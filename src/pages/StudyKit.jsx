@@ -40,6 +40,7 @@ const TESTING_TOOLS = [
 export default function StudyKit({ onNavigate }) {
   const [profile] = useProfile()
   const stream = profile.stream
+  const [subject, setSubject] = useState('all') /* selected subject pill — drives everything below */
   const [open, setOpen] = useState(null)
   const [weakOnly, setWeakOnly] = useState(false)
   const [examMode, setExamMode] = useState(false)
@@ -53,15 +54,24 @@ export default function StudyKit({ onNavigate }) {
     localStorage.setItem('cp_last', JSON.stringify(v))
   }
 
-  const ranked = boostRanking(stream)
+  const boostScope = subject === 'all' ? stream : subject
+  const ranked = boostRanking(boostScope)
   const top3 = ranked.slice(0, 3)
-  const weakTopics = weakTopicNames(stream)
+  const weakTopics = weakTopicNames(boostScope)
   const streamSubjects = STREAMS[stream] || []
 
   /* continue strip respects the current stream */
   const showContinue = lastActivity && (!lastActivity.subject || streamSubjects.includes(lastActivity.subject))
 
   const tool = LEARNING_TOOLS.find(t => t.id === open) || TESTING_TOOLS.find(t => t.id === open)
+
+  /* Notes progress — subject-specific when a pill is selected */
+  const notesProgress = subject === 'all'
+    ? LEARNING_TOOLS.find(t => t.id === 'notes').progress
+    : (() => {
+        const s = (NOTES_BY_STREAM[stream] || []).find(n => n.s === subject)
+        return s ? { done: s.done, total: s.chapters.length, label: 'chapters' } : { done: 0, total: 0, label: 'chapters' }
+      })()
 
   return (
     <div className="page">
@@ -78,6 +88,14 @@ export default function StudyKit({ onNavigate }) {
         <span className="sk-stream-value">{stream}</span>
         <button className="btn btn-outline-sm" onClick={() => onNavigate('profile')}>Change in Profile</button>
         <span className="sk-stream-subjects">{STREAMS[stream].join(' · ')}</span>
+      </div>
+
+      {/* Subject pills — same component as Analysis, drives everything below */}
+      <div className="subj-pills">
+        <button className={'subj-pill' + (subject === 'all' ? ' on' : '')} onClick={() => setSubject('all')}>All subjects</button>
+        {STREAMS[stream].map(s => (
+          <button key={s} className={'subj-pill' + (subject === s ? ' on' : '')} onClick={() => setSubject(s)}>{s}</button>
+        ))}
       </div>
 
       {/* B. Continue where you left off */}
@@ -121,17 +139,20 @@ export default function StudyKit({ onNavigate }) {
           <div className="sk-group">
             <div className="sk-group-label"><BookOpen size={16} /> Learning Tools</div>
             <div className="sk-grid">
-              {LEARNING_TOOLS.map(t => (
-                <div className="sk-card" key={t.id} onClick={() => setOpen(t.id)}>
-                  <div className="sk-ico"><t.icon size={20} /></div>
-                  <h3>{t.title}</h3>
-                  <p>{t.desc}</p>
-                  <div className="sk-card-progress">
-                    <div className="sk-card-bar"><i style={{ width: (t.progress.done / t.progress.total * 100) + '%' }} /></div>
-                    <span>{t.progress.done}/{t.progress.total} {t.progress.label}</span>
+              {LEARNING_TOOLS.map(t => {
+                const prog = t.id === 'notes' ? notesProgress : t.progress
+                return (
+                  <div className="sk-card" key={t.id} onClick={() => { record({ title: t.title, subject: subject === 'all' ? undefined : subject, detail: subject === 'all' ? 'all subjects' : subject, pct: 20 }); setOpen(t.id) }}>
+                    <div className="sk-ico"><t.icon size={20} /></div>
+                    <h3>{t.title}</h3>
+                    <p>{t.desc}</p>
+                    <div className="sk-card-progress">
+                      <div className="sk-card-bar"><i style={{ width: prog.total ? (prog.done / prog.total * 100) + '%' : '0%' }} /></div>
+                      <span>{prog.total ? prog.done + '/' + prog.total + ' ' + prog.label : '—'}</span>
+                    </div>
                   </div>
-                </div>
-              ))}
+                )
+              })}
             </div>
           </div>
 
@@ -207,7 +228,7 @@ export default function StudyKit({ onNavigate }) {
           </h2>
           <p style={{ fontSize: 13, color: 'var(--text-secondary)', margin: '6px 0 20px' }}>{tool.desc}</p>
 
-          {open === 'notes' && <NotesView stream={stream} record={record} />}
+          {open === 'notes' && <NotesView stream={stream} subject={subject} record={record} />}
           {open === 'flashcards' && <FlashView record={record} />}
           {open === 'quizzes' && <QuizView />}
           {open === 'pyqs' && <PyqView weakOnly={weakOnly} />}
@@ -224,11 +245,30 @@ export default function StudyKit({ onNavigate }) {
   )
 }
 
-function NotesView({ stream, record }) {
+function NotesView({ stream, subject, record }) {
+  /* route by subject → notes component. Economics mounts the dedicated build; others fall back to generic. */
+  if (subject === 'Economics') {
+    return (
+      <div className="sk-econ-wrap">
+        <p className="sk-econ-note">Economics notes dashboard — pattern breakdown, chapters & syllabus.</p>
+        <iframe
+          src="/econ-notes/index.html"
+          title="Economics notes — CUET Pro"
+          className="sk-econ-frame"
+          onLoad={() => record({ title: 'Economics notes', subject: 'Economics', detail: 'pattern dashboard', pct: 40 })}
+        />
+      </div>
+    )
+  }
+
   const subs = NOTES_BY_STREAM[stream] || NOTES_BY_STREAM.Commerce
+  const list = subject === 'all' ? subs : subs.filter(n => n.s === subject)
+
+  if (list.length === 0) return <p className="muted-empty">Notes for {subject} are being prepared — check back soon.</p>
+
   return (
     <div className="sk-subgrid">
-      {subs.map(n => (
+      {list.map(n => (
         <div className="sk-subcard" key={n.s}>
           <div className="sk-subhead">
             <b>{n.s}</b>
