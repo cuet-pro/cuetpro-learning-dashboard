@@ -246,7 +246,7 @@ export default function StudyKit({ onNavigate }) {
 }
 
 function NotesView({ stream, subject, record }) {
-  /* route by subject → notes component. Economics mounts the dedicated build; others fall back to generic. */
+  /* route by subject → notes component. Economics & Geography mount their dedicated dashboards; others fall back to generic. */
   if (subject === 'Economics') {
     return (
       <div className="sk-econ-wrap">
@@ -256,6 +256,19 @@ function NotesView({ stream, subject, record }) {
           title="Economics notes — CUET Pro"
           className="sk-econ-frame"
           onLoad={() => record({ title: 'Economics notes', subject: 'Economics', detail: 'pattern dashboard', pct: 40 })}
+        />
+      </div>
+    )
+  }
+  if (subject === 'Geography') {
+    return (
+      <div className="sk-econ-wrap">
+        <p className="sk-econ-note">Geography notes dashboard — NCERT chapters, syllabus & exam pattern.</p>
+        <iframe
+          src="/geo-notes/index.html"
+          title="Geography notes — CUET Pro"
+          className="sk-econ-frame"
+          onLoad={() => record({ title: 'Geography notes', subject: 'Geography', detail: 'chapter dashboard', pct: 40 })}
         />
       </div>
     )
