@@ -99,6 +99,12 @@ export default function Profile() {
             <button key={s} className={'pf-stream' + (profile.stream === s ? ' on' : '')} onClick={() => setStream(s)}>{s}</button>
           ))}
         </div>
+        <span className="pf-label">Gender <em>— dashboard avatar style</em></span>
+        <div className="pf-streams">
+          {['not-set', 'Female', 'Male'].map(g => (
+            <button key={g} className={'pf-stream' + (profile.gender === g ? ' on' : '')} onClick={() => save(p => ({ ...p, gender: g }))}>{g === 'not-set' ? 'Not set' : g}</button>
+          ))}
+        </div>
         <span className="pf-label">Subjects you're preparing</span>
         <div className="pf-subjects">
           {STREAMS[profile.stream].map(sub => (

@@ -15,6 +15,7 @@ export const STREAMS = {
 
 const DEFAULTS = {
   stream: 'Commerce',
+  gender: 'not-set',
   subjects: [...STREAMS.Commerce],
   dreamCollege: 'Shri Ram College of Commerce (SRCC)',
   targetPercentile: 85,
