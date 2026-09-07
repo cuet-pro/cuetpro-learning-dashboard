@@ -54,11 +54,27 @@ function daysLeft(dateStr) {
   const n = Date.now()
   return Math.max(0, Math.ceil((t - n) / 86400000))
 }
+/* live countdown: remaining days + hours, recomputed every minute */
+function useLiveCountdown(examDate) {
+  const calc = () => {
+    const t = new Date(examDate + 'T00:00:00').getTime()
+    const ms = Math.max(0, t - Date.now())
+    return { days: Math.floor(ms / 86400000), hours: Math.floor((ms % 86400000) / 3600000) }
+  }
+  const [cd, setCd] = useState(calc)
+  useEffect(() => { setCd(calc()); const iv = setInterval(() => setCd(calc()), 60000); return () => clearInterval(iv) }, [examDate])
+  return cd
+}
 
 /* ── Animated avatar: neutral/female/male variants, idle blink (JS interval ~3s) ── */
 function Avatar({ gender, blink }) {
-  const eyeCls = blink ? 'av-eye blink' : 'av-eye'
-  const eyes = <><ellipse className={eyeCls} cx="38" cy="46" rx="3.6" ry="4.4" /><ellipse className={eyeCls} cx="62" cy="46" rx="3.6" ry="4.4" /></>
+  const eyeCls = 'av-eye' + (blink ? ' blink' : '')
+  const eyes = (
+    <>
+      <g className={eyeCls}><ellipse cx="38" cy="47" rx="5" ry="5.6" fill="#fff" /><ellipse cx="38" cy="47" rx="2.4" ry="3.4" fill="#1a2436" /></g>
+      <g className={eyeCls}><ellipse cx="62" cy="47" rx="5" ry="5.6" fill="#fff" /><ellipse cx="62" cy="47" rx="2.4" ry="3.4" fill="#1a2436" /></g>
+    </>
+  )
   return (
     <svg viewBox="0 0 100 100" className="dash-avatar-svg" aria-hidden="true">
       <circle cx="50" cy="50" r="50" fill="#2a3f63" />
@@ -84,7 +100,7 @@ export default function Dashboard({ onNavigate }) {
   const [profile] = useProfile()
   const college = profile.dreamCollege
   const collegeShort = dreamCollegeShort(college)
-  const dl = daysLeft(profile.examDate)
+  const cd = useLiveCountdown(profile.examDate)
 
   /* challenges: collapsed by default */
   const [wordOpen, setWordOpen] = useState(false)
@@ -149,8 +165,8 @@ export default function Dashboard({ onNavigate }) {
           <div><b>CUET 2027</b><span className="count-sub">Common University Entrance Test</span></div>
         </div>
         <div className="count-r">
-          <b className="count-days">{dl}</b>
-          <span className="count-days-lbl">days left</span>
+          <b className="count-days">{cd.days}</b>
+          <span className="count-days-lbl">{cd.days === 1 ? 'day' : 'days'} left{cd.hours > 0 ? ` · ${cd.hours}h` : ''}</span>
         </div>
       </div>
 
@@ -184,10 +200,12 @@ export default function Dashboard({ onNavigate }) {
           {/* Word of the Day */}
           <div className={'cuet-card chal-card' + (wordOpen ? ' open' : '')}>
             <button className="ch-head" onClick={() => setWordOpen(!wordOpen)} aria-expanded={wordOpen}>
-              <span className="ch-tag">Word of the Day</span>
-              <span className="ch-preview">"{WORD_Q.word}" — {WORD_Q.q}</span>
-              <span className="ch-pts-badge">+{WORD_Q.pts} pts</span>
-              <ChevronDown size={16} className="ch-chev" />
+              <span className="ch-top">
+                <span className="ch-tag">Word of the Day</span>
+                <span className="ch-pts-badge">+{WORD_Q.pts} pts</span>
+                <ChevronDown size={16} className="ch-chev" />
+              </span>
+              <span className="ch-q">What does "<b>{WORD_Q.word}</b>" mean?</span>
             </button>
             {wordOpen && (
               <div className="ch-body">
@@ -208,10 +226,12 @@ export default function Dashboard({ onNavigate }) {
           {/* Subject Quiz of the Day */}
           <div className={'cuet-card chal-card' + (quizOpen ? ' open' : '')}>
             <button className="ch-head" onClick={() => setQuizOpen(!quizOpen)} aria-expanded={quizOpen}>
-              <span className="ch-tag">Subject Quiz of the Day</span>
-              <span className="ch-preview">{quizDone ? 'Quiz complete — ' + quizScore + '/3' : QUIZ[quizIdx].q}</span>
-              <span className="ch-pts-badge">+20 pts</span>
-              <ChevronDown size={16} className="ch-chev" />
+              <span className="ch-top">
+                <span className="ch-tag">Subject Quiz of the Day</span>
+                <span className="ch-pts-badge">+20 pts</span>
+                <ChevronDown size={16} className="ch-chev" />
+              </span>
+              <span className="ch-q">{quizDone ? 'Quiz complete — you scored ' + quizScore + '/3' : QUIZ[quizIdx].q}</span>
             </button>
             {quizOpen && (
               <div className="ch-body">
@@ -236,10 +256,12 @@ export default function Dashboard({ onNavigate }) {
           {/* RC of the Day */}
           <div className={'cuet-card chal-card' + (rcOpen ? ' open' : '')}>
             <button className="ch-head" onClick={() => setRcOpen(!rcOpen)} aria-expanded={rcOpen}>
-              <span className="ch-tag">RC of the Day</span>
-              <span className="ch-preview">Urban water scarcity — 3 quick questions</span>
-              <span className="ch-pts-badge">+15 pts</span>
-              <ChevronDown size={16} className="ch-chev" />
+              <span className="ch-top">
+                <span className="ch-tag">RC of the Day</span>
+                <span className="ch-pts-badge">+15 pts</span>
+                <ChevronDown size={16} className="ch-chev" />
+              </span>
+              <span className="ch-q">Urban water scarcity — 3 quick questions on a short passage.</span>
             </button>
             {rcOpen && (
               <div className="ch-body">

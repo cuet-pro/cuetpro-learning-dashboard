@@ -118,8 +118,8 @@
 /* ── Avatar idle blink ── */
 .dash-avatar { width: 48px; height: 48px; border-radius: var(--radius-full); overflow: hidden; flex-shrink: 0; }
 .dash-avatar-svg { width: 100%; height: 100%; display: block; }
-.av-eye { fill: #1a2436; transform-box: fill-box; transform-origin: center; transition: transform .08s ease; }
-.av-eye.blink { transform: scaleY(0.12); }
+.av-eye { transform-box: fill-box; transform-origin: center; transition: transform .09s ease; }
+.av-eye.blink { transform: scaleY(0.1); }
 
 /* ── Exam countdown strip ── */
 .count-strip { display: flex; align-items: center; justify-content: space-between; gap: 12px;
@@ -142,12 +142,16 @@
 .manifest-compact .btn { flex-shrink: 0; }
 
 /* ── Expandable daily challenges ── */
-.ch-head { display: flex; align-items: center; gap: 10px; width: 100%; text-align: left;
+.ch-head { display: flex; flex-direction: column; align-items: stretch; gap: 8px; width: 100%; text-align: left;
   background: none; border: none; padding: 0; cursor: pointer; font-family: var(--font-body); }
-.ch-head:hover .ch-preview { color: var(--green-600); }
-.ch-preview { flex: 1; min-width: 0; font-size: 13px; font-weight: 600; color: var(--text-primary);
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.ch-pts-badge { flex-shrink: 0; font-size: 11px; font-weight: 700; color: var(--warning-600); }
+.ch-top { display: flex; align-items: center; gap: 8px; }
+.ch-top .ch-tag { flex-shrink: 0; }
+.ch-pts-badge { flex-shrink: 0; font-size: 11px; font-weight: 800; color: var(--warning-600); background: var(--warning-100); padding: 3px 10px; border-radius: 999px; }
+.ch-top .ch-pts-badge { margin-left: auto; }
+.ch-q { font-size: 13.5px; font-weight: 600; color: var(--text-primary); line-height: 1.5;
+  white-space: normal; overflow-wrap: break-word; text-align: left; }
+.ch-q b { color: var(--navy-600); }
+.ch-head:hover .ch-q { color: var(--green-700); }
 .ch-chev { flex-shrink: 0; color: var(--text-tertiary); transition: transform .2s; }
 .chal-card.open .ch-chev { transform: rotate(180deg); }
 .ch-body { display: flex; flex-direction: column; gap: 10px; padding-top: 12px; margin-top: 10px;
