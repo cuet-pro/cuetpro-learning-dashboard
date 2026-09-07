@@ -274,3 +274,7 @@
 .prow-note.down { color: var(--warning-600); }
 .prow-actions { display: flex; gap: 8px; }
 .prow-actions .btn { padding: 7px 12px; font-size: 11.5px; }
+
+/* ── expansion must not stretch sibling cards ── */
+.chal-grid { align-items: start; }
+.dash-cols { align-items: start; }

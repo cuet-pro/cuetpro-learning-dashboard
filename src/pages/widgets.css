@@ -52,3 +52,7 @@
 @media (max-width: 900px) {
   .wdg-grid { grid-template-columns: 1fr; }
 }
+
+/* ── expansion must not stretch sibling cards ── */
+.wdg-grid { align-items: start; }
+.wdg { transition: box-shadow .15s; }
