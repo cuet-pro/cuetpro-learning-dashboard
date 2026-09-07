@@ -267,7 +267,7 @@ export default function Dashboard({ onNavigate }) {
         </div>
 
         {/* My Standing — tappable card + working toggle */}
-        <button className="cuet-card standing-card" onClick={() => setShowStanding(true)}>
+        <div className="cuet-card standing-card" role="button" tabIndex={0} onClick={() => setShowStanding(true)} onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') setShowStanding(true) }}>
           <div className="card-title-row">
             <div><h2>My Standing</h2><p>Ranked by contest & daily-challenge points</p></div>
             <ChevronRight size={18} className="st-chev" />
@@ -286,7 +286,7 @@ export default function Dashboard({ onNavigate }) {
             <div className="board-row me"><span className="br">#{lb.rank}</span><span className="bname">Ananya Verma (you)</span><b className="bpts">{lb.pts} pts</b></div>
           </div>
           <span className="st-full-hint">Tap to view full leaderboard <ArrowRight size={12} /></span>
-        </button>
+        </div>
       </div>
 
       {/* Manifestation full view modal */}
