@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Flame, ArrowRight, BookOpen, Zap, CheckCircle2, XCircle, Sparkles, ChevronDown, ChevronRight, CalendarDays, Eye, X, Trophy, Users } from 'lucide-react'
 import { useProfile, dreamCollegeShort } from '../lib/profile'
+import DashboardWidgets from './Widgets.jsx'
 import './dashboard.css'
 
 const SUBJECTS = [
@@ -88,10 +89,11 @@ function Avatar({ gender, blink }) {
         <path d="M50 16 Q76 14 72 38 Q70 34 66 30 L66 44 Q50 30 30 36 Q28 20 50 16 Z" fill="#1f2937" />
         <path d="M26 32 Q16 34 18 50 Q22 42 28 42 Z" fill="#1f2937" />
       </>)}
-      {/* waving arm + hand — sits beside the head, waves OUTWARD (never into the face) */}
+      {/* waving arm + hand — proper adult hand beside the head, waves OUTWARD */}
       <g className="av-arm">
-        <path d="M81 77 Q94 66 90 52" stroke="#eab98f" strokeWidth="8" strokeLinecap="round" fill="none" />
-        <circle cx="90.5" cy="46.5" r="5.6" fill="#f2c9a0" />
+        <path d="M80 78 Q93 66 89 52" stroke="#eab98f" strokeWidth="6.5" strokeLinecap="round" fill="none" />
+        <path d="M86.5 51 h6 a3.2 3.2 0 0 1 3.2 3.2 v4.6 a3.2 3.2 0 0 1 -3.2 3.2 h-6 a3.2 3.2 0 0 1 -3.2 -3.2 v-4.6 a3.2 3.2 0 0 1 3.2 -3.2 z" fill="#e9b98c" />
+        <path d="M89 51 v-3 a1.8 1.8 0 0 1 3.6 0 v3" fill="none" stroke="#e9b98c" strokeWidth="2.4" strokeLinecap="round" />
       </g>
       {eyes}
       <path d="M42 56 Q50 62 58 56" fill="none" stroke="#c48a68" strokeWidth="2.4" strokeLinecap="round" />
@@ -325,6 +327,12 @@ export default function Dashboard({ onNavigate }) {
           </div>
           <span className="st-full-hint">Tap to view full leaderboard <ArrowRight size={12} /></span>
         </div>
+      </div>
+
+      {/* Dashboard widgets — vocab, SWOT snapshot, resources, activity, week, shortcuts, badges */}
+      <div className="dash-section">
+        <h2 className="dash-section-title">More tools & updates</h2>
+        <DashboardWidgets />
       </div>
 
       {/* Manifestation full view modal */}
