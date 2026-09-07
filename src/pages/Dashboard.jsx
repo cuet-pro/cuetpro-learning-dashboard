@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Flame, ArrowRight, BookOpen, Zap, CheckCircle2, XCircle, Sparkles, ChevronDown, ChevronRight, CalendarDays, Eye, X, Trophy, Users } from 'lucide-react'
 import { useProfile, dreamCollegeShort } from '../lib/profile'
 import './dashboard.css'
@@ -55,9 +55,10 @@ function daysLeft(dateStr) {
   return Math.max(0, Math.ceil((t - n) / 86400000))
 }
 
-/* ── Animated avatar: neutral/female/male variants, idle blink ── */
-function Avatar({ gender }) {
-  const eyes = <><ellipse className="av-eye" cx="38" cy="46" rx="3.4" ry="4.2" /><ellipse className="av-eye" cx="62" cy="46" rx="3.4" ry="4.2" /></>
+/* ── Animated avatar: neutral/female/male variants, idle blink (JS interval ~3s) ── */
+function Avatar({ gender, blink }) {
+  const eyeCls = blink ? 'av-eye blink' : 'av-eye'
+  const eyes = <><ellipse className={eyeCls} cx="38" cy="46" rx="3.6" ry="4.4" /><ellipse className={eyeCls} cx="62" cy="46" rx="3.6" ry="4.4" /></>
   return (
     <svg viewBox="0 0 100 100" className="dash-avatar-svg" aria-hidden="true">
       <circle cx="50" cy="50" r="50" fill="#2a3f63" />
@@ -95,6 +96,16 @@ export default function Dashboard({ onNavigate }) {
   const [quizScore, setQuizScore] = useState(0)
   const [quizDone, setQuizDone] = useState(false)
 
+  /* avatar idle blink — every ~3s, quick close-open */
+  const [blink, setBlink] = useState(false)
+  useEffect(() => {
+    const iv = setInterval(() => {
+      setBlink(true)
+      setTimeout(() => setBlink(false), 160)
+    }, 3000)
+    return () => clearInterval(iv)
+  }, [])
+
   /* manifestation modal + standing modal + standing view */
   const [showManifest, setShowManifest] = useState(false)
   const [showStanding, setShowStanding] = useState(false)
@@ -119,7 +130,7 @@ export default function Dashboard({ onNavigate }) {
       {/* 1. Welcome header — animated avatar + streak + top% */}
       <div className="dash-header">
         <div className="dash-user">
-          <div className="dash-avatar"><Avatar gender={profile.gender} /></div>
+          <div className="dash-avatar"><Avatar gender={profile.gender} blink={blink} /></div>
           <div>
             <h1>Welcome back, Ananya</h1>
             <p>CUET 2027 · here's today's snapshot.</p>
