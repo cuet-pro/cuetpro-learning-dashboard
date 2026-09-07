@@ -1,15 +1,15 @@
 import { useEffect, useState } from 'react'
-import { Flame, ArrowRight, BookOpen, Zap, CheckCircle2, XCircle, Sparkles, ChevronDown, ChevronRight, CalendarDays, Eye, X, Trophy, Users } from 'lucide-react'
+import { Flame, ArrowRight, BookOpen, Zap, CheckCircle2, XCircle, Sparkles, ChevronDown, ChevronRight, CalendarDays, Eye, X, Trophy, Users, PieChart, ArrowUpRight } from 'lucide-react'
 import { useProfile, dreamCollegeShort } from '../lib/profile'
 import DashboardWidgets from './Widgets.jsx'
 import './dashboard.css'
 
 const SUBJECTS = [
-  { n: 'English', pct: 74, status: 'On track' },
-  { n: 'Economics', pct: 58, status: 'Needs attention' },
-  { n: 'Accountancy', pct: 81, status: 'On track' },
-  { n: 'Business Studies', pct: 64, status: 'On track' },
-  { n: 'General Test', pct: 45, status: 'Behind' },
+  { n: 'English', pct: 74, status: 'On track', d: 2.1 },
+  { n: 'Economics', pct: 58, status: 'Needs attention', d: -1.4 },
+  { n: 'Accountancy', pct: 81, status: 'On track', d: 3.2 },
+  { n: 'Business Studies', pct: 64, status: 'On track', d: 0.8 },
+  { n: 'General Test', pct: 45, status: 'Behind', d: -3.6 },
 ]
 
 /* My Standing — same source the whole app's leaderboard uses */
@@ -133,6 +133,7 @@ export default function Dashboard({ onNavigate }) {
   const [showManifest, setShowManifest] = useState(false)
   const [showStanding, setShowStanding] = useState(false)
   const [stView, setStView] = useState('all')
+  const [openRow, setOpenRow] = useState(null)
 
   const pickWord = i => { if (wordPick === null) setWordPick(i) }
   const pickQuiz = i => {
@@ -282,25 +283,43 @@ export default function Dashboard({ onNavigate }) {
 
       {/* 6. My Progress + My Standing */}
       <div className="dash-cols">
-        <div className="cuet-card">
-          <div className="card-title-row">
-            <div><h2>My Progress</h2><p>CUET Commerce Batch 2027</p></div>
+        <div className="cuet-card prog-card">
+          <button className="prog-head" onClick={() => onNavigate('analysis')} title="Open full analysis">
+            <span className="prog-head-ico"><PieChart size={17} /></span>
+            <span className="prog-head-t">
+              <b>My Progress</b>
+              <em>CUET Commerce Batch 2027</em>
+            </span>
             <span className="pill-green">On track</span>
-          </div>
-          <div className="progress-wrap">
+            <ArrowUpRight size={15} className="prog-head-arr" />
+          </button>
+          <button className="prog-ring-wrap" onClick={() => onNavigate('analysis')} title="See your analysis">
             <div className="ring" style={{ '--p': '64%' }}>
               <div className="ring-in"><b>64%</b><span>Overall syllabus</span></div>
             </div>
-            <p className="exp">Expected by now: 62%</p>
-          </div>
-          <div className="subjects">
-            {SUBJECTS.map((s, i) => (
-              <div className="subject-row" key={s.n}>
-                <span className="sn">{i + 1}</span>
-                <span className="sname">{s.n}</span>
-                <div className="sbar"><i style={{ width: s.pct + '%', background: sc(s.status) }} /></div>
-                <b className="spct">{s.pct}%</b>
-                <span className="sstatus" style={{ color: sc(s.status) }}>{s.status}</span>
+          </button>
+          <p className="prog-exp">Expected by now: 62% · <b className="ok">ahead +2%</b></p>
+          <div className="prog-subjects">
+            {SUBJECTS.map(s => (
+              <div key={s.n} className={'prow' + (openRow === s.n ? ' open' : '')}>
+                <button className="prow-main" onClick={() => setOpenRow(openRow === s.n ? null : s.n)} aria-expanded={openRow === s.n}>
+                  <span className="pname" title={s.n}>{s.n}</span>
+                  <div className="pbar"><i style={{ width: s.pct + '%', background: sc(s.status) }} /></div>
+                  <b className="ppct">{s.pct}%</b>
+                  <span className={'pstat ' + s.status.toLowerCase().replace(/ /g, '-')}>{s.status}</span>
+                  <ChevronDown size={14} className="prow-chev" />
+                </button>
+                {openRow === s.n && (
+                  <div className="prow-more">
+                    <span className={'prow-note' + (s.d >= 0 ? ' up' : ' down')}>
+                      {s.d >= 0 ? '▲ +' + s.d.toFixed(1) + '% vs last mock' : '▼ ' + s.d.toFixed(1) + '% vs last mock'} · {s.pct >= 75 ? 'keep the momentum' : (() => { const n = Math.ceil((75 - s.pct) / 3); return n + ' quick fix' + (n > 1 ? 'es' : '') + ' to reach 75%' })()}
+                    </span>
+                    <div className="prow-actions">
+                      <button className="btn btn-primary-sm" onClick={() => onNavigate('studykit')}>Practice <BookOpen size={13} /></button>
+                      <button className="btn btn-outline-sm" onClick={() => onNavigate('analysis')}>Open Analysis</button>
+                    </div>
+                  </div>
+                )}
               </div>
             ))}
           </div>
