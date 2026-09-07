@@ -88,10 +88,10 @@ function Avatar({ gender, blink }) {
         <path d="M50 16 Q76 14 72 38 Q70 34 66 30 L66 44 Q50 30 30 36 Q28 20 50 16 Z" fill="#1f2937" />
         <path d="M26 32 Q16 34 18 50 Q22 42 28 42 Z" fill="#1f2937" />
       </>)}
-      {/* waving arm + hand (waves every ~7s) */}
+      {/* waving arm + hand — sits beside the head, waves OUTWARD (never into the face) */}
       <g className="av-arm">
-        <path d="M80 72 Q88 62 80 51" stroke="#eab98f" strokeWidth="8.5" strokeLinecap="round" fill="none" />
-        <circle cx="78.5" cy="46.5" r="6.2" fill="#f2c9a0" />
+        <path d="M81 77 Q94 66 90 52" stroke="#eab98f" strokeWidth="8" strokeLinecap="round" fill="none" />
+        <circle cx="90.5" cy="46.5" r="5.6" fill="#f2c9a0" />
       </g>
       {eyes}
       <path d="M42 56 Q50 62 58 56" fill="none" stroke="#c48a68" strokeWidth="2.4" strokeLinecap="round" />
