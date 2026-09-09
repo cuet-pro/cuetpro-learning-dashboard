@@ -1,7 +1,7 @@
 /* CUET Pro — Profile & Settings */
 
-.pf-account { display: flex; align-items: center; gap: 14px; background: var(--navy-600); color: #fff; border-radius: 14px; padding: 18px 20px; margin-bottom: var(--space-5); }
-.pf-avatar { width: 46px; height: 46px; border-radius: 50%; background: var(--green-500); color: var(--navy-900); font-family: var(--font-display); font-weight: 800; font-size: 16px; display: grid; place-items: center; flex-shrink: 0; }
+.pf-account { display: flex; align-items: center; gap: 14px; background: linear-gradient(120deg, var(--primary), var(--secondary)); color: #fff; border-radius: 14px; padding: 18px 20px; margin-bottom: var(--space-5); }
+.pf-avatar { width: 46px; height: 46px; border-radius: 50%; background: var(--primary); color: #fff; font-family: var(--font-display); font-weight: 800; font-size: 16px; display: grid; place-items: center; flex-shrink: 0; }
 .pf-account-info { flex: 1; }
 .pf-account-info b { font-family: var(--font-display); font-size: 16px; display: block; }
 .pf-account-info span { font-size: 12px; color: var(--navy-200); }
@@ -22,7 +22,7 @@
 .pf-label { display: block; font-size: 11px; font-weight: 700; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: .4px; margin: 4px 0 8px; }
 .pf-streams { display: flex; gap: 8px; margin-bottom: 18px; }
 .pf-stream { font-size: 12.5px; font-weight: 700; padding: 9px 18px; border-radius: 999px; border: 1.5px solid var(--gray-200); color: var(--text-primary); transition: all .15s; background: var(--gray-0); }
-.pf-stream.on { background: var(--navy-600); border-color: var(--navy-600); color: #fff; }
+.pf-stream.on { background: linear-gradient(120deg, var(--primary), var(--secondary)); border-color: var(--secondary); color: #fff; }
 .pf-subjects { display: flex; flex-wrap: wrap; gap: 8px; }
 .pf-subject { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 600; padding: 8px 13px; border-radius: 9px; border: 1.5px solid var(--gray-200); color: var(--text-secondary); background: var(--gray-0); transition: all .15s; }
 .pf-subject.on { background: var(--green-50); border-color: var(--green-500); color: var(--green-700); }
