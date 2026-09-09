@@ -119,3 +119,8 @@
   .sk-focusmock .btn { width: 100%; justify-content: center; }
   .sk-rec-row .btn { flex: 1; }
 }
+
+/* Dark mode — legacy navy-surface fills resolve to light --secondary; restore dark elevated surfaces */
+[data-theme="dark"] .sk-focusmock { background: linear-gradient(120deg, var(--primary-hover), var(--secondary-soft)); border: 1px solid var(--border); }
+[data-theme="dark"] .sk-fc-front { background: var(--secondary-soft); border: 1px solid var(--border); }
+[data-theme="dark"] .subj-pill.on { background: var(--secondary-soft); border-color: var(--secondary-soft); }
