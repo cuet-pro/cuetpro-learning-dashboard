@@ -103,7 +103,7 @@ function Dropdown({ onClose, children }) {
 }
 
 /* ── Topbar ── */
-function Topbar({ page, onNavigate, setMenuOpen, theme, setTheme }) {
+function Topbar({ onNavigate, setMenuOpen, theme, setTheme }) {
   const [dd, setDd] = useState(null) // 'bell' | 'user'
   const closeDd = useCallback(() => setDd(null), [])
   const go = id => { onNavigate(id); closeDd() }
@@ -220,7 +220,7 @@ export default function AppShell({ page, onNavigate, children }) {
     <div className={'shell' + (rail ? ' rail' : '')}>
       <Sidebar active={page} onNavigate={onNavigate} rail={rail} setRail={setRail} open={menuOpen} setOpen={setMenuOpen} />
       <div className="shell-main">
-        <Topbar page={page} onNavigate={onNavigate} setMenuOpen={setMenuOpen} theme={theme} setTheme={setTheme} />
+        <Topbar onNavigate={onNavigate} setMenuOpen={setMenuOpen} theme={theme} setTheme={setTheme} />
         {children}
       </div>
       <BottomNav active={page} onNavigate={onNavigate} />
