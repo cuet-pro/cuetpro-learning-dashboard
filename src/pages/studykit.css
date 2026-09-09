@@ -175,3 +175,17 @@
   border: 1px solid var(--border); background: var(--surface); color: var(--text-secondary); border-radius: var(--r-sm); cursor: pointer; transition: all .13s; }
 .sk-topline-edit:hover { border-color: var(--primary); color: var(--primary); background: var(--primary-soft); }
 @media (max-width: 640px) { .sk-topline-subjects { white-space: normal; width: 100%; order: 5; } .sk-topline-edit { margin-left: 0; } }
+
+/* ── Stream + subject pills merged into one even-width row ── */
+.sk-headrow { display: flex; align-items: center; gap: var(--sp-4); margin: 2px 0 14px; flex-wrap: wrap; }
+.sk-headrow .sk-topline { display: flex; align-items: center; gap: 8px; flex-shrink: 0; margin: 0; }
+.sk-headrow .subj-pills { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; flex: 1 1 auto; justify-content: flex-end; padding: 0; margin: 0; }
+.sk-topline-edit { width: 28px; height: 28px; flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center;
+  border: 1px solid var(--border); background: var(--surface); color: var(--text-secondary); border-radius: var(--r-sm); cursor: pointer; transition: all .13s; }
+.sk-topline-edit:hover { border-color: var(--primary); color: var(--primary); background: var(--primary-soft); }
+.sk-topline-ico { width: 26px; height: 26px; flex-shrink: 0; border-radius: var(--r-sm); display: inline-flex; align-items: center; justify-content: center; background: var(--primary-soft); color: var(--primary); }
+.sk-topline-stream { font-family: var(--font-display); font-size: 14.5px; color: var(--text); }
+@media (max-width: 760px) {
+  .sk-headrow { align-items: flex-start; gap: 10px; }
+  .sk-headrow .subj-pills { justify-content: flex-start; width: 100%; order: 9; }
+}
