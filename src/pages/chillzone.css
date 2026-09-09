@@ -84,3 +84,7 @@
   .cz-invite-row { flex-direction: column; align-items: stretch; }
   .cz-invite-link { text-align: center; }
 }
+
+[data-theme="dark"] .cz-room { background: linear-gradient(120deg, var(--primary-hover), var(--secondary-soft)); border: 1px solid var(--border); }
+[data-theme="dark"] .cz-toast { background: var(--secondary-soft); border: 1px solid var(--border); }
+[data-theme="dark"] .cz-join, [data-theme="dark"] .cz-min.on { background: var(--primary); border-color: var(--primary); color: #fff; }

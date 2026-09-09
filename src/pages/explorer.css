@@ -40,3 +40,5 @@
 
 @media (max-width: 900px) { .ex-collist { grid-template-columns: 1fr 1fr; } }
 @media (max-width: 600px) { .ex-collist { grid-template-columns: 1fr; } }
+
+[data-theme="dark"] .ex-collo { background: var(--secondary-soft); color: var(--primary-hover); }

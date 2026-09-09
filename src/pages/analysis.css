@@ -144,3 +144,8 @@
   .boost-reason { flex: 1; }
   .impact-badge { display: none; }
 }
+
+[data-theme="dark"] .subj-pill.on { background: var(--secondary-soft); border-color: var(--secondary-soft); }
+[data-theme="dark"] .boost-banner { background: var(--secondary-soft); border: 1px solid var(--border); }
+[data-theme="dark"] .boost-hero { background: linear-gradient(120deg, var(--primary-hover), var(--secondary-soft)); border: 1px solid var(--border); }
+[data-theme="dark"] .boost-hero-badge { background: var(--primary); color: #fff; }

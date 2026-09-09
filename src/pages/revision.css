@@ -73,3 +73,5 @@
   .rv-sheet-time { display: none; }
   .rv-countdown { flex-wrap: wrap; }
 }
+
+[data-theme="dark"] .rv-fc-front { background: linear-gradient(120deg, var(--primary-hover), var(--secondary-soft)); border: 1px solid var(--border); }
