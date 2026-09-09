@@ -1,0 +1,229 @@
+import { createContext, useCallback, useContext, useEffect, useState } from 'react'
+import {
+  LayoutDashboard, GraduationCap, BarChart3, Sparkles, Compass, Settings, Coffee,
+  Search, Sun, Moon, Bell, Menu, X, PanelLeftClose, PanelLeftOpen, ChevronDown,
+  User, Crown, HelpCircle, LogOut, CircleCheck, CircleAlert, Info,
+} from 'lucide-react'
+import { todayISO } from '../../lib/spacedRepetition'
+import './shell.css'
+
+const NAV = [
+  { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { id: 'studykit', label: 'Study Kit', icon: GraduationCap },
+  { id: 'analysis', label: 'Analysis', icon: BarChart3 },
+  { id: 'revision', label: 'Smart Revision', icon: Sparkles },
+  { id: 'chill', label: 'Chill Zone', icon: Coffee },
+  { id: 'explorer', label: 'DU Admissions Explorer', icon: Compass },
+  { id: 'profile', label: 'Profile & Settings', icon: Settings },
+]
+const PRIMARY_NAV = ['dashboard', 'studykit', 'analysis', 'revision', 'profile']
+
+/* ── theme ── */
+function useTheme() {
+  const [theme, setTheme] = useState(() => localStorage.getItem('cp_theme') || 'light')
+  useEffect(() => {
+    document.documentElement.dataset.theme = theme
+    localStorage.setItem('cp_theme', theme)
+  }, [theme])
+  return [theme, setTheme]
+}
+
+/* ── Sidebar ── */
+function Sidebar({ active, onNavigate, rail, setRail, open, setOpen }) {
+  return (
+    <>
+      {open && <button className="scrim" onClick={() => setOpen(false)} aria-label="Close menu" />}
+      <aside className={'side' + (rail ? ' rail' : '') + (open ? ' open' : '')}>
+        <div className="side-logo">
+          <span className="side-logo-mark">CP</span>
+          <span className="side-logo-name">CUET Pro</span>
+        </div>
+        <nav className="side-nav">
+          {NAV.map(({ id, label, icon: Icon }) => (
+            <button
+              key={id}
+              className={'side-item' + (active === id ? ' active' : '')}
+              onClick={() => { onNavigate(id); setOpen(false) }}
+              title={label}
+            >
+              <Icon size={19} strokeWidth={1.8} className="s-ico" />
+              <span className="s-label">{label}</span>
+            </button>
+          ))}
+        </nav>
+        <div className="side-foot">
+          <div className="side-user">
+            <span className="side-user-av">AV</span>
+            <div><b>Ananya Verma</b><span>CUET 2027</span></div>
+          </div>
+          <button
+            className="side-collapse"
+            onClick={() => setRail(!rail)}
+            title={rail ? 'Expand sidebar' : 'Collapse sidebar'}
+            aria-label="Toggle sidebar width"
+          >
+            {rail ? <PanelLeftOpen size={15} /> : <PanelLeftClose size={15} />}
+          </button>
+        </div>
+      </aside>
+    </>
+  )
+}
+
+/* ── Notifications (populated only from REAL derivable triggers) ── */
+function NotificationsPanel({ onClose }) {
+  let dueToday = 0
+  try {
+    const deck = JSON.parse(localStorage.getItem('cp_deck') || '[]')
+    dueToday = deck.filter(c => c.state !== 'mastered' && c.nextReview <= todayISO()).length
+  } catch { /* ignore */ }
+  const items = []
+  if (dueToday > 0) items.push({ k: 'revision', label: `${dueToday} revision card${dueToday > 1 ? 's' : ''} due today`, sub: 'Smart Revision · spaced repetition' })
+  return (
+    <div className="dd" onClick={e => e.stopPropagation()}>
+      <div className="dd-head">Notifications</div>
+      {items.length === 0 ? (
+        <div className="dd-empty">You're all caught up — no new notifications.</div>
+      ) : (
+        items.map(i => (
+          <button key={i.k} className="dd-item" onClick={onClose}><CircleAlert size={15} style={{ color: 'var(--warning)' }} />{i.label}</button>
+        ))
+      )}
+    </div>
+  )
+}
+
+function Dropdown({ onClose, children }) {
+  useEffect(() => {
+    const h = () => onClose()
+    document.addEventListener('click', h)
+    return () => document.removeEventListener('click', h)
+  }, [onClose])
+  return <>{children}</>
+}
+
+/* ── Topbar ── */
+function Topbar({ page, onNavigate, setMenuOpen, theme, setTheme }) {
+  const [dd, setDd] = useState(null) // 'bell' | 'user'
+  const closeDd = useCallback(() => setDd(null), [])
+  const go = id => { onNavigate(id); closeDd() }
+  return (
+    <header className="topbar">
+      <button className="tb-menu" onClick={() => setMenuOpen(true)} aria-label="Open menu"><Menu size={19} /></button>
+      <div className="tb-search"><Search size={15} /><input placeholder="Search topics, tools, colleges…" onKeyDown={e => { if (e.key === 'Enter') e.target.blur() }} /></div>
+      <div className="tb-spacer" />
+      <button className="tb-icon" onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')} aria-label="Toggle theme" title="Toggle theme">
+        {theme === 'dark' ? <Sun size={17} /> : <Moon size={17} />}
+      </button>
+      <div style={{ position: 'relative' }}>
+        <button className="tb-icon" onClick={e => { e.stopPropagation(); setDd(dd === 'bell' ? null : 'bell') }} aria-label="Notifications">
+          <Bell size={17} />
+          <i className="tb-dot" />
+        </button>
+        {dd === 'bell' && <Dropdown onClose={closeDd}><NotificationsPanel onClose={closeDd} /></Dropdown>}
+      </div>
+      <div style={{ position: 'relative' }}>
+        <button className="tb-user" onClick={e => { e.stopPropagation(); setDd(dd === 'user' ? null : 'user') }}>
+          <span className="tb-user-av">AV</span>
+          <b>Ananya</b>
+          <ChevronDown size={14} />
+        </button>
+        {dd === 'user' && (
+          <Dropdown onClose={closeDd}>
+            <div className="dd">
+              <button className="dd-item" onClick={() => go('profile')}><User size={15} />Profile & Settings</button>
+              <button className="dd-item" onClick={() => alert('Deep-link → Upgrade plan')}><Crown size={15} />Upgrade to Pro</button>
+              <button className="dd-item" onClick={() => alert('Deep-link → Help centre')}><HelpCircle size={15} />Help & support</button>
+              <div className="dd-div" />
+              <button className="dd-item danger" onClick={() => alert('Deep-link → Sign out')}><LogOut size={15} />Sign out</button>
+            </div>
+          </Dropdown>
+        )}
+      </div>
+    </header>
+  )
+}
+
+/* ── Bottom nav (mobile) ── */
+function BottomNav({ active, onNavigate }) {
+  return (
+    <nav className="bottom-nav">
+      {PRIMARY_NAV.map(id => {
+        const item = NAV.find(n => n.id === id)
+        const Icon = item.icon
+        return (
+          <button key={id} className={'bn-item' + (active === id ? ' active' : '')} onClick={() => onNavigate(id)}>
+            <span className="bn-ico"><Icon size={19} /></span>
+            {item.label.split(' ')[0]}
+          </button>
+        )
+      })}
+    </nav>
+  )
+}
+
+/* ── Toast system ── */
+const ToastCtx = createContext(() => {})
+// oxlint-disable-next-line react/only-export-components
+export const useToast = () => useContext(ToastCtx)
+export function ToastProvider({ children }) {
+  const [toasts, setToasts] = useState([])
+  const toast = useCallback((msg, type = 'info', sub) => {
+    const id = Date.now() + Math.random()
+    setToasts(t => [...t, { id, msg, type, sub }])
+    setTimeout(() => setToasts(t => t.filter(x => x.id !== id)), 3800)
+  }, [])
+  return (
+    <ToastCtx.Provider value={toast}>
+      {children}
+      <div className="toast-view">
+        {toasts.map(t => (
+          <div key={t.id} className={'toast ' + t.type}>
+            {t.type === 'success' ? <CircleCheck size={16} style={{ color: 'var(--success)', flexShrink: 0, marginTop: 1 }} />
+              : t.type === 'error' ? <CircleAlert size={16} style={{ color: 'var(--error)', flexShrink: 0, marginTop: 1 }} />
+                : <Info size={16} style={{ color: 'var(--info)', flexShrink: 0, marginTop: 1 }} />}
+            <div><b>{t.msg}</b>{t.sub && <span>{t.sub}</span>}</div>
+          </div>
+        ))}
+      </div>
+    </ToastCtx.Provider>
+  )
+}
+
+/* ── Modal ── */
+export function Modal({ open, onClose, title, children, footer }) {
+  useEffect(() => {
+    if (!open) return
+    const h = e => { if (e.key === 'Escape') onClose() }
+    document.addEventListener('keydown', h)
+    return () => document.removeEventListener('keydown', h)
+  }, [open, onClose])
+  if (!open) return null
+  return (
+    <div className="modal-scrim" onClick={onClose}>
+      <div className="modal" onClick={e => e.stopPropagation()} role="dialog" aria-modal="true">
+        <button className="modal-x" onClick={onClose} aria-label="Close"><X size={16} /></button>
+        {title && <h3>{title}</h3>}
+        {children}
+        {footer && <div className="modal-foot">{footer}</div>}
+      </div>
+    </div>
+  )
+}
+
+/* ── App shell ── */
+export default function AppShell({ page, onNavigate, children }) {
+  const [rail, setRail] = useState(false)
+  const [menuOpen, setMenuOpen] = useState(false)
+  const [theme, setTheme] = useTheme()
+  return (
+    <div className={'shell' + (rail ? ' rail' : '')}>
+      <Sidebar active={page} onNavigate={onNavigate} rail={rail} setRail={setRail} open={menuOpen} setOpen={setMenuOpen} />
+      <div className="shell-main">
+        <Topbar page={page} onNavigate={onNavigate} setMenuOpen={setMenuOpen} theme={theme} setTheme={setTheme} />
+        {children}
+      </div>
+      <BottomNav active={page} onNavigate={onNavigate} />
+    </div>
+  )
+}
