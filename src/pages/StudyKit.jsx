@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react'
 import {
   NotebookText, Layers, Map as MapIcon, Dumbbell, Timer, FileQuestion, Archive, ArrowLeft,
   BookOpen, PlayCircle, ListChecks, Video, Sigma, Zap, ChevronRight, Flame, Target, CheckSquare,
-  Search, GraduationCap, FlaskConical,
+  Search, GraduationCap, FlaskConical, Settings,
 } from 'lucide-react'
 import { boostRanking, weakTopicNames } from '../lib/analysisData'
 import { useProfile, STREAMS } from '../lib/profile'
@@ -91,12 +91,14 @@ export default function StudyKit({ onNavigate }) {
         </div>
       </header>
 
-      {/* Stream + subject — single source of truth in Profile */}
-      <div className="sk-stream">
-        <label>Your stream</label>
-        <span className="sk-stream-value">{stream}</span>
-        <button className="btn btn-outline-sm" onClick={() => onNavigate('profile')}>Change in Profile</button>
-        <span className="sk-stream-subjects">{STREAMS[stream].join(' · ')}</span>
+      {/* Stream — compact: name + subjects inline, small icon routes to Profile (single source of truth) */}
+      <div className="sk-topline">
+        <span className="sk-topline-ico"><GraduationCap size={15} /></span>
+        <b className="sk-topline-stream">{stream}</b>
+        <span className="sk-topline-subjects">{STREAMS[stream].join(' · ')}</span>
+        <button className="sk-topline-edit" title="Change stream in Profile" aria-label="Change stream" onClick={() => onNavigate('profile')}>
+          <Settings size={14} />
+        </button>
       </div>
       <div className="subj-pills">
         <button className={'subj-pill' + (subject === 'all' ? ' on' : '')} onClick={() => setSubject('all')}>All subjects</button>

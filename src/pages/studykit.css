@@ -165,3 +165,13 @@
   .wb-rail-foot { display: none; }
   .wb-list { max-height: none; }
 }
+
+/* ── Compact stream line (replaces big strip) ── */
+.sk-topline { display: flex; align-items: center; gap: 8px; margin: 2px 0 14px; flex-wrap: wrap; }
+.sk-topline-ico { width: 26px; height: 26px; flex-shrink: 0; border-radius: var(--r-sm); display: inline-flex; align-items: center; justify-content: center; background: var(--primary-soft); color: var(--primary); }
+.sk-topline-stream { font-family: var(--font-display); font-size: 14.5px; color: var(--text); }
+.sk-topline-subjects { font-size: 12px; color: var(--text-muted); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sk-topline-edit { width: 28px; height: 28px; flex-shrink: 0; margin-left: auto; display: inline-flex; align-items: center; justify-content: center;
+  border: 1px solid var(--border); background: var(--surface); color: var(--text-secondary); border-radius: var(--r-sm); cursor: pointer; transition: all .13s; }
+.sk-topline-edit:hover { border-color: var(--primary); color: var(--primary); background: var(--primary-soft); }
+@media (max-width: 640px) { .sk-topline-subjects { white-space: normal; width: 100%; order: 5; } .sk-topline-edit { margin-left: 0; } }
