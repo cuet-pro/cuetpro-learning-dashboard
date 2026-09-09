@@ -89,23 +89,21 @@ export default function StudyKit({ onNavigate }) {
           <h1>Study Kit</h1>
           <p>Learning tools to build understanding, testing tools to prove it.</p>
         </div>
-      </header>
-
-      {/* Stream + subject pills — one compact row, even width use (pills ARE the subjects) */}
-      <div className="sk-headrow">
-        <div className="sk-topline">
-          <span className="sk-topline-ico"><GraduationCap size={15} /></span>
-          <b className="sk-topline-stream">{stream}</b>
-          <button className="sk-topline-edit" title="Change stream in Profile" aria-label="Change stream" onClick={() => onNavigate('profile')}>
+        {/* Stream — top-right, small; settings routes to Profile (single source of truth) */}
+        <div className="sk-topright">
+          <span className="sk-tr-stream"><GraduationCap size={13} /> {stream}</span>
+          <button className="sk-tr-edit" title="Change stream in Profile" aria-label="Change stream" onClick={() => onNavigate('profile')}>
             <Settings size={14} />
           </button>
         </div>
-        <div className="subj-pills">
-          <button className={'subj-pill' + (subject === 'all' ? ' on' : '')} onClick={() => setSubject('all')}>All subjects</button>
-          {STREAMS[stream].map(s => (
-            <button key={s} className={'subj-pill' + (subject === s ? ' on' : '')} onClick={() => setSubject(s)}>{s}</button>
-          ))}
-        </div>
+      </header>
+
+      {/* Subject pills — single scrolling line */}
+      <div className="sk-pillsline">
+        <button className={'subj-pill' + (subject === 'all' ? ' on' : '')} onClick={() => setSubject('all')}>All subjects</button>
+        {STREAMS[stream].map(s => (
+          <button key={s} className={'subj-pill' + (subject === s ? ' on' : '')} onClick={() => setSubject(s)}>{s}</button>
+        ))}
       </div>
 
       {/* Continue strip */}

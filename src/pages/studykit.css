@@ -189,3 +189,18 @@
   .sk-headrow { align-items: flex-start; gap: 10px; }
   .sk-headrow .subj-pills { justify-content: flex-start; width: 100%; order: 9; }
 }
+
+/* ── Stream top-right + single-line scrolling subject pills ── */
+.page-head { align-items: flex-end; justify-content: space-between; }
+.sk-topright { display: flex; align-items: center; gap: 6px; margin-bottom: 2px; }
+.sk-tr-stream { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700; color: var(--text-secondary);
+  background: var(--surface); border: 1px solid var(--border); padding: 6px 11px; border-radius: var(--r-full); }
+.sk-tr-stream svg { color: var(--primary); }
+.sk-tr-edit { width: 28px; height: 28px; display: inline-flex; align-items: center; justify-content: center;
+  border: 1px solid var(--border); background: var(--surface); color: var(--text-secondary); border-radius: var(--r-full); cursor: pointer; transition: all .13s; }
+.sk-tr-edit:hover { border-color: var(--primary); color: var(--primary); background: var(--primary-soft); }
+
+.sk-pillsline { display: flex; align-items: center; gap: 8px; overflow-x: auto; padding-bottom: 10px; margin: 0 0 2px;
+  scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+.sk-pillsline::-webkit-scrollbar { display: none; }
+.sk-pillsline .subj-pill { flex-shrink: 0; white-space: nowrap; }
