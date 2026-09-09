@@ -1,86 +1,100 @@
-/* CUET Pro — Design tokens (preserved from existing design) */
+/* ═══════════════════════════════════════════════════════════════
+   CUET Pro — "Clarity" design tokens  (single source of truth)
+   §4 of redesign spec: NEW UI + OLD data + OLD logic
+   ═══════════════════════════════════════════════════════════════ */
 :root {
-  --navy-900: #0E1B30;
-  --navy-800: #13233C;
-  --navy-700: #172A48;
-  --navy-600: #1A2C49;
-  --navy-500: #22395C;
-  --navy-300: #55709C;
-  --navy-200: #B3C2D9;
-  --navy-100: #D9E2EF;
-  --navy-50: #EEF3F9;
+  /* brand */
+  --primary: #146C4E;        --primary-hover: #0F5A40;   --primary-soft: #E6F3EE;
+  --secondary: #1D3557;      --secondary-soft: #EAF0F7;
+  --accent: #E8A33D;         --accent-soft: #FDF1DE;
 
-  --green-800: #04683F;
-  --green-700: #078054;
-  --green-600: #00A669;
-  --green-500: #00C97F;
-  --green-400: #52DCA8;
-  --green-100: #E5FBF3;
-  --green-50: #F0FDF8;
+  /* surfaces */
+  --bg: #F6F7F9;
+  --surface: #FFFFFF;
+  --surface-elevated: #FFFFFF;
+  --border: #E2E5EA;
+  --border-strong: #CBD1DA;
 
-  --blue-700: #1D4ED8;
-  --blue-500: #2F6FED;
-  --blue-100: #EAF1FE;
+  /* text */
+  --text: #14171F;
+  --text-secondary: #4B5265;
+  --text-muted: #8A90A0;
 
-  --warning-600: #C77700;
-  --warning-500: #F5A623;
-  --warning-100: #FDF3E2;
-  --warning-50: #FFF8EC;
-  --amber-600: var(--warning-600);
-  --amber-500: var(--warning-500);
-  --amber-100: var(--warning-100);
+  /* status */
+  --success: #1E9E6B;        --success-soft: #E7F6EF;
+  --warning: #B4750A;        --warning-soft: #FBF1DF;
+  --error: #C8382B;          --error-soft: #FBEAE8;
+  --info: #2F6FDB;           --info-soft: #EAF1FC;
 
-  --red-600: #C0392B;
-  --red-500: #E5484D;
-  --red-100: #FDF2F1;
-
-  --gray-0: #FFFFFF;
-  --gray-50: #F5F7FA;
-  --gray-100: #EEF1F6;
-  --gray-200: #E3E8F0;
-  --gray-300: #C9D2DF;
-  --gray-500: #7C889B;
-  --gray-600: #5B667A;
-  --gray-700: #3B4658;
-
-  /* semantic */
-  --text-primary: var(--navy-700);
-  --text-secondary: var(--gray-600);
-  --text-tertiary: var(--gray-500);
-
-  /* spacing */
-  --space-1: 4px; --space-2: 8px; --space-3: 12px; --space-4: 16px;
-  --space-5: 20px; --space-6: 24px; --space-8: 32px;
-
-  --radius-full: 999px;
-  --radius-lg: 18px;
-  --radius-md: 12px;
-  --radius-sm: 8px;
-  --shadow-xs: 0 1px 2px rgba(14, 27, 48, 0.05);
-  --shadow-card: 0 1px 2px rgba(14, 27, 48, 0.05), 0 4px 14px rgba(14, 27, 48, 0.06);
-
-  --font-display: 'Sora', 'Segoe UI', sans-serif;
-  --font-body: 'Plus Jakarta Sans', -apple-system, 'Segoe UI', sans-serif;
+  /* type */
+  --font-display: 'Sora', sans-serif;
+  --font-body: 'Inter', -apple-system, 'Segoe UI', sans-serif;
   --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
 
-  --text-display-xl: 64px;
-  --text-heading-lg: 28px;
-  --text-heading-md: 22px;
-  --text-heading-sm: 18px;
-  --text-body-md: 16px;
-  --tracking-caps: 0.08em;
-  --tracking-wide: 0.04em;
-  --leading-relaxed: 1.6;
+  /* spacing */
+  --sp-1: 4px; --sp-2: 8px; --sp-3: 12px; --sp-4: 16px; --sp-5: 20px;
+  --sp-6: 24px; --sp-7: 32px; --sp-8: 40px; --sp-9: 56px;
+
+  /* radius */
+  --r-sm: 6px; --r-md: 10px; --r-lg: 14px; --r-full: 999px;
+
+  /* elevation */
+  --shadow-sm: 0 1px 2px rgba(20, 23, 31, 0.05);
+  --shadow-md: 0 4px 14px rgba(20, 23, 31, 0.07);
+  --shadow-lg: 0 16px 40px rgba(20, 23, 31, 0.14);
+
+  /* ═══ DEPRECATED alias layer ═══
+     Maps the previous navy/green token vocabulary onto Clarity values so
+     existing page CSS re-skins instantly with zero logic change. Pages are
+     migrating to the new names as they are rebuilt (see REDESIGN_MAPPING.md). */
+  --navy-900: var(--secondary);  --navy-800: var(--secondary);  --navy-700: var(--secondary);
+  --navy-600: var(--secondary);  --navy-500: var(--secondary);
+  --navy-300: #7C8AA0;           --navy-200: #9AA7BC;           --navy-100: var(--secondary-soft);
+  --navy-50: var(--secondary-soft);
+  --green-800: var(--primary-hover); --green-700: var(--primary-hover); --green-600: var(--primary);
+  --green-500: var(--primary);       --green-400: var(--primary);
+  --green-100: var(--primary-soft);  --green-50: var(--primary-soft);
+  --blue-700: #1D4ED8;           --blue-500: var(--info);       --blue-100: var(--info-soft);
+  --warning-600: var(--warning); --warning-500: #D98A16;       --warning-100: var(--warning-soft);
+  --warning-50: #FFF6E8;
+  --amber-600: var(--warning);   --amber-500: #D98A16;         --amber-100: var(--warning-soft);
+  --red-600: var(--error);       --red-500: var(--error);      --red-100: var(--error-soft);
+  --gray-0: var(--surface);      --gray-50: var(--bg);         --gray-100: #EDF0F3;
+  --gray-200: var(--border);     --gray-300: var(--border-strong); --gray-500: var(--text-muted);
+  --gray-600: var(--text-secondary); --gray-700: var(--text);
+  --text-primary: var(--text);   --text-secondary: var(--text-secondary); --text-tertiary: var(--text-muted);
+  --space-1: var(--sp-1); --space-2: var(--sp-2); --space-3: var(--sp-3); --space-4: var(--sp-4);
+  --space-5: var(--sp-5); --space-6: var(--sp-6); --space-8: var(--sp-7);
+  --radius-full: var(--r-full); --radius-lg: var(--r-lg); --radius-md: var(--r-md); --radius-sm: var(--r-sm);
+  --shadow-xs: var(--shadow-sm); --shadow-card: var(--shadow-sm);
+  --text-display-xl: 64px; --text-heading-lg: 28px; --text-heading-md: 22px;
+  --text-heading-sm: 18px; --text-body-md: 16px;
+  --tracking-caps: 0.08em; --tracking-wide: 0.04em; --leading-relaxed: 1.6;
 }
+
+/* ═══ Dark mode (Clarity) — redefines the same variable names ═══ */
+[data-theme="dark"] {
+  --primary: #2E9C73;  --primary-hover: #3BB084;  --primary-soft: #14322A;
+  --secondary: #8FA6C4; --secondary-soft: #1B2637;
+  --accent: #E8A33D;   --accent-soft: #33270F;
+  --bg: #0E1218;       --surface: #161B24;        --surface-elevated: #1C2230;
+  --border: #262E3C;   --border-strong: #364054;
+  --text: #E7EAF0;     --text-secondary: #A9B1C1; --text-muted: #6E7788;
+  --success: #38C889;  --success-soft: #123226;
+  --warning: #E0A33D;  --warning-soft: #33270F;
+  --error: #E2695C;    --error-soft: #331716;
+  --info: #5B92F0;     --info-soft: #14253D;
+}
+
 * { margin: 0; padding: 0; box-sizing: border-box; }
 html, body { height: 100%; }
 body {
   font-family: var(--font-body);
-  background: var(--gray-0);
-  color: var(--navy-700);
+  background: var(--bg);
+  color: var(--text);
   -webkit-font-smoothing: antialiased;
 }
 button { font-family: inherit; cursor: pointer; border: none; background: none; }
 a { text-decoration: none; color: inherit; }
 ::-webkit-scrollbar { width: 8px; height: 8px; }
-::-webkit-scrollbar-thumb { background: var(--gray-300); border-radius: 8px; }
+::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 8px; }

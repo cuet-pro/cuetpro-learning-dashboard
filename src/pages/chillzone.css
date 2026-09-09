@@ -1,13 +1,13 @@
 /* CUET Pro — Chill Zone (social, low-pressure layer) */
 
 .cz-points { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; font-weight: 800; color: var(--green-700); background: var(--green-50); border: 1px solid var(--green-100); padding: 7px 14px; border-radius: 999px; flex-shrink: 0; }
-.cz-toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: var(--navy-700); color: #fff; font-size: 13px; font-weight: 700; padding: 11px 22px; border-radius: 999px; box-shadow: 0 8px 24px rgba(14,27,48,.25); z-index: 50; animation: cz-pop .2s ease; }
+.cz-toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: linear-gradient(120deg, var(--primary), var(--secondary)); color: #fff; font-size: 13px; font-weight: 700; padding: 11px 22px; border-radius: 999px; box-shadow: var(--shadow-md); z-index: 50; animation: cz-pop .2s ease; }
 @keyframes cz-pop { from { opacity: 0; transform: translateX(-50%) translateY(8px); } to { opacity: 1; transform: translateX(-50%); } }
 
 /* A. Study rooms */
-.cz-room { background: linear-gradient(120deg, var(--navy-700), var(--navy-500)); color: #fff; border-radius: 16px; padding: 22px 24px; margin-bottom: var(--space-5); }
+.cz-room { background: linear-gradient(120deg, var(--primary), var(--secondary)); color: #fff; border-radius: 16px; padding: 22px 24px; margin-bottom: var(--space-5); }
 .cz-room-head { display: flex; align-items: center; gap: 12px; margin-bottom: 8px; }
-.cz-room-ico { width: 40px; height: 40px; border-radius: 11px; background: rgba(0,201,127,.2); color: var(--green-400); display: grid; place-items: center; }
+.cz-room-ico { width: 40px; height: 40px; border-radius: 11px; background: rgba(255,255,255,.16); color: #fff; display: grid; place-items: center; }
 .cz-room-title h3 { font-family: var(--font-display); font-size: 16px; }
 .cz-live { display: flex; align-items: center; gap: 6px; font-size: 12px; color: rgba(255,255,255,.85); margin-top: 2px; }
 .cz-live i { width: 8px; height: 8px; border-radius: 50%; background: var(--green-400); animation: cz-pulse 1.6s infinite; }
@@ -17,11 +17,11 @@
 .cz-session-label { font-size: 11px; font-weight: 700; color: var(--navy-200); text-transform: uppercase; letter-spacing: .5px; }
 .cz-mins { display: flex; gap: 6px; }
 .cz-min { font-size: 12px; font-weight: 700; padding: 7px 14px; border-radius: 9px; background: rgba(255,255,255,.1); color: #fff; border: 1px solid rgba(255,255,255,.15); transition: all .15s; }
-.cz-min.on { background: var(--green-500); border-color: var(--green-500); color: var(--navy-900); }
-.cz-join { background: var(--green-500); color: var(--navy-900); }
+.cz-min.on { background: var(--primary); border-color: var(--primary); color: #fff; }
+.cz-join { background: var(--primary); color: #fff; }
 .cz-session { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
 .cz-timer { display: flex; align-items: center; gap: 8px; background: rgba(255,255,255,.1); border-radius: 12px; padding: 10px 16px; }
-.cz-timer svg { color: var(--green-400); }
+.cz-timer svg { color: rgba(255,255,255,.92); }
 .cz-timer b { font-family: var(--font-mono); font-size: 20px; letter-spacing: 1px; }
 .cz-timer span { font-size: 11px; color: rgba(255,255,255,.75); }
 .cz-room-livebar { flex: 1; min-width: 120px; height: 6px; background: rgba(255,255,255,.15); border-radius: 6px; overflow: hidden; }
@@ -84,3 +84,7 @@
   .cz-invite-row { flex-direction: column; align-items: stretch; }
   .cz-invite-link { text-align: center; }
 }
+
+[data-theme="dark"] .cz-room { background: linear-gradient(120deg, var(--primary-hover), var(--secondary-soft)); border: 1px solid var(--border); }
+[data-theme="dark"] .cz-toast { background: var(--secondary-soft); border: 1px solid var(--border); }
+[data-theme="dark"] .cz-join, [data-theme="dark"] .cz-min.on { background: var(--primary); border-color: var(--primary); color: #fff; }

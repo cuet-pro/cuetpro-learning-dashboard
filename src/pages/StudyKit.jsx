@@ -1,5 +1,9 @@
-import { useState } from 'react'
-import { NotebookText, Layers, Map as MapIcon, Dumbbell, Timer, FileQuestion, Archive, ArrowLeft, BookOpen, PlayCircle, ListChecks, Video, Sigma, Zap, ChevronRight, Flame, Target, CheckSquare } from 'lucide-react'
+import { useMemo, useState } from 'react'
+import {
+  NotebookText, Layers, Map as MapIcon, Dumbbell, Timer, FileQuestion, Archive, ArrowLeft,
+  BookOpen, PlayCircle, ListChecks, Video, Sigma, Zap, ChevronRight, Flame, Target, CheckSquare,
+  Search, GraduationCap, FlaskConical, Settings,
+} from 'lucide-react'
 import { boostRanking, weakTopicNames } from '../lib/analysisData'
 import { useProfile, STREAMS } from '../lib/profile'
 import './studykit.css'
@@ -30,18 +34,20 @@ const LEARNING_TOOLS = [
   { id: 'videos', icon: Video, title: 'Video lectures', desc: 'Short concept videos — 5-10 min each.', progress: { done: 7, total: 12, label: 'watched' } },
   { id: 'formulas', icon: Sigma, title: 'Formula sheets', desc: 'Quick-reference formula cards per subject.', progress: { done: 4, total: 6, label: 'viewed' } },
 ]
-
 const TESTING_TOOLS = [
-  { id: 'quizzes', icon: Timer, title: '5-Minute Quick Quizzes', desc: 'Short, low-pressure self-checks — repeat anytime.' },
-  { id: 'mocks', icon: FileQuestion, title: 'Mock Tests', desc: 'Full-length, CUET-pattern, timed & auto-scored.' },
-  { id: 'pyqs', icon: Archive, title: 'Previous Year Questions', desc: 'Shift-wise & topic-wise PYQ bank, filterable.' },
+  { id: 'quizzes', icon: Timer, title: '5-Minute Quick Quizzes', desc: 'Short, low-pressure self-checks — repeat anytime.', meta: { streak: '3-day streak', last: 'Last score 82%' } },
+  { id: 'mocks', icon: FileQuestion, title: 'Mock Tests', desc: 'Full-length, CUET-pattern, timed & auto-scored.', meta: { inProgress: 'Mock Test 7 · 60%', sub: 'Section 3 of 5 left' } },
+  { id: 'pyqs', icon: Archive, title: 'Previous Year Questions', desc: 'Shift-wise & topic-wise PYQ bank, filterable.', progress: { done: 60, total: 100, label: 'attempted' } },
 ]
+const ALL_TOOLS = [...LEARNING_TOOLS, ...TESTING_TOOLS]
 
 export default function StudyKit({ onNavigate }) {
   const [profile] = useProfile()
   const stream = profile.stream
-  const [subject, setSubject] = useState('all') /* selected subject pill — drives everything below */
-  const [open, setOpen] = useState(null)
+  const [subject, setSubject] = useState('all')
+  const [category, setCategory] = useState('learning')
+  const [selected, setSelected] = useState('notes')
+  const [query, setQuery] = useState('')
   const [weakOnly, setWeakOnly] = useState(false)
   const [examMode, setExamMode] = useState(false)
   const [lastActivity, setLastActivity] = useState(() => {
@@ -59,19 +65,22 @@ export default function StudyKit({ onNavigate }) {
   const top3 = ranked.slice(0, 3)
   const weakTopics = weakTopicNames(boostScope)
   const streamSubjects = STREAMS[stream] || []
-
-  /* continue strip respects the current stream */
   const showContinue = lastActivity && (!lastActivity.subject || streamSubjects.includes(lastActivity.subject))
 
-  const tool = LEARNING_TOOLS.find(t => t.id === open) || TESTING_TOOLS.find(t => t.id === open)
-
-  /* Notes progress — subject-specific when a pill is selected */
   const notesProgress = subject === 'all'
     ? LEARNING_TOOLS.find(t => t.id === 'notes').progress
     : (() => {
         const s = (NOTES_BY_STREAM[stream] || []).find(n => n.s === subject)
         return s ? { done: s.done, total: s.chapters.length, label: 'chapters' } : { done: 0, total: 0, label: 'chapters' }
       })()
+
+  /* searchable tool list — shows results across both categories */
+  const q = query.trim().toLowerCase()
+  const learningVisible = q ? LEARNING_TOOLS.filter(t => (t.title + ' ' + t.desc).toLowerCase().includes(q)) : category === 'learning' ? LEARNING_TOOLS : []
+  const testingVisible = q ? TESTING_TOOLS.filter(t => (t.title + ' ' + t.desc).toLowerCase().includes(q)) : category === 'testing' ? TESTING_TOOLS : []
+  const totalVisible = learningVisible.length + testingVisible.length
+  const progFor = t => (t.id === 'notes' ? notesProgress : t.progress) || { done: 0, total: 0, label: '' }
+  const tool = ALL_TOOLS.find(t => t.id === selected)
 
   return (
     <div className="page">
@@ -80,25 +89,24 @@ export default function StudyKit({ onNavigate }) {
           <h1>Study Kit</h1>
           <p>Learning tools to build understanding, testing tools to prove it.</p>
         </div>
+        {/* Stream — top-right, small; settings routes to Profile (single source of truth) */}
+        <div className="sk-topright">
+          <span className="sk-tr-stream"><GraduationCap size={13} /> {stream}</span>
+          <button className="sk-tr-edit" title="Change stream in Profile" aria-label="Change stream" onClick={() => onNavigate('profile')}>
+            <Settings size={14} />
+          </button>
+        </div>
       </header>
 
-      {/* A. Stream — single source of truth, set in Profile */}
-      <div className="sk-stream">
-        <label>Your stream</label>
-        <span className="sk-stream-value">{stream}</span>
-        <button className="btn btn-outline-sm" onClick={() => onNavigate('profile')}>Change in Profile</button>
-        <span className="sk-stream-subjects">{STREAMS[stream].join(' · ')}</span>
-      </div>
-
-      {/* Subject pills — same component as Analysis, drives everything below */}
-      <div className="subj-pills">
+      {/* Subject pills — single scrolling line */}
+      <div className="sk-pillsline">
         <button className={'subj-pill' + (subject === 'all' ? ' on' : '')} onClick={() => setSubject('all')}>All subjects</button>
         {STREAMS[stream].map(s => (
           <button key={s} className={'subj-pill' + (subject === s ? ' on' : '')} onClick={() => setSubject(s)}>{s}</button>
         ))}
       </div>
 
-      {/* B. Continue where you left off */}
+      {/* Continue strip */}
       {showContinue && (
         <section className="sk-continue">
           <div className="sk-continue-ico"><PlayCircle size={18} /></div>
@@ -111,9 +119,9 @@ export default function StudyKit({ onNavigate }) {
         </section>
       )}
 
-      {/* C. Recommended for you — live pull from Boost Plan */}
+      {/* Recommended — live boost pull */}
       {top3.length > 0 && (
-        <section className="sk-recommended">
+        <section className="sk-rec">
           <div className="sk-rec-head">
             <div className="sk-rec-ico"><Target size={17} /></div>
             <div>
@@ -125,138 +133,104 @@ export default function StudyKit({ onNavigate }) {
             <div className="sk-rec-row" key={t.name + t.subject}>
               <span className="status-dot" style={{ background: t.acc < 50 ? 'var(--red-500)' : t.acc < 75 ? 'var(--warning-500)' : 'var(--green-500)' }} />
               <span className="sk-rec-name">{t.name}<small>{t.subject}</small></span>
-              <button className="btn btn-outline-sm" onClick={() => { record({ title: t.name + ' — notes', subject: t.subject, detail: t.subject + ' · chapter 1', pct: 15 }); alert('Deep-link → notes: ' + t.name) }}>Notes</button>
-              <button className="btn btn-outline-sm" onClick={() => { record({ title: t.name + ' — flashcards', subject: t.subject, detail: t.subject + ' · deck', pct: 30 }); alert('Deep-link → flashcards: ' + t.name) }}>Flashcards</button>
-              <button className="btn btn-outline-sm" onClick={() => { record({ title: t.name + ' — exercises', subject: t.subject, detail: t.subject + ' · set 1', pct: 40 }); alert('Deep-link → exercises: ' + t.name) }}>Exercises</button>
+              <button className="btn btn-outline-sm" onClick={() => { setSelected('notes'); record({ title: t.name + ' — notes', subject: t.subject, detail: t.subject + ' · chapter 1', pct: 15 }); alert('Deep-link → notes: ' + t.name) }}>Notes</button>
+              <button className="btn btn-outline-sm" onClick={() => { setSelected('flashcards'); record({ title: t.name + ' — flashcards', subject: t.subject, detail: t.subject + ' · deck', pct: 30 }); alert('Deep-link → flashcards: ' + t.name) }}>Flashcards</button>
+              <button className="btn btn-outline-sm" onClick={() => { setSelected('exercises'); record({ title: t.name + ' — exercises', subject: t.subject, detail: t.subject + ' · set 1', pct: 40 }); alert('Deep-link → exercises: ' + t.name) }}>Exercises</button>
             </div>
           ))}
         </section>
       )}
 
-      {!tool ? (
-        <div className="sk-stack">
-          {/* Learning tools */}
-          <div className="sk-group">
-            <div className="sk-group-label"><BookOpen size={16} /> Learning Tools</div>
-            <div className="sk-grid">
-              {LEARNING_TOOLS.map(t => {
-                const prog = t.id === 'notes' ? notesProgress : t.progress
-                return (
-                  <div className="sk-card" key={t.id} onClick={() => { record({ title: t.title, subject: subject === 'all' ? undefined : subject, detail: subject === 'all' ? 'all subjects' : subject, pct: 20 }); setOpen(t.id) }}>
-                    <div className="sk-ico"><t.icon size={20} /></div>
-                    <h3>{t.title}</h3>
-                    <p>{t.desc}</p>
-                    <div className="sk-card-progress">
-                      <div className="sk-card-bar"><i style={{ width: prog.total ? (prog.done / prog.total * 100) + '%' : '0%' }} /></div>
-                      <span>{prog.total ? prog.done + '/' + prog.total + ' ' + prog.label : '—'}</span>
-                    </div>
-                  </div>
-                )
-              })}
+      {/* Focus mock banner */}
+      <section className="sk-focusmock">
+        <div className="sk-focusmock-ico"><Zap size={20} /></div>
+        <div className="sk-focusmock-info">
+          <h3>Focus mock</h3>
+          <p>A short mock built only from what you need to work on right now — about 20 minutes.</p>
+        </div>
+        <button className="btn btn-primary-sm" onClick={() => alert('Deep-link → focus mock session (from boost topics: ' + top3.slice(0, 3).map(t => t.name).join(', ') + ')')}>Generate focus mock</button>
+      </section>
+
+      {/* Workbench: category rail + searchable tool list + preview pane */}
+      <div className="wb">
+        <aside className="wb-rail">
+          <button className={'wb-cat' + (category === 'learning' ? ' on' : '')} onClick={() => { setCategory('learning'); setQuery('') }}>
+            <GraduationCap size={16} /> Learning <em>{q ? '' : LEARNING_TOOLS.length}</em>
+          </button>
+          <button className={'wb-cat' + (category === 'testing' ? ' on' : '')} onClick={() => { setCategory('testing'); setQuery('') }}>
+            <FlaskConical size={16} /> Testing <em>{q ? '' : TESTING_TOOLS.length}</em>
+          </button>
+          <div className="wb-rail-foot">Pick a tool to preview it →</div>
+        </aside>
+
+        <div className="wb-list">
+          <div className="wb-search">
+            <Search size={14} />
+            <input placeholder="Search tools…" value={query} onChange={e => setQuery(e.target.value)} />
+          </div>
+          {learningVisible.length > 0 && <div className="wb-list-label">Learning tools</div>}
+          {learningVisible.map(t => {
+            const p = progFor(t)
+            return (
+              <button key={t.id} className={'wb-row' + (selected === t.id && !q ? ' on' : '')} onClick={() => { setSelected(t.id); setCategory('learning') }}>
+                <span className="wb-row-ico"><t.icon size={16} /></span>
+                <span className="wb-row-t">
+                  <b>{t.title}</b>
+                  {p.total > 0 ? <em>{p.done}/{p.total} {p.label}</em> : <em>{t.desc}</em>}
+                  {p.total > 0 && <i className="wb-row-bar"><s style={{ width: (p.done / p.total * 100) + '%' }} /></i>}
+                </span>
+                <ChevronRight size={14} className="wb-row-arr" />
+              </button>
+            )
+          })}
+          {testingVisible.length > 0 && <div className="wb-list-label">Testing tools</div>}
+          {testingVisible.map(t => (
+            <button key={t.id} className={'wb-row' + (selected === t.id && !q ? ' on' : '')} onClick={() => { setSelected(t.id); setCategory('testing') }}>
+              <span className="wb-row-ico"><t.icon size={16} /></span>
+              <span className="wb-row-t">
+                <b>{t.title}</b>
+                <em>{t.meta ? (t.meta.streak || t.meta.inProgress) : t.desc}</em>
+                {t.progress && <i className="wb-row-bar"><s style={{ width: t.progress.done + '%' }} /></i>}
+              </span>
+              <ChevronRight size={14} className="wb-row-arr" />
+            </button>
+          ))}
+          {totalVisible === 0 && <p className="muted-empty">No tools match "{query}".</p>}
+        </div>
+
+        <div className="wb-preview" key={selected}>
+          <div className="wb-preview-head">
+            <span className="wb-preview-ico">{tool && <tool.icon size={18} />}</span>
+            <div>
+              <h3>{tool?.title}</h3>
+              <p>{tool?.desc}</p>
             </div>
           </div>
-
-          {/* Focus mock */}
-          <div className="sk-focusmock">
-            <div className="sk-focusmock-ico"><Zap size={20} /></div>
-            <div className="sk-focusmock-body">
-              <h3>Focus mock</h3>
-              <p>A short mock built only from what you need to work on right now — about 20 minutes.</p>
-            </div>
-            <button className="btn btn-primary-sm" onClick={() => alert('Deep-link → focus mock session (from boost topics: ' + top3.slice(0, 3).map(t => t.name).join(', ') + ')')}>Generate focus mock</button>
-          </div>
-
-          {/* Testing tools */}
-          <div className="sk-group">
-            <div className="sk-group-label"><ListChecks size={16} /> Testing Tools</div>
-            <div className="sk-grid sk-grid-testing">
-              {/* 5-min quiz */}
-              <div className="sk-card" onClick={() => setOpen('quizzes')}>
-                <div className="sk-ico"><Timer size={20} /></div>
-                <h3>5-Minute Quick Quizzes</h3>
-                <p>Short, low-pressure self-checks — repeat anytime.</p>
-                <div className="sk-quiz-meta">
-                  <span className="sk-streak"><Flame size={12} /> 3-day streak</span>
-                  <span className="sk-lastscore">Last score 82%</span>
-                </div>
-                <button className="btn btn-primary-sm sk-quiz-cta" onClick={e => { e.stopPropagation(); alert('Deep-link → today quiz · +20 pts') }}>Take today's quiz · +20 pts</button>
+          <div className="wb-preview-body">
+            {selected === 'notes' && <NotesView stream={stream} subject={subject} record={record} />}
+            {selected === 'flashcards' && <FlashView record={record} />}
+            {selected === 'quizzes' && <QuizView />}
+            {selected === 'pyqs' && <PyqView weakOnly={weakOnly} setWeakOnly={setWeakOnly} />}
+            {selected === 'mocks' && <MockView examMode={examMode} setExamMode={setExamMode} />}
+            {(selected === 'mindmaps' || selected === 'exercises' || selected === 'videos' || selected === 'formulas') && (
+              <div className="sk-placeholder">
+                <PlayCircle size={30} />
+                <p>Working content for this tool ships in the next iteration — design is ready, content pipeline is in progress.</p>
               </div>
-
-              {/* Mock tests */}
-              <div className="sk-card" onClick={() => setOpen('mocks')}>
-                <div className="sk-ico"><FileQuestion size={20} /></div>
-                <h3>Mock Tests</h3>
-                <p>Full-length, CUET-pattern, timed & auto-scored.</p>
-                <div className="sk-mock-state">
-                  <span className="sk-mock-progress-tag">In progress · 60%</span>
-                  <span className="sk-mock-detail">Mock Test 7 · Section 3 of 5 left</span>
-                  <button className="btn btn-primary-sm sk-resume-cta" onClick={e => { e.stopPropagation(); alert('Deep-link → resume Mock Test 7 at Q31') }}>Resume</button>
-                  <div className="sk-exam-mode" onClick={e => e.stopPropagation()}>
-                    <span>Exam mode</span>
-                    <button className={'sk-toggle' + (examMode ? ' on' : '')} onClick={() => setExamMode(m => !m)} aria-label="Toggle exam mode">
-                      <i />
-                    </button>
-                    <span className="sk-exam-hint">{examMode ? 'Fullscreen · timer locked' : 'Pause allowed'}</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* PYQ */}
-              <div className="sk-card" onClick={() => setOpen('pyqs')}>
-                <div className="sk-ico"><Archive size={20} /></div>
-                <h3>Previous Year Questions</h3>
-                <p>Shift-wise & topic-wise PYQ bank, filterable.</p>
-                <div className="sk-card-progress">
-                  <div className="sk-card-bar"><i style={{ width: '60%' }} /></div>
-                  <span>2024 & 2023 papers · 60% attempted</span>
-                </div>
-                <label className="sk-weak-only" onClick={e => e.stopPropagation()}>
-                  <input type="checkbox" checked={weakOnly} onChange={e => setWeakOnly(e.target.checked)} />
-                  <CheckSquare size={13} /> Only show my weak topics
-                  <span className="sk-weak-count">{weakOnly ? `· ${weakTopics.join(', ')}` : ''}</span>
-                </label>
-              </div>
-            </div>
+            )}
           </div>
         </div>
-      ) : (
-        <div className="sk-toolview">
-          <button className="btn btn-outline-sm" onClick={() => setOpen(null)} style={{ marginBottom: 16 }}><ArrowLeft size={14} /> All tools</button>
-          <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 'var(--text-heading-md)', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: 10 }}>
-            <span style={{ width: 40, height: 40, borderRadius: 'var(--radius-md)', background: 'var(--navy-50)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', color: 'var(--navy-500)' }}><tool.icon size={20} /></span>
-            {tool.title}
-          </h2>
-          <p style={{ fontSize: 13, color: 'var(--text-secondary)', margin: '6px 0 20px' }}>{tool.desc}</p>
-
-          {open === 'notes' && <NotesView stream={stream} subject={subject} record={record} />}
-          {open === 'flashcards' && <FlashView record={record} />}
-          {open === 'quizzes' && <QuizView />}
-          {open === 'pyqs' && <PyqView weakOnly={weakOnly} />}
-          {open === 'mocks' && <MockView examMode={examMode} setExamMode={setExamMode} />}
-          {(open === 'mindmaps' || open === 'exercises' || open === 'videos' || open === 'formulas') && (
-            <div className="sk-placeholder">
-              <PlayCircle size={30} />
-              <p>Working content for this tool ships in the next iteration — design is ready, content pipeline is in progress.</p>
-            </div>
-          )}
-        </div>
-      )}
+      </div>
     </div>
   )
 }
 
 function NotesView({ stream, subject, record }) {
-  /* route by subject → notes component. Economics & Geography mount their dedicated dashboards; others fall back to generic. */
   if (subject === 'Economics') {
     return (
       <div className="sk-econ-wrap">
         <p className="sk-econ-note">Economics notes dashboard — pattern breakdown, chapters & syllabus.</p>
-        <iframe
-          src="/econ-notes/index.html"
-          title="Economics notes — CUET Pro"
-          className="sk-econ-frame"
-          onLoad={() => record({ title: 'Economics notes', subject: 'Economics', detail: 'pattern dashboard', pct: 40 })}
-        />
+        <iframe src="/econ-notes/index.html" title="Economics notes — CUET Pro" className="sk-econ-frame" onLoad={() => record({ title: 'Economics notes', subject: 'Economics', detail: 'pattern dashboard', pct: 40 })} />
       </div>
     )
   }
@@ -264,21 +238,13 @@ function NotesView({ stream, subject, record }) {
     return (
       <div className="sk-econ-wrap">
         <p className="sk-econ-note">Geography notes dashboard — NCERT chapters, syllabus & exam pattern.</p>
-        <iframe
-          src="/geo-notes/index.html"
-          title="Geography notes — CUET Pro"
-          className="sk-econ-frame"
-          onLoad={() => record({ title: 'Geography notes', subject: 'Geography', detail: 'chapter dashboard', pct: 40 })}
-        />
+        <iframe src="/geo-notes/index.html" title="Geography notes — CUET Pro" className="sk-econ-frame" onLoad={() => record({ title: 'Geography notes', subject: 'Geography', detail: 'chapter dashboard', pct: 40 })} />
       </div>
     )
   }
-
   const subs = NOTES_BY_STREAM[stream] || NOTES_BY_STREAM.Commerce
   const list = subject === 'all' ? subs : subs.filter(n => n.s === subject)
-
   if (list.length === 0) return <p className="muted-empty">Notes for {subject} are being prepared — check back soon.</p>
-
   return (
     <div className="sk-subgrid">
       {list.map(n => (
@@ -359,7 +325,7 @@ function QuizView() {
   )
 }
 
-function PyqView({ weakOnly }) {
+function PyqView({ weakOnly, setWeakOnly }) {
   const weak = weakTopicNames('all')
   const items = [
     { s: 'English', sections: ['Reading Comprehension', 'Verbal Ability', 'Vocabulary'], weak: ['Vocabulary'] },
@@ -368,6 +334,11 @@ function PyqView({ weakOnly }) {
   ]
   return (
     <div className="sk-subgrid">
+      <label className="sk-weak-only">
+        <input type="checkbox" checked={weakOnly} onChange={e => setWeakOnly(e.target.checked)} />
+        <CheckSquare size={13} /> Only show my weak topics
+        <span>{weakOnly ? `· ${weak.join(', ')}` : ''}</span>
+      </label>
       {items.map(it => (
         <div className="sk-subcard" key={it.s}>
           <div className="sk-subhead"><b>{it.s} · PYQ</b><span className="sk-prog">2024 & 2023</span></div>
