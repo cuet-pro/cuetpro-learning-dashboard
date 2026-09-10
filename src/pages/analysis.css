@@ -149,3 +149,10 @@
 [data-theme="dark"] .boost-banner { background: var(--secondary-soft); border: 1px solid var(--border); }
 [data-theme="dark"] .boost-hero { background: linear-gradient(120deg, var(--primary-hover), var(--secondary-soft)); border: 1px solid var(--border); }
 [data-theme="dark"] .boost-hero-badge { background: var(--primary); color: #fff; }
+
+/* ── Mistake tracker: header row + View more + sub-skill count badge ── */
+.an-card-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.an-view-more { display: inline-flex; align-items: center; gap: 3px; flex-shrink: 0; font-size: 12px; font-weight: 700; color: var(--primary);
+  background: var(--primary-soft); border: none; border-radius: var(--r-full); padding: 7px 13px; cursor: pointer; transition: all .13s; font-family: var(--font-body); }
+.an-view-more:hover { background: var(--primary); color: #fff; }
+.mskill-count { font-family: var(--font-mono); font-size: 10.5px; font-weight: 700; color: var(--error); background: var(--error-soft); border-radius: var(--r-full); padding: 3px 8px; flex-shrink: 0; }

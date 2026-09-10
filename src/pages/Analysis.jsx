@@ -1,7 +1,8 @@
 import { useState } from 'react'
-import { Home, Grid3x3, ListChecks, TrendingUp, Zap, ChevronRight, Target, AlertTriangle, BookOpen, Info } from 'lucide-react'
+import { Home, Grid3x3, TrendingUp, Zap, ChevronRight, Target, AlertTriangle, BookOpen, Info } from 'lucide-react'
 import { status, allSubSkills, boostRanking, boostReason, subjectsFor } from '../lib/analysisData'
 import { useProfile } from '../lib/profile'
+import { Modal } from '../components/shell/Shell'
 import './analysis.css'
 
 /* ═══════════ Shared data + boost logic lives in src/lib/analysisData.js ═══════════ */
@@ -23,7 +24,6 @@ const pct1 = v => v.toFixed(1)
 const TABS = [
   { id: 'overview', label: 'Overview', icon: Home },
   { id: 'swot', label: 'SWOT', icon: Grid3x3 },
-  { id: 'subskills', label: 'Sub-skills', icon: ListChecks },
   { id: 'trend', label: 'Trend', icon: TrendingUp },
   { id: 'boost', label: 'Boost plan', icon: Zap },
 ]
@@ -69,7 +69,6 @@ export default function Analysis() {
 
       {tab === 'overview' && <OverviewTab subject={scope} target={profile.targetPercentile} />}
       {tab === 'swot' && <SwotTab subject={scope} />}
-      {tab === 'subskills' && <SubSkillsTab subject={scope} />}
       {tab === 'trend' && <TrendTab subject={scope} target={profile.targetPercentile} />}
       {tab === 'boost' && <BoostTab subject={scope} single={subjectsFor(scope).length === 1} />}
     </div>
@@ -80,6 +79,7 @@ export default function Analysis() {
 function OverviewTab({ subject, target }) {
   const subs = selectedSubjects(subject)
   const isAll = subs.length > 1
+  const [showSkills, setShowSkills] = useState(false)
   const acc = isAll ? OVERALL.acc : Math.round(subs.reduce((s, x) => s + x.acc, 0) / subs.length)
   const mistakes = subs.flatMap(s => (s.mistakes || []).map(m => ({ ...m, subj: s.name })))
   const weakTopics = allSubSkills(subject).filter(sk => sk.acc < 50).length
@@ -113,7 +113,7 @@ function OverviewTab({ subject, target }) {
       {/* Section-wise accuracy */}
       <section className="an-card">
         <h3 className="an-card-title">Section-wise accuracy</h3>
-        <p className="an-card-sub">Tap any subject to focus it above, then open Sub-skills <span className="tap-hint">→</span></p>
+        <p className="an-card-sub">Tap any subject to focus it. Repeated mistakes are broken down by sub-skill below <span className="tap-hint">→</span></p>
         {subs.map(s => {
           const st = status(s.acc)
           return (
@@ -132,8 +132,17 @@ function OverviewTab({ subject, target }) {
       <div className="an-grid">
         {/* Mistake tracker */}
         <section className="an-card">
-          <h3 className="an-card-title">Mistake tracker</h3>
-          <p className="an-card-sub">Topics where you repeat the same errors</p>
+          <div className="an-card-head">
+            <div>
+              <h3 className="an-card-title">Mistake tracker</h3>
+              <p className="an-card-sub">Topics where you repeat the same errors</p>
+            </div>
+            {mistakes.length > 0 && (
+              <button className="an-view-more" onClick={() => setShowSkills(true)}>
+                View more <ChevronRight size={14} />
+              </button>
+            )}
+          </div>
           {mistakes.length === 0 && <p className="muted-empty">No repeated mistakes logged for {isAll ? 'your subjects' : subject}.</p>}
           {mistakes.map(m => (
             <div className="mistake-row" key={m.topic + m.subj}>
@@ -163,6 +172,11 @@ function OverviewTab({ subject, target }) {
           </div>
         </section>
       </div>
+
+      {/* View more → sub-skill breakdown behind the repeated mistakes */}
+      <Modal open={showSkills} onClose={() => setShowSkills(false)} title="Sub-skills behind your mistakes">
+        <MistakeSkills mistakes={mistakes} scope={subject} />
+      </Modal>
     </>
   )
 }
@@ -244,52 +258,57 @@ function SwotQuad({ title, desc, color, rows, level }) {
   )
 }
 
-/* ═══════════ 3. Sub-skills ═══════════ */
-function SubSkillsTab({ subject }) {
-  const subs = selectedSubjects(subject)
-  const isAll = subs.length > 1
-  const skList = allSubSkills(subject).sort((a, b) => a.acc - b.acc)
-  const weakest = skList[0]
+/* ═══════════ Sub-skill breakdown behind repeated mistakes (opens from Mistake tracker) ═══════════ */
+function MistakeSkills({ mistakes, scope }) {
+  const all = allSubSkills(scope)
+  const rows = mistakes.map(m => {
+    const sk = all.find(a => a.name.toLowerCase() === String(m.topic).toLowerCase())
+    return sk ? { ...sk, count: m.count } : { name: m.topic, subject: m.subj, acc: null, count: m.count }
+  }).sort((a, b) => (a.acc ?? 101) - (b.acc ?? 101))
+  const weakest = rows.find(r => r.acc != null)
 
-  if (!weakest) return <p className="muted-empty">No sub-skill data yet.</p>
+  if (rows.length === 0) return <p className="muted-empty">No repeated mistakes logged yet — sub-skill breakdown appears here once you have a few mocks.</p>
 
   return (
     <>
-      {isAll && (
-        <p className="an-card-sub" style={{ margin: '0 0 14px' }}>
-          All subjects combined — pick a subject above to focus its drill-down and focus area.
-        </p>
-      )}
-      <section className="an-card">
-        <h3 className="an-card-title">Sub-skill breakdown</h3>
-        <p className="an-card-sub">Weakest first · aggregated across all mocks</p>
-        {skList.map(sk => {
-          const s = status(sk.acc)
+      <p className="ov-sub">Grouped by the topics you keep getting wrong — weakest first.</p>
+      <section className="an-card" style={{ marginBottom: 0 }}>
+        <h3 className="an-card-title">Sub-skills behind your mistakes</h3>
+        <p className="an-card-sub">Aggregated across all mocks · matched from your mistake tracker</p>
+        {rows.map(r => {
+          const s = r.acc != null ? status(r.acc) : null
           return (
-            <div className="subject-row static" key={sk.name + sk.subject}>
-              <span className="status-dot" style={{ background: s.color }} />
-              <span className="subject-name">{sk.name}</span>
-              <span className="subject-subj">{sk.subject}</span>
-              <span className="subject-bar"><i style={{ width: sk.acc + '%', background: s.color }} /></span>
-              <b className="subject-acc" style={{ color: s.color }}>{pct(sk.acc)}%</b>
-              {sk.name === weakest.name && <span className="weakest-tag">weakest</span>}
+            <div className="subject-row static" key={r.name + r.subject}>
+              <span className="status-dot" style={{ background: s ? s.color : 'var(--border-strong)' }} />
+              <span className="subject-name">{r.name}</span>
+              <span className="subject-subj">{r.subject}</span>
+              {r.acc != null
+                ? <span className="subject-bar"><i style={{ width: r.acc + '%', background: s.color }} /></span>
+                : <span className="subject-bar"><i style={{ width: '0%' }} /></span>}
+              <b className="subject-acc" style={{ color: s ? s.color : 'var(--text-muted)' }}>{r.acc != null ? pct(r.acc) + '%' : '—'}</b>
+              <span className="mskill-count">×{r.count}</span>
+              {weakest && r.name === weakest.name && <span className="weakest-tag">weakest</span>}
             </div>
           )
         })}
+        {rows.some(r => r.acc == null) && (
+          <p className="muted-empty" style={{ marginTop: 10 }}>
+            Topics marked “—” need more attempts before a reliable sub-skill estimate can be shown.
+          </p>
+        )}
       </section>
 
-      {/* Focus area callout */}
-      {!isAll && subs.length === 1 && (
-        <section className="focus-card" style={{ background: status(weakest.acc).color + '14', borderColor: status(weakest.acc).color }}>
+      {weakest && (
+        <section className="focus-card" style={{ background: status(weakest.acc).color + '14', borderColor: status(weakest.acc).color, marginTop: 14 }}>
           <div className="focus-ico" style={{ background: status(weakest.acc).color, color: '#fff' }}><Target size={18} /></div>
           <div className="focus-body">
-            <h3>Focus area — {weakest.name}</h3>
+            <h3>Fix this first — {weakest.name}</h3>
             <p>
-              Your accuracy here is <b>{pct(weakest.acc)}%</b> — the lowest in {subject}. It's <b className="flat">flat</b> across recent mocks — a targeted fix is needed.
+              Your accuracy here is <b>{pct(weakest.acc)}%</b> and it accounts for <b>×{weakest.count}</b> repeated mistakes. Clearing it also lifts {weakest.subject}.
             </p>
           </div>
-          <button className="btn btn-primary-sm" onClick={() => alert('Deep-link → practice session, filtered to: ' + subject + ' · ' + weakest.name)}>
-            Start {weakest.name} practice <BookOpen size={14} />
+          <button className="btn btn-primary-sm" onClick={() => alert('Deep-link → practice session, filtered to: ' + weakest.subject + ' · ' + weakest.name)}>
+            Start practice <BookOpen size={14} />
           </button>
         </section>
       )}
