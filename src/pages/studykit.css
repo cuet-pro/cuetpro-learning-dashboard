@@ -220,3 +220,24 @@
 .sk-note-wrap.full .sk-note-bar { padding: 0 2px; }
 .sk-note-wrap.full .sk-econ-frame { flex: 1; height: auto; border-radius: var(--r-sm); }
 .sk-note-wrap.full .sk-note-fs { background: var(--primary-soft); border-color: var(--primary); color: var(--primary); }
+
+/* ── PYQ: year filter + shift-wise papers ── */
+.pyq-years { display: flex; align-items: center; gap: 6px; flex-wrap: nowrap; overflow-x: auto; padding-bottom: 2px; scrollbar-width: none; }
+.pyq-years::-webkit-scrollbar { display: none; }
+.pyq-years-lbl { font-size: 11px; font-weight: 800; letter-spacing: .4px; text-transform: uppercase; color: var(--text-muted); flex-shrink: 0; margin-right: 2px; }
+.pyq-year { flex-shrink: 0; font-size: 12px; font-weight: 700; color: var(--text-secondary); background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-full); padding: 6px 14px; cursor: pointer; transition: all .13s; font-family: var(--font-mono); }
+.pyq-year:hover { border-color: var(--primary); color: var(--primary); }
+.pyq-year.on { background: var(--primary); border-color: var(--primary); color: #fff; }
+.pyq-progress { display: flex; align-items: center; gap: 10px; }
+.pyq-progress .sk-card-bar { flex: 1; }
+.pyq-progress span { font-size: 11.5px; color: var(--text-muted); white-space: nowrap; }
+.pyq-yearhead { font-family: var(--font-display); font-size: 14px; font-weight: 700; color: var(--text); display: flex; align-items: baseline; gap: 6px; }
+.pyq-yearhead em { font-style: normal; font-size: 11px; font-weight: 600; color: var(--text-muted); font-family: var(--font-body); }
+.pyq-shifts { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 10px; }
+.pyq-shift { border: 1px solid var(--border); border-radius: var(--r-md); padding: 12px 13px; background: var(--surface); display: flex; flex-direction: column; gap: 9px; }
+.pyq-shift-top { display: flex; align-items: center; gap: 8px; }
+.pyq-shift-top b { font-family: var(--font-mono); font-size: 12.5px; color: var(--text); }
+.pyq-shift-qs { font-size: 10.5px; font-weight: 700; color: var(--text-muted); background: var(--bg); border-radius: var(--r-full); padding: 3px 9px; }
+.pyq-shift .btn { margin-left: auto; }
+.pyq-chips { display: flex; flex-wrap: wrap; gap: 5px; }
+.pyq-chip { font-size: 10.5px; font-weight: 600; color: var(--text-secondary); background: var(--bg); border: 1px solid var(--border); border-radius: var(--r-full); padding: 3px 9px; }

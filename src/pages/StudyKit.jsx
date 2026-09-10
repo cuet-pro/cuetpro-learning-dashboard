@@ -4,7 +4,7 @@ import {
   BookOpen, PlayCircle, ListChecks, Video, Sigma, Zap, ChevronRight, Flame, Target, CheckSquare,
   Search, GraduationCap, FlaskConical, Settings, Maximize2, Minimize2,
 } from 'lucide-react'
-import { boostRanking, weakTopicNames } from '../lib/analysisData'
+import { boostRanking, weakTopicNames, allSubSkills } from '../lib/analysisData'
 import { useProfile, STREAMS } from '../lib/profile'
 import './studykit.css'
 
@@ -210,7 +210,7 @@ export default function StudyKit({ onNavigate }) {
             {selected === 'notes' && <NotesView stream={stream} subject={subject} record={record} />}
             {selected === 'flashcards' && <FlashView record={record} />}
             {selected === 'quizzes' && <QuizView />}
-            {selected === 'pyqs' && <PyqView weakOnly={weakOnly} setWeakOnly={setWeakOnly} />}
+            {selected === 'pyqs' && <PyqView subject={subject} stream={stream} weakOnly={weakOnly} setWeakOnly={setWeakOnly} />}
             {selected === 'mocks' && <MockView examMode={examMode} setExamMode={setExamMode} />}
             {(selected === 'mindmaps' || selected === 'exercises' || selected === 'videos' || selected === 'formulas') && (
               <div className="sk-placeholder">
@@ -357,13 +357,32 @@ function QuizView() {
   )
 }
 
-function PyqView({ weakOnly, setWeakOnly }) {
-  const weak = weakTopicNames('all')
-  const items = [
-    { s: 'English', sections: ['Reading Comprehension', 'Verbal Ability', 'Vocabulary'], weak: ['Vocabulary'] },
-    { s: 'Economics', sections: ['Macro Economics', 'Indian Economy', 'Money & Banking'], weak: ['Money & Banking'] },
-    { s: 'General Test', sections: ['Quantitative Ability', 'Logical Reasoning', 'General Knowledge'], weak: ['Quantitative Ability'] },
-  ]
+/* ── PYQ: subject-aware + year filter + shift-wise papers ── */
+const PYQ_YEARS = [2026, 2025, 2024, 2023, 2022]
+const PYQ_SCHEDULE = {
+  2022: [['15 Jul', 1], ['15 Jul', 2], ['16 Jul', 1], ['16 Jul', 2]],
+  2023: [['21 May', 1], ['21 May', 2], ['22 May', 1], ['22 May', 2]],
+  2024: [['15 May', 1], ['15 May', 2], ['16 May', 1], ['16 May', 2]],
+  2025: [['08 May', 1], ['08 May', 2], ['09 May', 1], ['09 May', 2]],
+  2026: [['11 May', 1], ['11 May', 2], ['12 May', 1], ['12 May', 2]],
+}
+const PYQ_DONE = { 2022: 20, 2023: 35, 2024: 60, 2025: 0, 2026: 0 }
+
+function PyqView({ subject, stream, weakOnly, setWeakOnly }) {
+  const scope = subject === 'all' ? stream : subject
+  const [year, setYear] = useState('all')
+  const weak = weakTopicNames(scope)
+
+  /* sections come from the real sub-skill engine for this scope */
+  const allSections = allSubSkills(scope).map(s => s.name)
+  const sections = weakOnly && weak.length ? weak : allSections.slice(0, 4)
+
+  const shiftsFor = y => {
+    const qs = scope === 'General Test' ? 50 : 45
+    return (PYQ_SCHEDULE[y] || []).map(([d, s]) => ({ date: d, shift: s, qs, id: `${y}-${d}-${s}` }))
+  }
+  const yearsToShow = year === 'all' ? PYQ_YEARS : [year]
+
   return (
     <div className="sk-subgrid">
       <label className="sk-weak-only">
@@ -371,15 +390,44 @@ function PyqView({ weakOnly, setWeakOnly }) {
         <CheckSquare size={13} /> Only show my weak topics
         <span>{weakOnly ? `· ${weak.join(', ')}` : ''}</span>
       </label>
-      {items.map(it => (
-        <div className="sk-subcard" key={it.s}>
-          <div className="sk-subhead"><b>{it.s} · PYQ</b><span className="sk-prog">2024 & 2023</span></div>
-          {(weakOnly ? it.sections.filter(x => it.weak.includes(x)) : it.sections).map(x => (
-            <div className="sk-chapter" key={x}><span className="sk-dot" style={{ background: 'var(--green-500)' }} />{x}<span style={{ marginLeft: 'auto', fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--text-tertiary)' }}>15 Qs</span></div>
-          ))}
-          {weakOnly && it.sections.filter(x => it.weak.includes(x)).length === 0 && <p className="muted-empty">No weak topics here.</p>}
+
+      {/* year filter */}
+      <div className="pyq-years">
+        <span className="pyq-years-lbl">Year</span>
+        <button className={'pyq-year' + (year === 'all' ? ' on' : '')} onClick={() => setYear('all')}>All</button>
+        {PYQ_YEARS.map(y => (
+          <button key={y} className={'pyq-year' + (year === y ? ' on' : '')} onClick={() => setYear(y)}>{y}</button>
+        ))}
+      </div>
+
+      {year !== 'all' && (
+        <div className="pyq-progress">
+          <div className="sk-card-bar"><i style={{ width: PYQ_DONE[year] + '%' }} /></div>
+          <span>{year} papers · {PYQ_DONE[year]}% attempted</span>
+        </div>
+      )}
+
+      {yearsToShow.map(y => (
+        <div className="pyq-yearblock" key={y}>
+          {year === 'all' && <div className="pyq-yearhead">{y}{PYQ_DONE[y] === 0 ? <em> · not started</em> : <em> · {PYQ_DONE[y]}% done</em>}</div>}
+          <div className="pyq-shifts">
+            {shiftsFor(y).map(sh => (
+              <div className="pyq-shift" key={sh.id}>
+                <div className="pyq-shift-top">
+                  <b>{sh.date} Shift {sh.shift}</b>
+                  <span className="pyq-shift-qs">{sh.qs} Qs</span>
+                  <button className="btn btn-outline-sm" onClick={() => alert(`Deep-link → PYQ: ${scope} ${y} · ${sh.date} Shift ${sh.shift}`)}>Attempt</button>
+                </div>
+                <div className="pyq-chips">
+                  {sections.map(s => <span className="pyq-chip" key={s}>{s}</span>)}
+                </div>
+              </div>
+            ))}
+            {shiftsFor(y).length === 0 && <p className="muted-empty">No papers for this year yet.</p>}
+          </div>
         </div>
       ))}
+      {weakOnly && sections.length === 0 && <p className="muted-empty">No weak topics for {scope}.</p>}
     </div>
   )
 }
