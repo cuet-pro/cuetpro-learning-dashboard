@@ -1,8 +1,8 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import {
   NotebookText, Layers, Map as MapIcon, Dumbbell, Timer, FileQuestion, Archive, ArrowLeft,
   BookOpen, PlayCircle, ListChecks, Video, Sigma, Zap, ChevronRight, Flame, Target, CheckSquare,
-  Search, GraduationCap, FlaskConical, Settings,
+  Search, GraduationCap, FlaskConical, Settings, Maximize2, Minimize2,
 } from 'lucide-react'
 import { boostRanking, weakTopicNames } from '../lib/analysisData'
 import { useProfile, STREAMS } from '../lib/profile'
@@ -225,12 +225,44 @@ export default function StudyKit({ onNavigate }) {
   )
 }
 
+/* Notes dashboard (Economics / Geography) with fullscreen expand */
+function NoteDashboard({ src, title, subject, record }) {
+  const [full, setFull] = useState(false)
+
+  useEffect(() => {
+    if (!full) return
+    const onKey = e => { if (e.key === 'Escape') setFull(false) }
+    document.addEventListener('keydown', onKey)
+    const prev = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => { document.removeEventListener('keydown', onKey); document.body.style.overflow = prev }
+  }, [full])
+
+  return (
+    <div className={'sk-note-wrap' + (full ? ' full' : '')}>
+      <div className="sk-note-bar">
+        <span className="sk-note-bar-t">{subject} notes</span>
+        <button className="sk-note-fs" onClick={() => setFull(f => !f)} title={full ? 'Minimize (Esc)' : 'Full screen'}>
+          {full ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
+          <span>{full ? 'Minimize' : 'Full screen'}</span>
+        </button>
+      </div>
+      <iframe
+        src={src}
+        title={title}
+        className="sk-econ-frame"
+        onLoad={() => record({ title: subject + ' notes', subject, detail: full ? 'full screen' : 'dashboard', pct: 40 })}
+      />
+    </div>
+  )
+}
+
 function NotesView({ stream, subject, record }) {
   if (subject === 'Economics') {
     return (
       <div className="sk-econ-wrap">
         <p className="sk-econ-note">Economics notes dashboard — pattern breakdown, chapters & syllabus.</p>
-        <iframe src="/econ-notes/index.html" title="Economics notes — CUET Pro" className="sk-econ-frame" onLoad={() => record({ title: 'Economics notes', subject: 'Economics', detail: 'pattern dashboard', pct: 40 })} />
+        <NoteDashboard src="/econ-notes/index.html" title="Economics notes — CUET Pro" subject="Economics" record={record} />
       </div>
     )
   }
@@ -238,7 +270,7 @@ function NotesView({ stream, subject, record }) {
     return (
       <div className="sk-econ-wrap">
         <p className="sk-econ-note">Geography notes dashboard — NCERT chapters, syllabus & exam pattern.</p>
-        <iframe src="/geo-notes/index.html" title="Geography notes — CUET Pro" className="sk-econ-frame" onLoad={() => record({ title: 'Geography notes', subject: 'Geography', detail: 'chapter dashboard', pct: 40 })} />
+        <NoteDashboard src="/geo-notes/index.html" title="Geography notes — CUET Pro" subject="Geography" record={record} />
       </div>
     )
   }

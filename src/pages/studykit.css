@@ -204,3 +204,19 @@
   scrollbar-width: none; -webkit-overflow-scrolling: touch; }
 .sk-pillsline::-webkit-scrollbar { display: none; }
 .sk-pillsline .subj-pill { flex-shrink: 0; white-space: nowrap; }
+
+/* ── Notes fullscreen expand (iframe stays mounted — no reload) ── */
+.sk-note-wrap { position: relative; display: flex; flex-direction: column; gap: 8px; }
+.sk-note-bar { display: flex; align-items: center; gap: 10px; }
+.sk-note-bar-t { font-size: 12px; font-weight: 700; color: var(--text-muted); }
+.sk-note-fs { margin-left: auto; display: inline-flex; align-items: center; gap: 6px; font-size: 11.5px; font-weight: 700;
+  color: var(--text-secondary); background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-full);
+  padding: 6px 12px; cursor: pointer; transition: all .13s; }
+.sk-note-fs:hover { border-color: var(--primary); color: var(--primary); background: var(--primary-soft); }
+.sk-note-wrap .sk-econ-frame { width: 100%; height: 520px; border: 1px solid var(--border); border-radius: var(--r-md); background: #fff; }
+
+/* fullscreen mode */
+.sk-note-wrap.full { position: fixed; inset: 0; z-index: 500; background: var(--surface); padding: var(--sp-4) var(--sp-4) var(--sp-3); gap: 10px; }
+.sk-note-wrap.full .sk-note-bar { padding: 0 2px; }
+.sk-note-wrap.full .sk-econ-frame { flex: 1; height: auto; border-radius: var(--r-sm); }
+.sk-note-wrap.full .sk-note-fs { background: var(--primary-soft); border-color: var(--primary); color: var(--primary); }
