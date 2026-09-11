@@ -5,7 +5,6 @@ import './profile.css'
 
 const NOTIFS = [
   { id: 'streak', label: 'Daily streak reminder', desc: 'A nudge if you haven\'t studied today — keeps your streak alive' },
-  { id: 'revision', label: 'Revision-due alerts', desc: 'Fires when Smart Revision has items due today (due count > 0)' },
   { id: 'mocks', label: 'Mock test reminders', desc: 'A heads-up when a scheduled mock is about to start' },
 ]
 
@@ -56,7 +55,7 @@ export default function Profile() {
         <button className="btn btn-outline-sm"><LogOut size={13} /> Sign out</button>
       </section>
 
-      {/* B. My target — feeds Dashboard, Analysis, Smart Revision */}
+      {/* B. My target — feeds Dashboard, Analysis, Study Kit */}
       <section className="pf-card">
         <div className="pf-card-head">
           <div className="pf-ico"><Target size={17} /></div>
@@ -165,7 +164,7 @@ export default function Profile() {
         )}
       </section>
 
-      <p className="pf-foot">Stream · target college · target percentile · exam date are stored once here and read by Dashboard, Analysis, Study Kit and Smart Revision.</p>
+      <p className="pf-foot">Stream · target college · target percentile · exam date are stored once here and read by Dashboard, Analysis and Study Kit.</p>
     </div>
   )
 }
