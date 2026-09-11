@@ -115,42 +115,33 @@ function OverviewTab({ subject, target }) {
         </div>
       </section>
 
-      {/* Overall accuracy by subject */}
-      <section className="an-card">
-        <h3 className="an-card-title">Overall accuracy by subject</h3>
-        <p className="an-card-sub">Tap any subject to focus it. Repeated mistakes are broken down by sub-skill below <span className="tap-hint">→</span></p>
-        {subs.map(s => {
-          const st = status(s.acc)
-          return (
-            <div className="subject-row static" key={s.name}>
-              <span className="status-dot" style={{ background: st.color }} />
-              <span className="subject-name">{s.name}</span>
-              <span className="subject-bar"><i style={{ width: s.acc + '%', background: st.color }} /></span>
-              <b className="subject-acc" style={{ color: st.color }}>{pct(s.acc)}%</b>
-              <span className="subject-status" style={{ color: st.color }}>{st.label}</span>
-              {!isAll && <span className="row-chevron"><ChevronRight size={15} /></span>}
-            </div>
-          )
-        })}
-      </section>
-
-      {/* Section-wise accuracy ⇄ Trend (flip card) */}
-      <section className="an-card an-flipcard">
+      {/* ONE card: trend chart on the front (default), section-wise accuracy on the back */}
+      <section
+        className={'an-card an-flipcard' + (flipped ? ' is-flipped' : '')}
+        onClick={e => {
+          if (e.target.closest('input, button, .trend-wrap, .an-slider, .an-slider-ticks')) return
+          setFlipped(f => !f)
+        }}
+        title={flipped ? 'Tap to see your college trend' : 'Tap to see section-wise accuracy'}
+      >
         <div className={'an-flip-inner' + (flipped ? ' flipped' : '')}>
-          {/* FRONT — section-wise accuracy for the selected mock */}
+          {/* FRONT (default) — percentile trend with real college logos */}
           <div className="an-face an-front">
             <div className="an-card-head">
               <div>
-                <h3 className="an-card-title">Section-wise accuracy</h3>
-                <p className="an-card-sub">Drag the slider or tap a mock — flip the card for your college trend</p>
+                <h3 className="an-card-title">Percentile trend &amp; college reach</h3>
+                <p className="an-card-sub">Every point shows the DU college that opens up at that score — hover a point, or drag the slider</p>
               </div>
               <div className="an-face-tools">
                 <span className="an-live-chip">{pct1(mocks[sel].pct)}%ile</span>
-                <button className="an-flip-btn" onClick={() => setFlipped(true)} title="See college trend" aria-label="See college trend">
+                <button className="an-flip-btn" onClick={() => setFlipped(true)} title="See section-wise accuracy" aria-label="See section-wise accuracy">
                   <RefreshCw size={13} />
                 </button>
               </div>
             </div>
+
+            <TrendChart mocks={mocks} target={target} showColleges activeIndex={sel} onPick={setSel} />
+
             <input
               type="range" className="an-slider" min={0} max={mocks.length - 1} step={1}
               value={sel} onChange={e => setSel(Number(e.target.value))}
@@ -161,45 +152,47 @@ function OverviewTab({ subject, target }) {
               <button key={m.mock} className={i === sel ? 'on' : ''} onClick={() => setSel(i)} title={'Mock ' + m.mock}>{m.mock}</button>
             ))}</div>
 
-            <div className="an-attempt" key={sel}>
-              <div className="an-attempt-head">
-                <span className="an-attempt-badge">{mocks[sel].mock}</span>
-                <b>{pct1(mocks[sel].pct)} percentile</b>
-                {(() => {
-                  const c = collegeAt(mocks[sel].pct)
-                  if (!c) return null
-                  return (
-                    <span className={'an-college-chip' + (c.reached ? ' on' : '')}>
-                      <Target size={12} />
-                      {c.reached ? c.label + ' — reached' : c.label + ' · ' + pct1(c.gap) + '%ile away'}
-                    </span>
-                  )
-                })()}
-              </div>
-              <div className="an-attempt-bars">
-                {mockSections(subs, sel).map((s, k) => (
-                  <div className="an-att-bar" key={s.name} style={{ animationDelay: (k * 55) + 'ms' }}>
-                    <span className="an-att-name">{s.name}</span>
-                    <i className="an-att-track"><s style={{ width: s.acc + '%', background: status(s.acc).color }} /></i>
-                    <b className="an-att-pct">{s.acc}%</b>
-                  </div>
-                ))}
-              </div>
+            <div className="an-attempt-head an-attempt-head-front">
+              <span className="an-attempt-badge">{mocks[sel].mock}</span>
+              <b>{pct1(mocks[sel].pct)} percentile</b>
+              {(() => {
+                const c = collegeAt(mocks[sel].pct)
+                if (!c) return null
+                return (
+                  <span className={'an-college-chip' + (c.reached ? ' on' : '')}>
+                    <Target size={12} />
+                    {c.reached ? c.label + ' — reached' : c.label + ' · ' + pct1(c.gap) + '%ile away'}
+                  </span>
+                )
+              })()}
             </div>
           </div>
 
-          {/* BACK — percentile trend with college logos */}
+          {/* BACK — section-wise accuracy */}
           <div className="an-face an-back">
             <div className="an-card-head">
               <div>
-                <h3 className="an-card-title">Percentile trend &amp; college reach</h3>
-                <p className="an-card-sub">Every point carries the DU college that opens up at that score — hover to see the detail</p>
+                <h3 className="an-card-title">Section-wise accuracy</h3>
+                <p className="an-card-sub">Where you stand in each section — tap a subject to focus it</p>
               </div>
-              <button className="an-flip-btn" onClick={() => setFlipped(false)} title="Back to sections" aria-label="Back to sections">
+              <button className="an-flip-btn" onClick={() => setFlipped(false)} title="Back to the trend graph" aria-label="Back to the trend graph">
                 <RefreshCw size={13} />
               </button>
             </div>
-            <TrendChart mocks={mocks} target={target} showColleges activeIndex={sel} onPick={setSel} />
+            {subs.map(s2 => {
+              const st = status(s2.acc)
+              return (
+                <div className="subject-row static" key={s2.name}>
+                  <span className="status-dot" style={{ background: st.color }} />
+                  <span className="subject-name">{s2.name}</span>
+                  <span className="subject-bar"><i style={{ width: s2.acc + '%', background: st.color }} /></span>
+                  <b className="subject-acc" style={{ color: st.color }}>{pct(s2.acc)}%</b>
+                  <span className="subject-status" style={{ color: st.color }}>{st.label}</span>
+                  {!isAll && <span className="row-chevron"><ChevronRight size={15} /></span>}
+                </div>
+              )
+            })}
+            <p className="an-flip-hint">Tap the card to flip back to your college trend</p>
           </div>
         </div>
       </section>
@@ -422,13 +415,6 @@ function collegeAt(p) {
 
 
 /* section-wise accuracy for a given mock (deterministic, derived from real subject accuracies) */
-function mockSections(subs, i) {
-  const drift = [-6, -4, -2, 0, 2, 4][i] ?? 0
-  return subs.map((s, k) => ({
-    name: s.name,
-    acc: Math.max(20, Math.min(99, Math.round(s.acc + drift + ((i * 7 + k * 13) % 5) - 2))),
-  }))
-}
 
 /* question-wise log for a mock paper (deterministic; topics come from the real sub-skill engine) */
 function mockQuestions(paperIdx) {

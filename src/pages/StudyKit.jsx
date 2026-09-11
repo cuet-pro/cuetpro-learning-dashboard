@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react'
 import {
-  NotebookText, Layers, Map as MapIcon, Dumbbell, Timer, FileQuestion, Archive, ArrowLeft,
-  BookOpen, PlayCircle, ListChecks, Video, Sigma, Zap, ChevronRight, Flame, Target, CheckSquare,
+  NotebookText, Layers, Map as MapIcon, Dumbbell, Timer, FileQuestion, Archive, ArrowLeft, PlayCircle, Video, Sigma, Zap, ChevronRight, Target, CheckSquare,
   Search, GraduationCap, FlaskConical, Settings, Maximize2, Minimize2,
 } from 'lucide-react'
 import { boostRanking, weakTopicNames, allSubSkills } from '../lib/analysisData'
