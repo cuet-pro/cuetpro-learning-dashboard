@@ -143,7 +143,7 @@ export default function Dashboard({ onNavigate }) {
       {/* 1. Hero identity strip */}
       <section className="hero">
         <div className="hero-id">
-          <div className="dash-avatar"><Avatar gender={profile.gender} blink={blink} /></div>
+          <div className="av-float"><div className="dash-avatar"><Avatar gender={profile.gender} blink={blink} /></div></div>
           <div className="hero-id-t">
             <h1>Welcome back, Ananya</h1>
             <p>CUET 2027 · {profile.stream} · keep the streak alive</p>
@@ -223,6 +223,9 @@ export default function Dashboard({ onNavigate }) {
 
       {/* 4. Progress ⇄ Standing — combined flip card */}
       <div className="flip-wrap">
+        <button className="flip-cue" onClick={() => setFlipped(f => !f)} title="Flip card" aria-label="Flip card">
+          <RefreshCw size={13} />
+        </button>
         <div className={'flip-inner' + (flipped ? ' flipped' : '')}>
           {/* FRONT — My Progress */}
           <section className="cuet-card flip-face flip-front">

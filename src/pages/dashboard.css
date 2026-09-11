@@ -453,3 +453,42 @@ button.hero-chip:hover { border-color: var(--primary); }
 .dash-avatar-svg { width: 100%; height: 100%; display: block; overflow: visible; filter: drop-shadow(0 4px 10px rgba(20,23,31,.16)); }
 .hero-id { align-items: center; }
 @media (max-width: 640px) { .dash-avatar { width: 54px; height: 54px; } }
+
+/* ═══ Premium flip card + breakout animated avatar ═══ */
+
+/* Flip: hover lift + depth, premium easing, whole-card rotation */
+.flip-wrap { perspective: 1800px; position: relative; transition: transform .3s cubic-bezier(.22,.61,.36,1); }
+.flip-wrap:hover { transform: translateY(-4px); }
+.flip-inner { position: relative; transform-style: preserve-3d; transition: transform .55s cubic-bezier(.2,.7,.2,1); will-change: transform; }
+.flip-inner.flipped { transform: rotateY(180deg); }
+.flip-face { backface-visibility: hidden; -webkit-backface-visibility: hidden; cursor: pointer;
+  box-shadow: var(--shadow-sm); transition: box-shadow .3s cubic-bezier(.22,.61,.36,1), border-color .3s; }
+.flip-back { position: absolute; inset: 0; transform: rotateY(180deg); overflow: auto; }
+.flip-wrap:hover .flip-face { box-shadow: var(--shadow-lg); }
+.flip-wrap:hover .flip-front { border-color: color-mix(in srgb, var(--primary) 35%, var(--border)); }
+
+/* interactive cue — soft pulsing flip button */
+.flip-cue { position: absolute; right: 14px; top: 14px; z-index: 5; width: 30px; height: 30px; border-radius: var(--r-full);
+  display: grid; place-items: center; background: var(--surface); border: 1px solid var(--border); color: var(--primary); cursor: pointer;
+  transition: background .18s, color .18s, transform .18s; animation: cue-pulse 3s ease-in-out infinite; }
+.flip-cue:hover { background: var(--primary); color: #fff; transform: rotate(180deg) scale(1.08); animation: none; }
+@keyframes cue-pulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(20,108,78,.28); } 50% { box-shadow: 0 0 0 7px rgba(20,108,78,0); } }
+.flip-bar { display: flex; gap: 6px; background: var(--bg); border: 1px solid var(--border); border-radius: var(--r-full); padding: 4px; margin-bottom: var(--sp-4); width: fit-content; }
+.flip-seg { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 700; font-family: var(--font-body);
+  color: var(--text-secondary); background: transparent; border: none; border-radius: var(--r-full); padding: 7px 14px; cursor: pointer; transition: all .18s; }
+.flip-seg:hover { color: var(--primary); }
+.flip-seg.on { background: var(--primary); color: #fff; box-shadow: 0 2px 8px rgba(20,108,78,.3); }
+
+/* Avatar: bigger, floating, emerging from the circle, hover depth */
+.hero-id { position: relative; }
+.av-float { animation: av-bob 3.8s ease-in-out infinite; transition: transform .3s cubic-bezier(.22,.61,.36,1); }
+.av-float:hover { animation-play-state: paused; transform: translateY(-5px) scale(1.05); }
+@keyframes av-bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
+.dash-avatar { position: relative; width: 78px; height: 78px; flex-shrink: 0; overflow: visible; z-index: 3; cursor: pointer; }
+.dash-avatar::after { content: ''; position: absolute; inset: -12px; border-radius: var(--r-full); z-index: -1;
+  background: radial-gradient(circle at 50% 58%, rgba(20,108,78,.20), transparent 68%); filter: blur(7px); transition: opacity .3s, transform .3s; }
+.av-float:hover .dash-avatar::after { transform: scale(1.12); opacity: 1; }
+.dash-avatar-svg { width: 100%; height: 100%; display: block; overflow: visible;
+  filter: drop-shadow(0 6px 14px rgba(20,23,31,.20)); transition: filter .3s; }
+.av-float:hover .dash-avatar-svg { filter: drop-shadow(0 14px 24px rgba(20,23,31,.30)); }
+@media (max-width: 640px) { .dash-avatar { width: 64px; height: 64px; } }
