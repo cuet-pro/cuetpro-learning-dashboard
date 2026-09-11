@@ -27,17 +27,17 @@ const NOTES_BY_STREAM = {
 }
 
 const LEARNING_TOOLS = [
-  { id: 'notes', icon: NotebookText, title: 'Notes', desc: 'Concise NCERT-based notes, chapter by chapter.', progress: { done: 12, total: 18, label: 'chapters' } },
-  { id: 'flashcards', icon: Layers, title: 'Flashcards', desc: 'Swipeable quick-revision cards, mark as learned.', progress: { done: 56, total: 80, label: 'cards mastered' } },
-  { id: 'mindmaps', icon: MapIcon, title: 'Mind Maps', desc: 'Visual chapter maps for fast pre-exam revision.', progress: { done: 6, total: 10, label: 'viewed' } },
-  { id: 'exercises', icon: Dumbbell, title: 'Exercises', desc: 'Topic-wise practice tied to specific topics.', progress: { done: 9, total: 14, label: 'sets done' } },
-  { id: 'videos', icon: Video, title: 'Video lectures', desc: 'Short concept videos — 5-10 min each.', progress: { done: 7, total: 12, label: 'watched' } },
-  { id: 'formulas', icon: Sigma, title: 'Formula sheets', desc: 'Quick-reference formula cards per subject.', progress: { done: 4, total: 6, label: 'viewed' } },
+  { id: 'notes', tone: 'green', icon: NotebookText, title: 'Notes', desc: 'Concise NCERT-based notes, chapter by chapter.', progress: { done: 12, total: 18, label: 'chapters' } },
+  { id: 'flashcards', tone: 'blue', icon: Layers, title: 'Flashcards', desc: 'Swipeable quick-revision cards, mark as learned.', progress: { done: 56, total: 80, label: 'cards mastered' } },
+  { id: 'mindmaps', tone: 'violet', icon: MapIcon, title: 'Mind Maps', desc: 'Visual chapter maps for fast pre-exam revision.', progress: { done: 6, total: 10, label: 'viewed' } },
+  { id: 'exercises', tone: 'green', icon: Dumbbell, title: 'Exercises', desc: 'Topic-wise practice tied to specific topics.', progress: { done: 9, total: 14, label: 'sets done' } },
+  { id: 'videos', tone: 'amber', icon: Video, title: 'Video lectures', desc: 'Short concept videos — 5-10 min each.', progress: { done: 7, total: 12, label: 'watched' } },
+  { id: 'formulas', tone: 'violet', icon: Sigma, title: 'Formula sheets', desc: 'Quick-reference formula cards per subject.', progress: { done: 4, total: 6, label: 'viewed' } },
 ]
 const TESTING_TOOLS = [
-  { id: 'quizzes', icon: Timer, title: '5-Minute Quick Quizzes', desc: 'Short, low-pressure self-checks — repeat anytime.', meta: { streak: '3-day streak', last: 'Last score 82%' } },
-  { id: 'mocks', icon: FileQuestion, title: 'Mock Tests', desc: 'Full-length, CUET-pattern, timed & auto-scored.', meta: { inProgress: 'Mock Test 7 · 60%', sub: 'Section 3 of 5 left' } },
-  { id: 'pyqs', icon: Archive, title: 'Previous Year Questions', desc: 'Shift-wise & topic-wise PYQ bank, filterable.', progress: { done: 60, total: 100, label: 'attempted' } },
+  { id: 'quizzes', tone: 'blue', icon: Timer, title: '5-Minute Quick Quizzes', desc: 'Short, low-pressure self-checks — repeat anytime.', meta: { streak: '3-day streak', last: 'Last score 82%' } },
+  { id: 'mocks', tone: 'amber', icon: FileQuestion, title: 'Mock Tests', desc: 'Full-length, CUET-pattern, timed & auto-scored.', meta: { inProgress: 'Mock Test 7 · 60%', sub: 'Section 3 of 5 left' } },
+  { id: 'pyqs', tone: 'red', icon: Archive, title: 'Previous Year Questions', desc: 'Shift-wise & topic-wise PYQ bank, filterable.', progress: { done: 60, total: 100, label: 'attempted' } },
 ]
 const ALL_TOOLS = [...LEARNING_TOOLS, ...TESTING_TOOLS]
 
@@ -45,8 +45,7 @@ export default function StudyKit({ onNavigate }) {
   const [profile] = useProfile()
   const stream = profile.stream
   const [subject, setSubject] = useState('all')
-  const [category, setCategory] = useState('learning')
-  const [selected, setSelected] = useState('notes')
+  const [selected, setSelected] = useState(null)
   const [query, setQuery] = useState('')
   const [weakOnly, setWeakOnly] = useState(false)
   const [examMode, setExamMode] = useState(false)
@@ -76,9 +75,8 @@ export default function StudyKit({ onNavigate }) {
 
   /* searchable tool list — shows results across both categories */
   const q = query.trim().toLowerCase()
-  const learningVisible = q ? LEARNING_TOOLS.filter(t => (t.title + ' ' + t.desc).toLowerCase().includes(q)) : category === 'learning' ? LEARNING_TOOLS : []
-  const testingVisible = q ? TESTING_TOOLS.filter(t => (t.title + ' ' + t.desc).toLowerCase().includes(q)) : category === 'testing' ? TESTING_TOOLS : []
-  const totalVisible = learningVisible.length + testingVisible.length
+  const learningShown = q ? LEARNING_TOOLS.filter(t => (t.title + ' ' + t.desc).toLowerCase().includes(q)) : LEARNING_TOOLS
+  const testingShown = q ? TESTING_TOOLS.filter(t => (t.title + ' ' + t.desc).toLowerCase().includes(q)) : TESTING_TOOLS
   const progFor = t => (t.id === 'notes' ? notesProgress : t.progress) || { done: 0, total: 0, label: '' }
   const tool = ALL_TOOLS.find(t => t.id === selected)
 
@@ -119,28 +117,6 @@ export default function StudyKit({ onNavigate }) {
         </section>
       )}
 
-      {/* Recommended — live boost pull */}
-      {top3.length > 0 && (
-        <section className="sk-rec">
-          <div className="sk-rec-head">
-            <div className="sk-rec-ico"><Target size={17} /></div>
-            <div>
-              <h3>Recommended for you</h3>
-              <p>Based on where you can improve fastest</p>
-            </div>
-          </div>
-          {top3.map(t => (
-            <div className="sk-rec-row" key={t.name + t.subject}>
-              <span className="status-dot" style={{ background: t.acc < 50 ? 'var(--red-500)' : t.acc < 75 ? 'var(--warning-500)' : 'var(--green-500)' }} />
-              <span className="sk-rec-name">{t.name}<small>{t.subject}</small></span>
-              <button className="btn btn-outline-sm" onClick={() => { setSelected('notes'); record({ title: t.name + ' — notes', subject: t.subject, detail: t.subject + ' · chapter 1', pct: 15 }); alert('Deep-link → notes: ' + t.name) }}>Notes</button>
-              <button className="btn btn-outline-sm" onClick={() => { setSelected('flashcards'); record({ title: t.name + ' — flashcards', subject: t.subject, detail: t.subject + ' · deck', pct: 30 }); alert('Deep-link → flashcards: ' + t.name) }}>Flashcards</button>
-              <button className="btn btn-outline-sm" onClick={() => { setSelected('exercises'); record({ title: t.name + ' — exercises', subject: t.subject, detail: t.subject + ' · set 1', pct: 40 }); alert('Deep-link → exercises: ' + t.name) }}>Exercises</button>
-            </div>
-          ))}
-        </section>
-      )}
-
       {/* Focus mock banner */}
       <section className="sk-focusmock">
         <div className="sk-focusmock-ico"><Zap size={20} /></div>
@@ -151,62 +127,20 @@ export default function StudyKit({ onNavigate }) {
         <button className="btn btn-primary-sm" onClick={() => alert('Deep-link → focus mock session (from boost topics: ' + top3.slice(0, 3).map(t => t.name).join(', ') + ')')}>Generate focus mock</button>
       </section>
 
-      {/* Workbench: category rail + searchable tool list + preview pane */}
-      <div className="wb">
-        <aside className="wb-rail">
-          <button className={'wb-cat' + (category === 'learning' ? ' on' : '')} onClick={() => { setCategory('learning'); setQuery('') }}>
-            <GraduationCap size={16} /> Learning <em>{q ? '' : LEARNING_TOOLS.length}</em>
-          </button>
-          <button className={'wb-cat' + (category === 'testing' ? ' on' : '')} onClick={() => { setCategory('testing'); setQuery('') }}>
-            <FlaskConical size={16} /> Testing <em>{q ? '' : TESTING_TOOLS.length}</em>
-          </button>
-          <div className="wb-rail-foot">Pick a tool to preview it →</div>
-        </aside>
-
-        <div className="wb-list">
-          <div className="wb-search">
-            <Search size={14} />
-            <input placeholder="Search tools…" value={query} onChange={e => setQuery(e.target.value)} />
-          </div>
-          {learningVisible.length > 0 && <div className="wb-list-label">Learning tools</div>}
-          {learningVisible.map(t => {
-            const p = progFor(t)
-            return (
-              <button key={t.id} className={'wb-row' + (selected === t.id && !q ? ' on' : '')} onClick={() => { setSelected(t.id); setCategory('learning') }}>
-                <span className="wb-row-ico"><t.icon size={16} /></span>
-                <span className="wb-row-t">
-                  <b>{t.title}</b>
-                  {p.total > 0 ? <em>{p.done}/{p.total} {p.label}</em> : <em>{t.desc}</em>}
-                  {p.total > 0 && <i className="wb-row-bar"><s style={{ width: (p.done / p.total * 100) + '%' }} /></i>}
-                </span>
-                <ChevronRight size={14} className="wb-row-arr" />
-              </button>
-            )
-          })}
-          {testingVisible.length > 0 && <div className="wb-list-label">Testing tools</div>}
-          {testingVisible.map(t => (
-            <button key={t.id} className={'wb-row' + (selected === t.id && !q ? ' on' : '')} onClick={() => { setSelected(t.id); setCategory('testing') }}>
-              <span className="wb-row-ico"><t.icon size={16} /></span>
-              <span className="wb-row-t">
-                <b>{t.title}</b>
-                <em>{t.meta ? (t.meta.streak || t.meta.inProgress) : t.desc}</em>
-                {t.progress && <i className="wb-row-bar"><s style={{ width: t.progress.done + '%' }} /></i>}
-              </span>
-              <ChevronRight size={14} className="wb-row-arr" />
+      {/* Tools — Learning & Testing card grids (opens detail panel on tap) */}
+      {selected ? (
+        <section className="sk-detail">
+          <div className="sk-detail-head">
+            <button className="sk-back" onClick={() => setSelected(null)}>
+              <ArrowLeft size={15} /> All tools
             </button>
-          ))}
-          {totalVisible === 0 && <p className="muted-empty">No tools match "{query}".</p>}
-        </div>
-
-        <div className="wb-preview" key={selected}>
-          <div className="wb-preview-head">
-            <span className="wb-preview-ico">{tool && <tool.icon size={18} />}</span>
-            <div>
+            <span className={'sk-detail-ico tone-' + (tool?.tone || 'green')}>{tool && <tool.icon size={18} />}</span>
+            <div className="sk-detail-t">
               <h3>{tool?.title}</h3>
               <p>{tool?.desc}</p>
             </div>
           </div>
-          <div className="wb-preview-body">
+          <div className="sk-detail-body">
             {selected === 'notes' && <NotesView stream={stream} subject={subject} record={record} />}
             {selected === 'flashcards' && <FlashView record={record} />}
             {selected === 'quizzes' && <QuizView />}
@@ -219,8 +153,80 @@ export default function StudyKit({ onNavigate }) {
               </div>
             )}
           </div>
-        </div>
-      </div>
+        </section>
+      ) : (
+        <>
+          <div className="sk-toolsearch">
+            <Search size={14} />
+            <input placeholder="Search tools…" value={query} onChange={e => setQuery(e.target.value)} />
+          </div>
+
+          {learningShown.length > 0 && (
+            <section className="sk-tools">
+              <h3 className="sk-tools-title">
+                <GraduationCap size={15} /> Learning tools <em>{learningShown.length}</em>
+              </h3>
+              <div className="sk-cards">
+                {learningShown.map((t, idx) => {
+                  const p = progFor(t)
+                  return (
+                    <button
+                      key={t.id}
+                      className={'sk-tcard tone-' + t.tone}
+                      style={{ animationDelay: (idx * 45) + 'ms' }}
+                      onClick={() => { setSelected(t.id) }}
+                    >
+                      <span className="sk-tcard-ico"><t.icon size={18} /></span>
+                      <span className="sk-tcard-t">
+                        <b>{t.title}</b>
+                        <em>{p.total > 0 ? p.done + '/' + p.total + ' ' + p.label : t.desc}</em>
+                      </span>
+                      {p.total > 0 && (
+                        <span className="sk-tcard-prog">
+                          <i><s style={{ width: (p.done / p.total * 100) + '%' }} /></i>
+                          <b className="sk-tcard-pct">{Math.round(p.done / p.total * 100)}%</b>
+                        </span>
+                      )}
+                      <ChevronRight size={15} className="sk-tcard-arr" />
+                    </button>
+                  )
+                })}
+              </div>
+            </section>
+          )}
+
+          {testingShown.length > 0 && (
+            <section className="sk-tools">
+              <h3 className="sk-tools-title">
+                <FlaskConical size={15} /> Testing tools <em>{testingShown.length}</em>
+              </h3>
+              <div className="sk-cards">
+                {testingShown.map((t, idx) => (
+                  <button
+                    key={t.id}
+                    className={'sk-tcard tone-' + t.tone}
+                    style={{ animationDelay: (idx * 45) + 'ms' }}
+                    onClick={() => { setSelected(t.id) }}
+                  >
+                    <span className="sk-tcard-ico"><t.icon size={18} /></span>
+                    <span className="sk-tcard-t">
+                      <b>{t.title}</b>
+                      <em>{t.meta ? (t.meta.streak || t.meta.inProgress) : t.desc}</em>
+                    </span>
+                    {t.progress && (
+                      <span className="sk-tcard-prog">
+                        <i><s style={{ width: t.progress.done + '%' }} /></i>
+                        <b className="sk-tcard-pct">{t.progress.done}%</b>
+                      </span>
+                    )}
+                    <ChevronRight size={15} className="sk-tcard-arr" />
+                  </button>
+                ))}
+              </div>
+            </section>
+          )}
+        </>
+      )}
     </div>
   )
 }

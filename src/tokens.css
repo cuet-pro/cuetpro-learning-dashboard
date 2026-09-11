@@ -6,6 +6,8 @@
   /* brand */
   --primary: #146C4E;        --primary-hover: #0F5A40;   --primary-soft: #E6F3EE;
   --secondary: #1D3557;      --secondary-soft: #EAF0F7;
+  --violet: #7C5CFF;
+  --violet-soft: #F1EEFF;
   --accent: #E8A33D;         --accent-soft: #FDF1DE;
 
   /* surfaces */
