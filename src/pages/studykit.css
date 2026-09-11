@@ -316,3 +316,6 @@
 
 /* uniform card height */
 .sk-tcard { min-height: 100px; }
+
+/* PYQ content: vertical flow (was caught in the 3-col subgrid) */
+.sk-pyq-flow { display: flex; flex-direction: column; gap: 14px; }

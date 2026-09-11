@@ -390,7 +390,7 @@ function PyqView({ subject, stream, weakOnly, setWeakOnly }) {
   const yearsToShow = year === 'all' ? PYQ_YEARS : [year]
 
   return (
-    <div className="sk-subgrid">
+    <div className="sk-pyq-flow">
       <label className="sk-weak-only">
         <input type="checkbox" checked={weakOnly} onChange={e => setWeakOnly(e.target.checked)} />
         <CheckSquare size={13} /> Only show my weak topics
