@@ -1,6 +1,7 @@
 import { useState } from 'react'
-import { Home, Grid3x3, TrendingUp, Zap, ChevronRight, Target, AlertTriangle, BookOpen, Info } from 'lucide-react'
+import { Home, Grid3x3, TrendingUp, Zap, ChevronRight, Target, AlertTriangle, BookOpen, Info, FileQuestion, CheckCircle2, XCircle, Clock } from 'lucide-react'
 import { status, allSubSkills, boostRanking, boostReason, subjectsFor } from '../lib/analysisData'
+import { offerings, topCutoff } from '../data/duData'
 import { useProfile } from '../lib/profile'
 import { Modal } from '../components/shell/Shell'
 import './analysis.css'
@@ -25,6 +26,7 @@ const TABS = [
   { id: 'overview', label: 'Overview', icon: Home },
   { id: 'swot', label: 'SWOT', icon: Grid3x3 },
   { id: 'trend', label: 'Trend', icon: TrendingUp },
+  { id: 'mocks', label: 'Mock papers', icon: FileQuestion },
   { id: 'boost', label: 'Boost plan', icon: Zap },
 ]
 
@@ -70,6 +72,7 @@ export default function Analysis() {
       {tab === 'overview' && <OverviewTab subject={scope} target={profile.targetPercentile} />}
       {tab === 'swot' && <SwotTab subject={scope} />}
       {tab === 'trend' && <TrendTab subject={scope} target={profile.targetPercentile} />}
+      {tab === 'mocks' && <MockPapersTab subject={scope} />}
       {tab === 'boost' && <BoostTab subject={scope} single={subjectsFor(scope).length === 1} />}
     </div>
   )
@@ -80,6 +83,8 @@ function OverviewTab({ subject, target }) {
   const subs = selectedSubjects(subject)
   const isAll = subs.length > 1
   const [showSkills, setShowSkills] = useState(false)
+  const [sel, setSel] = useState(5)
+  const mocks = (isAll ? OVERALL.trend : subs[0].trend).map((v, i) => ({ mock: 'M' + (i + 2), pct: v }))
   const acc = isAll ? OVERALL.acc : Math.round(subs.reduce((s, x) => s + x.acc, 0) / subs.length)
   const mistakes = subs.flatMap(s => (s.mistakes || []).map(m => ({ ...m, subj: s.name })))
   const weakTopics = allSubSkills(subject).filter(sk => sk.acc < 50).length
@@ -127,6 +132,47 @@ function OverviewTab({ subject, target }) {
             </div>
           )
         })}
+      </section>
+
+      {/* Trend & college reach — slider driven, section-wise card */}
+      <section className="an-card an-trendcard">
+        <div className="an-card-head">
+          <div>
+            <h3 className="an-card-title">Trend &amp; college reach</h3>
+            <p className="an-card-sub">Drag the slider — see any mock&#39;s sections and the DU college that opens up at that percentile</p>
+          </div>
+          <span className="an-live-chip">{pct1(mocks[sel].pct)}%ile</span>
+        </div>
+        <TrendChart mocks={mocks} target={target} showColleges activeIndex={sel} onPick={setSel} />
+        <input
+          type="range" className="an-slider" min={0} max={mocks.length - 1} step={1}
+          value={sel} onChange={e => setSel(Number(e.target.value))}
+          style={{ '--fill': Math.round((sel / (mocks.length - 1)) * 100) + '%' }}
+          aria-label="Select mock attempt"
+        />
+        <div className="an-slider-ticks">{mocks.map((m, i) => <span key={m.mock} className={i === sel ? 'on' : ''}>{m.mock}</span>)}</div>
+
+        <div className="an-attempt" key={sel}>
+          <div className="an-attempt-head">
+            <span className="an-attempt-badge">{mocks[sel].mock}</span>
+            <b>{pct1(mocks[sel].pct)} percentile</b>
+            {(() => { const c = collegeAt(mocks[sel].pct); if (!c) return null; return (
+              <span className={'an-college-chip' + (c.reached ? ' on' : '')}>
+                <Target size={12} />
+                {c.reached ? c.label + ' — reached' : c.label + ' · ' + pct1(c.gap) + '%ile away'}
+              </span>
+            ) })()}
+          </div>
+          <div className="an-attempt-bars">
+            {mockSections(subs, sel).map((s, k) => (
+              <div className="an-att-bar" key={s.name} style={{ animationDelay: (k * 55) + 'ms' }}>
+                <span className="an-att-name">{s.name}</span>
+                <i className="an-att-track"><s style={{ width: s.acc + '%', background: status(s.acc).color }} /></i>
+                <b className="an-att-pct">{s.acc}%</b>
+              </div>
+            ))}
+          </div>
+        </div>
       </section>
 
       <div className="an-grid">
@@ -317,6 +363,54 @@ function MistakeSkills({ mistakes, scope }) {
 }
 
 /* ═══════════ 4. Trend ═══════════ */
+/* ═══════════ Percentile → DU college (real cutoff data) ═══════════ */
+const COLLEGE_PCT = (() => {
+  const byName = new Map()
+  offerings.forEach(o => {
+    const pct = (topCutoff(o) || 0) / 10          // CUET score /1000 ≈ percentile
+    if (pct > 0 && (!byName.has(o.collegeName) || byName.get(o.collegeName) < pct)) byName.set(o.collegeName, pct)
+  })
+  return [...byName.entries()].map(([name, pct]) => ({ name, pct })).sort((a, b) => b.pct - a.pct)
+})()
+
+function shortName(name) {
+  if (/Shri Ram College of Commerce/i.test(name)) return 'SRCC'
+  let n = name.replace(/^Department of\s+/i, '').replace(/\s*\(.*\)/, '')
+  n = n.split(' ').slice(0, 2).join(' ')
+  return n.length > 16 ? n.slice(0, 15) + '…' : n
+}
+
+/* nearest college by percentile, with whether the student already reaches it */
+function collegeAt(p) {
+  if (!COLLEGE_PCT.length) return null
+  const nearest = COLLEGE_PCT.reduce((best, c) => Math.abs(c.pct - p) < Math.abs(best.pct - p) ? c : best, COLLEGE_PCT[0])
+  return { ...nearest, reached: nearest.pct <= p + 0.5, label: shortName(nearest.name), gap: Math.max(0, nearest.pct - p) }
+}
+
+
+/* section-wise accuracy for a given mock (deterministic, derived from real subject accuracies) */
+function mockSections(subs, i) {
+  const drift = [-6, -4, -2, 0, 2, 4][i] ?? 0
+  return subs.map((s, k) => ({
+    name: s.name,
+    acc: Math.max(20, Math.min(99, Math.round(s.acc + drift + ((i * 7 + k * 13) % 5) - 2))),
+  }))
+}
+
+/* question-wise log for a mock paper (deterministic; topics come from the real sub-skill engine) */
+function mockQuestions(paperIdx) {
+  const topics = allSubSkills('all')
+  const out = []
+  for (let q = 0; q < 45; q++) {
+    const t = topics[(q * 7 + paperIdx * 3) % topics.length]
+    const r = (q * 31 + paperIdx * 17) % 100
+    const correct = r < 52 + paperIdx * 3
+    const skipped = !correct && ((q * 13 + paperIdx) % 11 === 0)
+    out.push({ q: q + 1, topic: t.name, subject: t.subject, correct, skipped, time: 18 + ((q * 5 + paperIdx * 7) % 40) })
+  }
+  return out
+}
+
 function TrendTab({ subject, target }) {
   const subs = selectedSubjects(subject)
   const isAll = subs.length > 1
@@ -326,13 +420,13 @@ function TrendTab({ subject, target }) {
     <section className="an-card">
       <h3 className="an-card-title">Percentile trend</h3>
       <p className="an-card-sub">{isAll ? 'Last 6 mocks vs target percentile' : subject + ' · last 6 mocks vs target percentile'}</p>
-      <TrendChart mocks={mocks} target={target} />
+      <TrendChart mocks={mocks} target={target} showColleges />
     </section>
   )
 }
 
-function TrendChart({ mocks, target }) {
-  const W = 560, H = 170, PAD = 28
+function TrendChart({ mocks, target, showColleges, activeIndex, onPick }) {
+  const W = 560, H = 190, PAD = 28
   const min = 30, max = 100
   const x = i => PAD + (i / (mocks.length - 1)) * (W - PAD * 2)
   const y = v => H - PAD - ((v - min) / (max - min)) * (H - PAD * 2)
@@ -342,25 +436,40 @@ function TrendChart({ mocks, target }) {
     <div className="trend-wrap">
       <svg viewBox={`0 0 ${W} ${H}`} className="trend-svg">
         {[40, 50, 60, 70, 80, 90, 100].map(g => (
-          <line key={g} x1={PAD} x2={W - PAD} y1={y(g)} y2={y(g)} stroke="#EEF1F6" strokeWidth="1" />
+          <line key={g} x1={PAD} x2={W - PAD} y1={y(g)} y2={y(g)} stroke="var(--border)" strokeWidth="1" />
         ))}
-        <line x1={PAD} x2={W - PAD} y1={targetY} y2={targetY} stroke="#F5A623" strokeWidth="1.5" strokeDasharray="6 5" />
-        <text x={W - PAD} y={targetY - 6} textAnchor="end" fontSize="10" fontWeight="700" fill="#C77700">target {target}%ile</text>
-        <path d={`${line} L${x(mocks.length - 1).toFixed(1)},${H - PAD} L${x(0).toFixed(1)},${H - PAD} Z`} fill="url(#trendArea)" opacity="0.5" />
-        <path d={line} fill="none" stroke="#00C97F" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-        {mocks.map((p, i) => (
-          <g key={p.mock}>
-            <circle cx={x(i)} cy={y(p.pct)} r="3.5" fill="#00C97F" />
-            <text x={x(i)} y={y(p.pct) - 8} textAnchor="middle" fontSize="9.5" fontWeight="600" fill="#5B667A">{pct1(p.pct)}%</text>
-            <text x={x(i)} y={H - 10} textAnchor="middle" fontSize="9.5" fill="#7C889B">{p.mock}</text>
-          </g>
-        ))}
+        <line x1={PAD} x2={W - PAD} y1={targetY} y2={targetY} stroke="var(--warning)" strokeWidth="1.5" strokeDasharray="6 5" />
+        <text x={W - PAD} y={targetY - 6} textAnchor="end" fontSize="10" fontWeight="700" fill="var(--warning)">target {target}%ile</text>
         <defs>
           <linearGradient id="trendArea" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#00C97F" stopOpacity="0.25" />
-            <stop offset="100%" stopColor="#00C97F" stopOpacity="0" />
+            <stop offset="0%" stopColor="var(--primary)" stopOpacity="0.28" />
+            <stop offset="100%" stopColor="var(--primary)" stopOpacity="0" />
           </linearGradient>
         </defs>
+        <path className="trend-area" d={`${line} L${x(mocks.length - 1).toFixed(1)},${H - PAD} L${x(0).toFixed(1)},${H - PAD} Z`} fill="url(#trendArea)" />
+        <path className="trend-line" d={line} fill="none" stroke="var(--primary)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+        {mocks.map((p, i) => {
+          const c = showColleges ? collegeAt(p.pct) : null
+          const active = activeIndex === i
+          const cx = x(i), cy = y(p.pct)
+          const label = c ? c.label + (c.reached ? '' : ' +' + pct1(c.gap)) : ''
+          const tw = label.length * 4.5 + 14
+          return (
+            <g key={p.mock} className={'trend-pt' + (active ? ' on' : '')} onClick={onPick ? () => onPick(i) : undefined}>
+              <title>{'Mock ' + p.mock + ' · ' + pct1(p.pct) + '%ile' + (c ? ' · ' + c.name + (c.reached ? ' — reached' : ' — ' + pct1(c.gap) + ' away') : '')}</title>
+              <circle className={active ? 'trend-dot on' : 'trend-dot'} cx={cx} cy={cy} r={active ? 5.5 : 3.5} />
+              {active && <circle cx={cx} cy={cy} r="9" className="trend-ring" />}
+              <text x={cx} y={cy - 9} textAnchor="middle" fontSize="9.5" fontWeight="700" className="trend-val">{pct1(p.pct)}%</text>
+              <text x={cx} y={H - 10} textAnchor="middle" fontSize="9.5" className="trend-mock">{p.mock}</text>
+              {c && (
+                <>
+                  <rect className={'trend-chip' + (c.reached ? ' on' : '')} x={cx - tw / 2} y={cy + 11} width={tw} height={14} rx="7" />
+                  <text className={'trend-chip-t' + (c.reached ? ' on' : '')} x={cx} y={cy + 21} textAnchor="middle" fontSize="8.4" fontWeight="700">{label}</text>
+                </>
+              )}
+            </g>
+          )
+        })}
       </svg>
     </div>
   )
@@ -472,4 +581,78 @@ function ImpactBadge({ tier }) {
   if (tier === 'high') return <span className="impact-badge high">high impact</span>
   if (tier === 'medium') return <span className="impact-badge medium">medium impact</span>
   return <span className="impact-badge low">low impact</span>
+}
+
+/* ═══════════ Mock paper analysis — question-wise ═══════════ */
+function MockPapersTab({ subject }) {
+  const subs = selectedSubjects(subject)
+  const isAll = subs.length > 1
+  const [paper, setPaper] = useState(null)
+  const [filter, setFilter] = useState('all')
+  const mocks = (isAll ? OVERALL.trend : subs[0].trend).map((v, i) => ({ mock: i + 2, pct: v }))
+
+  if (paper === null) {
+    return (
+      <section className="an-card">
+        <div className="an-card-head">
+          <div>
+            <h3 className="an-card-title">Mock paper analysis</h3>
+            <p className="an-card-sub">Open any paper to review every question — topic, time and where you slipped</p>
+          </div>
+        </div>
+        <div className="mp-grid">
+          {mocks.map((m, i) => {
+            const qs = mockQuestions(i)
+            const correct = qs.filter(q => q.correct).length
+            const skipped = qs.filter(q => q.skipped).length
+            const wrong = qs.length - correct - skipped
+            return (
+              <button className="mp-card" key={m.mock} style={{ animationDelay: (i * 55) + 'ms' }} onClick={() => { setPaper(m.mock); setFilter('all') }}>
+                <span className="mp-card-top"><b>Mock {m.mock}</b><em>{pct1(m.pct)}%ile</em></span>
+                <span className="mp-card-meta">
+                  <span className="mp-ok"><CheckCircle2 size={11} /> {correct}</span>
+                  <span className="mp-bad"><XCircle size={11} /> {wrong}</span>
+                  <span className="mp-skip">— {skipped}</span>
+                </span>
+                <span className="mp-card-bar"><i style={{ width: Math.round(correct / qs.length * 100) + '%' }} /></span>
+                <span className="mp-card-cta">Analyse paper <ChevronRight size={13} /></span>
+              </button>
+            )
+          })}
+        </div>
+      </section>
+    )
+  }
+
+  const qs = mockQuestions(paper - 2)
+  const correct = qs.filter(q => q.correct).length
+  const skipped = qs.filter(q => q.skipped).length
+  const shown = qs.filter(q => filter === 'all' ? true : filter === 'wrong' ? (!q.correct && !q.skipped) : filter === 'skip' ? q.skipped : q.correct)
+  return (
+    <section className="an-card">
+      <div className="an-card-head">
+        <div>
+          <h3 className="an-card-title">Mock {paper} — question-wise</h3>
+          <p className="an-card-sub">{correct} correct · {qs.length - correct - skipped} wrong · {skipped} skipped · {qs.length} questions</p>
+        </div>
+        <button className="an-view-more" onClick={() => setPaper(null)}>All papers <ChevronRight size={14} /></button>
+      </div>
+      <div className="mq-filters">
+        {[['all', 'All ' + qs.length], ['right', 'Correct ' + correct], ['wrong', 'Wrong ' + (qs.length - correct - skipped)], ['skip', 'Skipped ' + skipped]].map(([id, label]) => (
+          <button key={id} className={'mq-filter' + (filter === id ? ' on' : '')} onClick={() => setFilter(id)}>{label}</button>
+        ))}
+      </div>
+      <div className="mq-list">
+        {shown.map((q, i) => (
+          <div className={'mq-row ' + (q.correct ? 'ok' : q.skipped ? 'skip' : 'bad')} key={q.q} style={{ animationDelay: (i * 12) + 'ms' }}>
+            <span className="mq-n">Q{q.q}</span>
+            <span className="mq-topic">{q.topic}<em>{q.subject}</em></span>
+            <span className="mq-time"><Clock size={11} /> {q.time}s</span>
+            <span className="mq-ic">{q.correct ? <CheckCircle2 size={15} /> : q.skipped ? <span className="mq-dash">—</span> : <XCircle size={15} />}</span>
+          </div>
+        ))}
+        {shown.length === 0 && <p className="muted-empty">Nothing in this filter for Mock {paper}.</p>}
+      </div>
+    </section>
+  )
 }
