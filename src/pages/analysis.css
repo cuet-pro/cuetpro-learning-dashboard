@@ -274,3 +274,45 @@
 .mq-row.skip .mq-n { color: var(--text-muted); }
 .mq-dash { font-weight: 700; }
 @media (max-width: 700px) { .mq-row { grid-template-columns: 36px 1fr 24px; } .mq-time { display: none; } }
+
+/* ═══════════ Section-wise accuracy ⇄ Trend flip card ═══════════ */
+.an-flipcard { perspective: 1900px; padding: 0; background: none; border: none; box-shadow: none; }
+.an-flipcard:hover .an-flip-inner { transform: translateY(-2px); }
+.an-flip-inner { position: relative; transform-style: preserve-3d; transition: transform .58s cubic-bezier(.22,.61,.36,1), translate .3s ease; }
+.an-flip-inner.flipped { transform: rotateY(180deg); }
+.an-face { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-lg); padding: var(--sp-5);
+  backface-visibility: hidden; -webkit-backface-visibility: hidden; transition: box-shadow .28s ease; }
+.an-flipcard:hover .an-face { box-shadow: var(--shadow-md); }
+.an-back { position: absolute; inset: 0; transform: rotateY(180deg); display: flex; flex-direction: column; }
+.an-face-tools { display: flex; align-items: center; gap: 8px; margin-left: auto; }
+.an-flip-btn { width: 30px; height: 30px; display: inline-flex; align-items: center; justify-content: center; cursor: pointer;
+  border: 1px solid var(--border); background: var(--surface); color: var(--text-secondary); border-radius: var(--r-full);
+  transition: transform .3s ease, border-color .2s ease, color .2s ease, background .2s ease; }
+.an-flip-btn:hover { border-color: var(--primary); color: var(--primary); background: var(--primary-soft); transform: rotate(180deg); }
+.an-flipcard:hover .an-flip-btn { animation: flip-cue 2.6s ease-in-out infinite; }
+@keyframes flip-cue { 0%, 100% { box-shadow: 0 0 0 0 rgba(20,108,78,.28) } 50% { box-shadow: 0 0 0 6px rgba(20,108,78,0) } }
+.an-back .trend-wrap { margin-top: auto; margin-bottom: auto; }
+
+/* ═══════════ Trend graph: real college logos + animated tooltip ═══════════ */
+.trend-pt { cursor: pointer; }
+.trend-logo { opacity: 0; animation: logo-pop .5s cubic-bezier(.22,.61,.36,1) .25s forwards; filter: drop-shadow(0 2px 4px rgba(20,23,31,.18)); }
+.trend-logo-halo { fill: var(--surface); stroke: var(--border); stroke-width: 1; opacity: 0; animation: logo-pop .5s cubic-bezier(.22,.61,.36,1) .2s forwards; transition: stroke .2s ease, r .2s ease; }
+@keyframes logo-pop { from { opacity: 0; transform: scale(.6) } to { opacity: 1; transform: scale(1) } }
+.trend-pt:hover .trend-logo { filter: drop-shadow(0 4px 10px rgba(20,108,78,.4)); }
+.trend-pt:hover .trend-logo-halo { stroke: var(--primary); stroke-width: 1.6; }
+.trend-pt:hover .trend-dot { r: 5.6; filter: drop-shadow(0 3px 8px rgba(20,108,78,.5)); }
+.trend-pt.on .trend-logo-halo { stroke: var(--primary); }
+
+.trend-wrap { position: relative; }
+.trend-tip { position: absolute; top: 6px; transform: translateX(var(--tip-shift, 0%));
+  background: var(--secondary); color: #fff; border-radius: var(--r-md); padding: 9px 12px; min-width: 168px; max-width: 240px;
+  box-shadow: var(--shadow-lg); z-index: 5; pointer-events: none;
+  animation: tip-in .22s cubic-bezier(.22,.61,.36,1); }
+@keyframes tip-in { from { opacity: 0; transform: translateX(var(--tip-shift, 0%)) translateY(-6px) scale(.97) } to { opacity: 1; transform: translateX(var(--tip-shift, 0%)) translateY(0) scale(1) } }
+.trend-tip::after { content: ''; position: absolute; bottom: -5px; left: 18px; width: 10px; height: 10px; background: var(--secondary); transform: rotate(45deg); }
+.trend-tip-score { display: block; font: 700 11px var(--font-mono); color: rgba(255,255,255,.72); }
+.trend-tip-college { display: block; font: 700 12.5px var(--font-display); margin: 3px 0 5px; }
+.trend-tip-status { display: inline-block; font: 700 10.5px var(--font-body); border-radius: var(--r-full); padding: 3px 9px; }
+.trend-tip-status.reach { background: rgba(46,156,115,.28); color: #B7F0D6; }
+.trend-tip-status.target { background: rgba(232,163,61,.28); color: #FFE0AE; }
+.trend-tip-status.dream { background: rgba(200,56,43,.28); color: #FFC9C2; }
