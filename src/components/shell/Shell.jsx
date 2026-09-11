@@ -1,22 +1,20 @@
 import { createContext, useCallback, useContext, useEffect, useState } from 'react'
 import {
-  LayoutDashboard, GraduationCap, BarChart3, Sparkles, Compass, Settings, Coffee,
+  LayoutDashboard, GraduationCap, BarChart3, Compass, Settings, Coffee,
   Search, Sun, Moon, Bell, Menu, X, PanelLeftClose, PanelLeftOpen, ChevronDown,
   User, Crown, HelpCircle, LogOut, CircleCheck, CircleAlert, Info,
 } from 'lucide-react'
-import { todayISO } from '../../lib/spacedRepetition'
 import './shell.css'
 
 const NAV = [
   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { id: 'studykit', label: 'Study Kit', icon: GraduationCap },
   { id: 'analysis', label: 'Analysis', icon: BarChart3 },
-  { id: 'revision', label: 'Smart Revision', icon: Sparkles },
   { id: 'chill', label: 'Chill Zone', icon: Coffee },
   { id: 'explorer', label: 'DU Admissions Explorer', icon: Compass },
   { id: 'profile', label: 'Profile & Settings', icon: Settings },
 ]
-const PRIMARY_NAV = ['dashboard', 'studykit', 'analysis', 'revision', 'profile']
+const PRIMARY_NAV = ['dashboard', 'studykit', 'analysis', 'profile', 'explorer']
 
 /* ── theme ── */
 function useTheme() {
@@ -70,15 +68,9 @@ function Sidebar({ active, onNavigate, rail, setRail, open, setOpen }) {
   )
 }
 
-/* ── Notifications (populated only from REAL derivable triggers) ── */
+/* ── Notifications (empty state only — no notification source in the app yet) ── */
 function NotificationsPanel({ onClose }) {
-  let dueToday = 0
-  try {
-    const deck = JSON.parse(localStorage.getItem('cp_deck') || '[]')
-    dueToday = deck.filter(c => c.state !== 'mastered' && c.nextReview <= todayISO()).length
-  } catch { /* ignore */ }
   const items = []
-  if (dueToday > 0) items.push({ k: 'revision', label: `${dueToday} revision card${dueToday > 1 ? 's' : ''} due today`, sub: 'Smart Revision · spaced repetition' })
   return (
     <div className="dd" onClick={e => e.stopPropagation()}>
       <div className="dd-head">Notifications</div>

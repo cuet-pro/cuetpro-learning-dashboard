@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Home, Grid3x3, TrendingUp, Zap, ChevronRight, Target, AlertTriangle, BookOpen, Info, FileQuestion, CheckCircle2, XCircle, Clock, RefreshCw } from 'lucide-react'
+import { Home, Grid3x3, Zap, ChevronRight, Target, BookOpen, Info, FileQuestion, CheckCircle2, XCircle, Clock, RefreshCw } from 'lucide-react'
 import { status, allSubSkills, boostRanking, boostReason, subjectsFor } from '../lib/analysisData'
 import { offerings, topCutoff } from '../data/duData'
 import { logoFor } from '../data/collegeLogos'

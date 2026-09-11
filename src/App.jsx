@@ -2,7 +2,6 @@ import { useState } from 'react'
 import Dashboard from './pages/Dashboard.jsx'
 import StudyKit from './pages/StudyKit.jsx'
 import Analysis from './pages/Analysis.jsx'
-import SmartRevision from './pages/SmartRevision.jsx'
 import ChillZone from './pages/ChillZone.jsx'
 import Explorer from './pages/Explorer.jsx'
 import Profile from './pages/Profile.jsx'
@@ -14,7 +13,6 @@ const PAGES = {
   dashboard: Dashboard,
   studykit: StudyKit,
   analysis: Analysis,
-  revision: SmartRevision,
   chill: ChillZone,
   explorer: Explorer,
   profile: Profile,

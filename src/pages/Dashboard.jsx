@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import {
-  Flame, ArrowRight, BookOpen, CheckCircle2, ChevronDown, CalendarDays, Eye,
-  Trophy, Users, PieChart, ArrowUpRight, RefreshCw, TrendingUp, Target, Quote, Sparkles, Medal,
+  Flame, ArrowRight, BookOpen, ChevronDown, CalendarDays, Eye,
+  Trophy, Users, PieChart, ArrowUpRight, RefreshCw, Target, Quote, Medal,
 } from 'lucide-react'
 import { useProfile, dreamCollegeShort } from '../lib/profile'
 import { Modal } from '../components/shell/Shell.jsx'
