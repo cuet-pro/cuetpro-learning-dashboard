@@ -216,7 +216,9 @@
 .sk-note-wrap .sk-econ-frame { width: 100%; height: 520px; border: 1px solid var(--border); border-radius: var(--r-md); background: #fff; }
 
 /* fullscreen mode */
-.sk-note-wrap.full { position: fixed; inset: 0; z-index: 500; background: var(--surface); padding: var(--sp-4) var(--sp-4) var(--sp-3); gap: 10px; }
+.sk-note-wrap.full { position: fixed; inset: 0; width: 100vw; height: 100dvh; z-index: 900; background: var(--surface); padding: var(--sp-3) var(--sp-3) var(--sp-2); gap: 8px; }
+.sk-note-wrap.full .sk-note-bar { justify-content: flex-end; padding: 0 2px; }
+.sk-note-wrap.full .sk-note-bar > span { display: none; }
 .sk-note-wrap.full .sk-note-bar { padding: 0 2px; }
 .sk-note-wrap.full .sk-econ-frame { flex: 1; height: auto; border-radius: var(--r-sm); }
 .sk-note-wrap.full .sk-note-fs { background: var(--primary-soft); border-color: var(--primary); color: var(--primary); }
@@ -293,7 +295,10 @@
 @keyframes sk-card-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
 /* Tool detail panel */
-.sk-detail { animation: sk-card-in .32s ease both; }
+/* NOTE: no animation/transform on .sk-detail itself — a transformed ancestor traps
+   position:fixed children (the notes fullscreen). Entrance animation lives on the children. */
+.sk-detail-head { animation: sk-card-in .3s ease; }
+.sk-detail-body { animation: sk-card-in .34s ease; }
 .sk-detail-head { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; }
 .sk-back { display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: var(--r-full);
   border: 1px solid var(--border); background: var(--surface); font: 600 12px var(--font-body); color: var(--text-secondary);
