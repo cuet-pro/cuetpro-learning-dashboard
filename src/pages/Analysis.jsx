@@ -115,9 +115,9 @@ function OverviewTab({ subject, target }) {
         </div>
       </section>
 
-      {/* Section-wise accuracy */}
+      {/* Overall accuracy by subject */}
       <section className="an-card">
-        <h3 className="an-card-title">Section-wise accuracy</h3>
+        <h3 className="an-card-title">Overall accuracy by subject</h3>
         <p className="an-card-sub">Tap any subject to focus it. Repeated mistakes are broken down by sub-skill below <span className="tap-hint">→</span></p>
         {subs.map(s => {
           const st = status(s.acc)
@@ -157,7 +157,9 @@ function OverviewTab({ subject, target }) {
               style={{ '--fill': Math.round((sel / (mocks.length - 1)) * 100) + '%' }}
               aria-label="Select mock attempt"
             />
-            <div className="an-slider-ticks">{mocks.map((m, i) => <span key={m.mock} className={i === sel ? 'on' : ''}>{m.mock}</span>)}</div>
+            <div className="an-slider-ticks">{mocks.map((m, i) => (
+              <button key={m.mock} className={i === sel ? 'on' : ''} onClick={() => setSel(i)} title={'Mock ' + m.mock}>{m.mock}</button>
+            ))}</div>
 
             <div className="an-attempt" key={sel}>
               <div className="an-attempt-head">
@@ -402,10 +404,14 @@ const COLLEGE_PCT = (() => {
 
 function shortName(name) {
   if (/Shri Ram College of Commerce/i.test(name)) return 'SRCC'
-  let n = name.replace(/^Department of\s+/i, '').replace(/\s*\(.*\)/, '')
-  n = n.split(' ').slice(0, 2).join(' ')
-  return n.length > 16 ? n.slice(0, 15) + '…' : n
+  let n = name.replace(/^Department of\s+/i, '').replace(/\s*\(.*\)\s*/g, ' ').trim()
+  n = n.replace(/\s+and\s+/gi, ' ').replace(/^The\s+/i, '')
+  const words = n.split(/\s+/).filter(w => !/^(of|for|the|applied|sciences|studies|finno|ugrian)$/i.test(w))
+  let out = words.slice(0, 2).join(' ')
+  if (out.length < 4) out = words.slice(0, 3).join(' ')
+  return out.length > 18 ? out.slice(0, 17).trim() + '…' : out
 }
+
 
 /* nearest college by percentile, with whether the student already reaches it */
 function collegeAt(p) {
