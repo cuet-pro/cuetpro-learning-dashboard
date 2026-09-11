@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import {
   Flame, ArrowRight, BookOpen, CheckCircle2, ChevronDown, CalendarDays, Eye,
-  Trophy, Users, PieChart, ArrowUpRight, TrendingUp, Target, Quote, Sparkles, Medal,
+  Trophy, Users, PieChart, ArrowUpRight, RefreshCw, TrendingUp, Target, Quote, Sparkles, Medal,
 } from 'lucide-react'
 import { useProfile, dreamCollegeShort } from '../lib/profile'
 import { Modal } from '../components/shell/Shell.jsx'
@@ -66,8 +66,14 @@ function Avatar({ gender, blink }) {
   )
   return (
     <svg viewBox="0 0 100 100" className="dash-avatar-svg" aria-hidden="true">
-      <circle cx="50" cy="50" r="50" fill="var(--secondary)" />
-      <circle cx="50" cy="58" r="34" fill="#f2c9a0" />
+      <defs>
+        <linearGradient id="avDisc" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stopColor="var(--primary)" />
+          <stop offset="100%" stopColor="var(--secondary)" />
+        </linearGradient>
+      </defs>
+      <circle cx="50" cy="52" r="47" fill="url(#avDisc)" />
+      <circle cx="50" cy="58" r="36" fill="#f2c9a0" />
       {gender === 'Female' && (<>
         <path d="M50 14 Q78 10 74 30 Q78 22 68 20 Q76 34 72 44 Q60 26 40 26 Q30 30 28 40 Q24 26 30 18 Q38 12 50 14 Z" fill="#3d2b1f" />
         <path d="M28 40 Q16 34 20 52 Q24 62 32 58 Q28 46 30 42 Z" fill="#3d2b1f" />
@@ -78,9 +84,9 @@ function Avatar({ gender, blink }) {
         <path d="M26 32 Q16 34 18 50 Q22 42 28 42 Z" fill="#1f2937" />
       </>)}
       <g className="av-arm">
-        <path d="M80 78 Q93 66 89 52" stroke="#eab98f" strokeWidth="6.5" strokeLinecap="round" fill="none" />
-        <path d="M86.5 51 h6 a3.2 3.2 0 0 1 3.2 3.2 v4.6 a3.2 3.2 0 0 1 -3.2 3.2 h-6 a3.2 3.2 0 0 1 -3.2 -3.2 v-4.6 a3.2 3.2 0 0 1 3.2 -3.2 z" fill="#e9b98c" />
-        <path d="M89 51 v-3 a1.8 1.8 0 0 1 3.6 0 v3" fill="none" stroke="#e9b98c" strokeWidth="2.4" strokeLinecap="round" />
+        <path d="M84 82 Q104 68 98 42" stroke="#eab98f" strokeWidth="7" strokeLinecap="round" fill="none" />
+        <path d="M95.5 41 h6.5 a3.4 3.4 0 0 1 3.4 3.4 v5 a3.4 3.4 0 0 1 -3.4 3.4 h-6.5 a3.4 3.4 0 0 1 -3.4 -3.4 v-5 a3.4 3.4 0 0 1 3.4 -3.4 z" fill="#e9b98c" />
+        <path d="M98.5 41 v-3.4 a2 2 0 0 1 4 0 v3.4" fill="none" stroke="#e9b98c" strokeWidth="2.6" strokeLinecap="round" />
       </g>
       {eyes}
       <path d="M42 56 Q50 62 58 56" fill="none" stroke="#c48a68" strokeWidth="2.4" strokeLinecap="round" />
@@ -116,6 +122,7 @@ export default function Dashboard({ onNavigate }) {
   const [showStanding, setShowStanding] = useState(false)
   const [stView, setStView] = useState('all')
   const [openRow, setOpenRow] = useState(null)
+  const [flipped, setFlipped] = useState(false)
 
   const weakest = [...SUBJECTS].sort((a, b) => a.pct - b.pct)[0]
   const lb = LB[stView]
@@ -214,63 +221,75 @@ export default function Dashboard({ onNavigate }) {
         )}
       </section>
 
-      {/* 4. Progress + Standing */}
-      <div className="dash-cols">
-        <section className="cuet-card">
-          <button className="prog-head" onClick={() => onNavigate('analysis')}>
-            <span className="prog-head-ico"><PieChart size={17} /></span>
-            <span className="prog-head-t"><b>My Progress</b><em>CUET Commerce Batch 2027</em></span>
-            <span className="pill-green">On track</span>
-            <ArrowUpRight size={15} className="prog-head-arr" />
-          </button>
-          <button className="prog-ring-wrap" onClick={() => onNavigate('analysis')}>
-            <div className="ring" style={{ '--p': '64%' }}><div className="ring-in"><b>64%</b><span>Overall syllabus</span></div></div>
-          </button>
-          <p className="prog-exp">Expected by now: 62% · <b className="ok">ahead +2%</b></p>
-          <div className="prog-subjects">
-            {SUBJECTS.map(s => (
-              <div key={s.n} className={'prow' + (openRow === s.n ? ' open' : '')}>
-                <button className="prow-main" onClick={() => setOpenRow(openRow === s.n ? null : s.n)} aria-expanded={openRow === s.n}>
-                  <span className="pname">{s.n}</span>
-                  <div className="pbar"><i style={{ width: s.pct + '%', background: sc(s.status) }} /></div>
-                  <b className="ppct">{s.pct}%</b>
-                  <span className={'pstat ' + s.status.toLowerCase().replace(/ /g, '-')}>{s.status}</span>
-                  <ChevronDown size={14} className="prow-chev" />
-                </button>
-                {openRow === s.n && (
-                  <div className="prow-more">
-                    <span className={'prow-note' + (s.d >= 0 ? ' up' : ' down')}>
-                      {s.d >= 0 ? '▲ +' + s.d.toFixed(1) + '% vs last mock' : '▼ ' + s.d.toFixed(1) + '% vs last mock'} · {s.pct >= 75 ? 'keep the momentum' : (() => { const n = Math.ceil((75 - s.pct) / 3); return n + ' quick fix' + (n > 1 ? 'es' : '') + ' to reach 75%' })()}
-                    </span>
-                    <div className="prow-actions">
-                      <button className="btn btn-primary-sm" onClick={() => onNavigate('studykit')}>Practice <BookOpen size={13} /></button>
-                      <button className="btn btn-outline-sm" onClick={() => onNavigate('analysis')}>Open Analysis</button>
+      {/* 4. Progress ⇄ Standing — combined flip card */}
+      <div className="flip-wrap">
+        <div className={'flip-inner' + (flipped ? ' flipped' : '')}>
+          {/* FRONT — My Progress */}
+          <section className="cuet-card flip-face flip-front">
+            <div className="flip-bar">
+              <button className="flip-seg on" onClick={() => setFlipped(false)}><PieChart size={13} /> My Progress</button>
+              <button className="flip-seg" onClick={() => setFlipped(true)}><Trophy size={13} /> My Standing <RefreshCw size={12} /></button>
+            </div>
+            <button className="prog-head" onClick={() => onNavigate('analysis')}>
+              <span className="prog-head-ico"><PieChart size={17} /></span>
+              <span className="prog-head-t"><b>My Progress</b><em>CUET Commerce Batch 2027</em></span>
+              <span className="pill-green">On track</span>
+              <ArrowUpRight size={15} className="prog-head-arr" />
+            </button>
+            <button className="prog-ring-wrap" onClick={() => onNavigate('analysis')}>
+              <div className="ring" style={{ '--p': '64%' }}><div className="ring-in"><b>64%</b><span>Overall syllabus</span></div></div>
+            </button>
+            <p className="prog-exp">Expected by now: 62% · <b className="ok">ahead +2%</b></p>
+            <div className="prog-subjects">
+              {SUBJECTS.map(s => (
+                <div key={s.n} className={'prow' + (openRow === s.n ? ' open' : '')}>
+                  <button className="prow-main" onClick={() => setOpenRow(openRow === s.n ? null : s.n)} aria-expanded={openRow === s.n}>
+                    <span className="pname">{s.n}</span>
+                    <div className="pbar"><i style={{ width: s.pct + '%', background: sc(s.status) }} /></div>
+                    <b className="ppct">{s.pct}%</b>
+                    <span className={'pstat ' + s.status.toLowerCase().replace(/ /g, '-')}>{s.status}</span>
+                    <ChevronDown size={14} className="prow-chev" />
+                  </button>
+                  {openRow === s.n && (
+                    <div className="prow-more">
+                      <span className={'prow-note' + (s.d >= 0 ? ' up' : ' down')}>
+                        {s.d >= 0 ? '▲ +' + s.d.toFixed(1) + '% vs last mock' : '▼ ' + s.d.toFixed(1) + '% vs last mock'} · {s.pct >= 75 ? 'keep the momentum' : (() => { const n = Math.ceil((75 - s.pct) / 3); return n + ' quick fix' + (n > 1 ? 'es' : '') + ' to reach 75%' })()}
+                      </span>
+                      <div className="prow-actions">
+                        <button className="btn btn-primary-sm" onClick={() => onNavigate('studykit')}>Practice <BookOpen size={13} /></button>
+                        <button className="btn btn-outline-sm" onClick={() => onNavigate('analysis')}>Open Analysis</button>
+                      </div>
                     </div>
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-        </section>
+                  )}
+                </div>
+              ))}
+            </div>
+          </section>
 
-        <section className="cuet-card standing-card" role="button" tabIndex={0} onClick={() => setShowStanding(true)} onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') setShowStanding(true) }}>
-          <div className="card-title-row">
-            <div><h2>My Standing</h2><p>Ranked by contest & daily-challenge points</p></div>
-            <ChevronDown size={16} className="st-chev-up" />
-          </div>
-          <div className="st-tabs" onClick={e => e.stopPropagation()}>
-            <button className={'st-tab' + (stView === 'all' ? ' on' : '')} onClick={() => setStView('all')}>All CUET Pro</button>
-            <button className={'st-tab' + (stView === 'subj' ? ' on' : '')} onClick={() => setStView('subj')}>My Subject</button>
-          </div>
-          <div className="st-num"><b>#{lb.rank}</b><span>of {lb.of.toLocaleString('en-IN')} students</span></div>
-          <div className="st-pct"><Trophy size={14} /> <b>{lb.pctile}%ile</b> current standing</div>
-          <div className="board">
-            <div className="board-title">TOP 5 · {lb.cohort.toUpperCase()}</div>
-            {top5.map((p, i) => <div className="board-row" key={p.name}><span className="br">{i + 1}</span><span className="bname">{p.name}</span><b className="bpts">{p.pts} pts</b></div>)}
-            <div className="board-row me"><span className="br">#{lb.rank}</span><span className="bname">Ananya Verma (you)</span><b className="bpts">{lb.pts} pts</b></div>
-          </div>
-          <span className="st-full-hint">Tap to view full leaderboard <ArrowRight size={12} /></span>
-        </section>
+          {/* BACK — My Standing */}
+          <section className="cuet-card flip-face flip-back" onClick={() => setShowStanding(true)}>
+            <div className="flip-bar" onClick={e => e.stopPropagation()}>
+              <button className="flip-seg" onClick={() => setFlipped(false)}><PieChart size={13} /> My Progress <RefreshCw size={12} /></button>
+              <button className="flip-seg on" onClick={() => setFlipped(true)}><Trophy size={13} /> My Standing</button>
+            </div>
+            <div className="card-title-row">
+              <div><h2>My Standing</h2><p>Ranked by contest & daily-challenge points</p></div>
+              <ChevronDown size={16} className="st-chev-up" />
+            </div>
+            <div className="st-tabs" onClick={e => e.stopPropagation()}>
+              <button className={'st-tab' + (stView === 'all' ? ' on' : '')} onClick={() => setStView('all')}>All CUET Pro</button>
+              <button className={'st-tab' + (stView === 'subj' ? ' on' : '')} onClick={() => setStView('subj')}>My Subject</button>
+            </div>
+            <div className="st-num"><b>#{lb.rank}</b><span>of {lb.of.toLocaleString('en-IN')} students</span></div>
+            <div className="st-pct"><Trophy size={14} /> <b>{lb.pctile}%ile</b> current standing</div>
+            <div className="board">
+              <div className="board-title">TOP 5 · {lb.cohort.toUpperCase()}</div>
+              {top5.map((p, i) => <div className="board-row" key={p.name}><span className="br">{i + 1}</span><span className="bname">{p.name}</span><b className="bpts">{p.pts} pts</b></div>)}
+              <div className="board-row me"><span className="br">#{lb.rank}</span><span className="bname">Ananya Verma (you)</span><b className="bpts">{lb.pts} pts</b></div>
+            </div>
+            <span className="st-full-hint">Tap to view full leaderboard <ArrowRight size={12} /></span>
+          </section>
+        </div>
       </div>
 
       {/* 5. Tool tiles (4 grouped) */}

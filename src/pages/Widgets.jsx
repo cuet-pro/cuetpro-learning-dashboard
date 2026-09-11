@@ -1,146 +1,178 @@
 import { useEffect, useState } from 'react'
 import {
   Swords, List, Layers, MessageCircle, TrendingUp, TrendingDown, AlertTriangle, Lightbulb,
-  FileText, BarChart3, ListChecks, Files, Info, CheckCircle2, Users, Flame, Award,
-  Activity, CalendarRange, Target, Zap, GraduationCap, Sparkles, Compass, ChevronRight, Gift,
+  FileText, BarChart3, ListChecks, Files, Info, CheckCircle2, Users, Flame, Award, Zap,
+  Compass, Target, Timer, BookOpen, Trophy, Sigma, Map as MapIcon, Video,
 } from 'lucide-react'
+import { boostRanking, weakTopicNames } from '../lib/analysisData'
 import './widgets.css'
 
-/* Icons reuse the app's existing vocabulary (flashcards=Layers, trend=TrendingUp/Down,
-   alert=AlertTriangle, bulb=Lightbulb, file=FileText, checklist=ListChecks,
-   check=CheckCircle2, users=Users, flame=Flame, bolt=Zap, target=Target). */
+/* ── 1. Vocabulary & practice — icon grid ── */
+function VocabTile({ onNavigate }) {
+  const items = [
+    { icon: Swords, label: 'Word battle', go: () => alert('Deep-link → Word battle (Chill Zone)') },
+    { icon: List, label: 'Word list', go: () => alert('Deep-link → Word list') },
+    { icon: Layers, label: 'Flashcards', go: null, nav: 'studykit' },
+    { icon: MessageCircle, label: 'Phrasal verbs', go: () => alert('Deep-link → Phrasal verbs') },
+    { icon: Timer, label: 'Quick quiz', go: null, nav: 'studykit' },
+    { icon: Zap, label: 'Focus mock', go: null, nav: 'studykit' },
+  ]
+  return <IconGrid items={items} onNavigate={onNavigate} />
+}
 
-function TileHead({ icon: Icon, title, sub, hint, onClickHint }) {
+/* ── 2. Insights & resources — icon grid ── */
+function InsightsTile({ words, onNavigate }) {
+  const items = [
+    { icon: TrendingUp, label: 'Strengths', tone: 'ok' },
+    { icon: TrendingDown, label: 'Weaknesses', tone: 'warn' },
+    { icon: AlertTriangle, label: 'Threats', tone: 'bad' },
+    { icon: Lightbulb, label: 'Fixes', tone: 'info' },
+    { icon: FileText, label: 'Syllabus PDF', go: () => alert('Deep-link → Syllabus PDF') },
+    { icon: BarChart3, label: 'Cutoffs', nav: 'explorer' },
+    { icon: ListChecks, label: 'Eligibility', go: () => alert('Deep-link → Eligibility checker') },
+    { icon: Files, label: 'Sample papers', go: () => alert('Deep-link → Sample papers') },
+    { icon: Info, label: 'Pattern guide', go: () => alert('Deep-link → Exam pattern guide') },
+    { icon: MapIcon, label: 'Explorer', nav: 'explorer' },
+    { icon: Sigma, label: 'Formulas', nav: 'studykit' },
+    { icon: BookOpen, label: 'Weak topics', badge: String(words.length) },
+  ]
+  return <IconGrid items={items} onNavigate={onNavigate} />
+}
+
+/* ── 3. Activity — icon chips + animated feed ── */
+function ActivityTile() {
+  const [feed, setFeed] = useState([
+    { id: 1, icon: CheckCircle2, tone: 'ok', t: 'Mock Test #7 completed', when: '2h ago' },
+    { id: 2, icon: Layers, tone: 'info', t: '12 flashcards mastered', when: '4h ago' },
+    { id: 3, icon: Users, tone: 'info', t: 'Joined a study room', when: '6h ago' },
+    { id: 4, icon: Flame, tone: 'warn', t: '9-day streak milestone', when: 'yesterday' },
+  ])
+  useEffect(() => {
+    const extra = [
+      { icon: Flame, tone: 'warn', t: 'Daily challenge completed', when: 'just now' },
+      { icon: Trophy, tone: 'ok', t: 'Rank moved up to #142', when: 'just now' },
+      { icon: Video, tone: 'info', t: 'Watched “National income” lesson', when: 'just now' },
+    ]
+    let i = 0
+    const iv = setInterval(() => {
+      const e = extra[i % extra.length]
+      i += 1
+      setFeed(f => [{ ...e, id: Date.now() }, ...f].slice(0, 6))
+    }, 9000)
+    return () => clearInterval(iv)
+  }, [])
+  const stats = [
+    { icon: Target, v: '2/3', l: 'mocks' },
+    { icon: TrendingUp, v: '+4.2%', l: 'accuracy' },
+    { icon: Timer, v: '6.5h', l: 'studied' },
+    { icon: Flame, v: '7', l: 'day streak' },
+  ]
   return (
-    <div className="tile-head">
-      <span className="tile-ico"><Icon size={16} /></span>
-      <div className="tile-t"><b>{title}</b><em>{sub}</em></div>
-      {hint && <button className="tile-open" onClick={onClickHint}>{hint} <ChevronRight size={13} /></button>}
+    <>
+      <div className="icon-strip">
+        {stats.map(s => {
+          const I = s.icon
+          return <div className="icon-stat" key={s.l}><I size={15} /><b>{s.v}</b><span>{s.l}</span></div>
+        })}
+      </div>
+      <div className="feed">
+        {feed.map(f => {
+          const I = f.icon
+          return (
+            <div className={'feed-row ' + f.tone} key={f.id}>
+              <span className={'feed-ico ' + f.tone}><I size={14} /></span>
+              <span className="feed-t">{f.t}</span>
+              <span className="feed-when">{f.when}</span>
+            </div>
+          )
+        })}
+      </div>
+    </>
+  )
+}
+
+/* ── 4. Badges — icon grid, earned vs locked ── */
+function BadgesTile() {
+  const badges = [
+    { icon: Flame, label: '7-day streak', earned: true, tone: 'warn' },
+    { icon: Award, label: 'Mock marathoner', earned: true, tone: 'ok' },
+    { icon: Zap, label: 'Weak → strong', earned: true, tone: 'ok' },
+    { icon: Trophy, label: 'Top 5%', earned: true, tone: 'warn' },
+    { icon: Flame, label: '30-day streak', earned: false },
+    { icon: Target, label: 'Perfect mock', earned: false },
+    { icon: BookOpen, label: 'Scholar', earned: false },
+    { icon: Compass, label: 'Explorer', earned: false },
+  ]
+  return (
+    <div className="badge-grid">
+      {badges.map(b => {
+        const I = b.icon
+        return (
+          <button
+            className={'badge-cell' + (b.earned ? ' earned ' + (b.tone || '') : ' locked')}
+            key={b.label}
+            onClick={() => alert(b.earned ? `Earned: ${b.label}` : `Locked — ${b.label}: keep going to unlock`)}
+          >
+            <I size={20} />
+            <span>{b.label}</span>
+          </button>
+        )
+      })}
     </div>
   )
 }
-function Row({ icon: Icon, label, sub, color, onClick }) {
+
+function IconGrid({ items, onNavigate }) {
   return (
-    <button className="tile-row" onClick={() => (onClick ? onClick() : alert('Deep-link → ' + label))}>
-      <span className="tile-row-ico" style={color ? { color } : undefined}><Icon size={14} /></span>
-      <span className="tile-row-t"><b>{label}</b>{sub && <em>{sub}</em>}</span>
-      <ChevronRight size={13} className="tile-row-arr" />
-    </button>
+    <div className="icon-grid">
+      {items.map(it => {
+        const I = it.icon
+        return (
+          <button
+            className={'icon-cell' + (it.tone ? ' ' + it.tone : '')}
+            key={it.label}
+            onClick={() => (it.go ? it.go() : it.nav && onNavigate ? onNavigate(it.nav) : null)}
+            disabled={!it.go && !it.nav}
+          >
+            <I size={19} />
+            <span>{it.label}</span>
+            {it.badge && <em className="icon-badge">{it.badge}</em>}
+          </button>
+        )
+      })}
+    </div>
   )
 }
 
-const VOCAB = [
-  { icon: Swords, label: 'Word battle', sub: '1v1 vocab duel', onClick: () => alert('Deep-link → Chill Zone · Word battle') },
-  { icon: List, label: 'Word list', sub: '120 words this week' },
-  { icon: Layers, label: 'Flashcards', sub: '34 due for recall', onClick: () => null },
-  { icon: MessageCircle, label: 'Phrasal verbs', sub: '12 new phrases' },
-]
-const SWOT = [
-  { icon: TrendingUp, label: 'Vocabulary · 88%', color: 'var(--success)', sub: 'strength' },
-  { icon: TrendingDown, label: 'Money & Banking · 48%', color: 'var(--warning)', sub: 'weakness' },
-  { icon: AlertTriangle, label: 'Quant ability · 38%', color: 'var(--error)', sub: 'threat — high marks share' },
-  { icon: Lightbulb, label: 'National income · 62%', color: 'var(--info)', sub: 'opportunity' },
-]
-const RESOURCES = [
-  { icon: FileText, label: 'Syllabus PDF' }, { icon: BarChart3, label: 'Previous year cutoffs' },
-  { icon: ListChecks, label: 'Eligibility checker' }, { icon: Files, label: 'Sample papers' }, { icon: Info, label: 'Exam pattern guide' },
-]
-const SHORTCUTS = [
-  { icon: GraduationCap, label: 'Study Kit', id: 'studykit' }, { icon: BarChart3, label: 'Analysis', id: 'analysis' },
-  { icon: Sparkles, label: 'Smart Revision', id: 'revision' }, { icon: Compass, label: 'DU Explorer', id: 'explorer' },
-]
-const BASE_ACTIVITY = [
-  { icon: CheckCircle2, color: 'var(--success)', label: 'Mock Test #7 completed', sub: '2 hours ago · 512/800' },
-  { icon: Layers, color: 'var(--success)', label: 'Flashcards mastered', sub: '12 cards · Money & Banking' },
-  { icon: Users, color: 'var(--info)', label: 'Joined a study room', sub: '6 hours ago · 50-min session' },
-  { icon: Flame, color: 'var(--warning)', label: '9-day streak milestone', sub: 'Yesterday' },
-]
-const NEW_ACTIVITY = [
-  { icon: CheckCircle2, color: 'var(--success)', label: 'Daily challenge completed', sub: 'Word of the Day · +10 pts' },
-  { icon: Flame, color: 'var(--warning)', label: 'Streak extended to 10 days', sub: 'Just now' },
-]
-const WEEK_STATS = [
-  { icon: Target, v: '2 mocks', l: 'of 3 planned' }, { icon: TrendingUp, v: '+4.2%', l: 'accuracy' },
-  { icon: Activity, v: '6.5h', l: 'studied' }, { icon: Flame, v: '7 days', l: 'streak' },
-]
-const BADGES = [
-  { icon: Flame, color: 'var(--warning)', name: '7-day streak', earned: true },
-  { icon: Award, color: 'var(--success)', name: 'Mock marathoner', earned: true },
-  { icon: Zap, color: 'var(--success)', name: 'Weak → strong', earned: true },
-  { icon: Award, name: '30-day streak', earned: false },
-  { icon: Target, name: 'Perfect mock', earned: false },
-  { icon: Award, name: 'Scholar', earned: false },
-]
-
 export default function DashboardTiles({ onNavigate }) {
-  const [activity, setActivity] = useState(BASE_ACTIVITY.map((a, i) => ({ ...a, id: i, fresh: false })))
-  const [newCount, setNewCount] = useState(0)
-  useEffect(() => {
-    const iv = setInterval(() => {
-      const n = NEW_ACTIVITY[newCount % NEW_ACTIVITY.length]
-      setActivity(list => [{ ...n, id: Date.now(), fresh: true }, ...list].slice(0, 6))
-      setNewCount(c => c + 1)
-    }, 9000)
-    return () => clearInterval(iv)
-  }, [newCount])
+  const [open, setOpen] = useState('vocab')
+  const words = weakTopicNames('Commerce')
+  const [topWords] = useState(() => boostRanking('Commerce').slice(0, 1))
+
+  const tiles = [
+    { id: 'vocab', title: 'Vocabulary & practice', icon: Layers, body: <VocabTile onNavigate={onNavigate} /> },
+    { id: 'insights', title: 'Insights & resources', icon: Lightbulb, body: <InsightsTile words={words} onNavigate={onNavigate} /> },
+    { id: 'activity', title: 'Your recent activity', icon: TrendingUp, body: <ActivityTile /> },
+    { id: 'badges', title: 'Recent badges', icon: Award, body: <BadgesTile /> },
+  ]
 
   return (
     <div className="tiles">
-      {/* 1 · Vocabulary & practice */}
-      <section className="cuet-card tile">
-        <TileHead icon={Swords} title="Vocabulary & practice" sub="Words, flashcards, quick duels" hint="Open Study Kit" onClickHint={() => onNavigate('studykit')} />
-        {VOCAB.map(r => <Row key={r.label} {...r} onClick={r.onClick} />)}
-        <div className="tile-div" />
-        <div className="tile-chips">
-          {SHORTCUTS.map(s => (
-            <button key={s.id} className="tile-chip" onClick={() => onNavigate(s.id)}><s.icon size={12} /> {s.label.split(' ')[0]}</button>
-          ))}
-        </div>
-      </section>
-
-      {/* 2 · Insights & resources */}
-      <section className="cuet-card tile">
-        <TileHead icon={Gift} title="Insights & resources" sub="SWOT snapshot + free downloads" hint="Open Analysis" onClickHint={() => onNavigate('analysis')} />
-        {SWOT.map(r => <Row key={r.label} {...r} />)}
-        <div className="tile-div" />
-        <div className="tile-chips">
-          {RESOURCES.map(r => (
-            <button key={r.label} className="tile-chip" onClick={() => alert('Deep-link → ' + r.label)}><r.icon size={12} /> {r.label.split(' ')[0]}</button>
-          ))}
-        </div>
-      </section>
-
-      {/* 3 · Activity */}
-      <section className="cuet-card tile">
-        <TileHead icon={Activity} title="Your recent activity" sub="Live feed · this week at a glance" />
-        <div className="tile-feed">
-          {activity.map(a => (
-            <div key={a.id} className={'tile-feed-row' + (a.fresh ? ' fresh' : '')}>
-              <span className="tile-feed-ico" style={{ color: a.color }}><a.icon size={14} /></span>
-              <span className="tile-feed-t"><b>{a.label}</b><em>{a.sub}</em></span>
-            </div>
-          ))}
-        </div>
-        <div className="tile-div" />
-        <div className="tile-stats">
-          {WEEK_STATS.map(s => (
-            <div className="tile-stat" key={s.l}><span style={{ color: 'var(--text-muted)' }}><s.icon size={13} /></span><b>{s.v}</b><em>{s.l}</em></div>
-          ))}
-        </div>
-      </section>
-
-      {/* 4 · Badges */}
-      <section className="cuet-card tile">
-        <TileHead icon={Award} title="Recent badges" sub="Earned & waiting for you" hint="Chill Zone" onClickHint={() => onNavigate('chill')} />
-        <div className="tile-badges">
-          {BADGES.map(b => (
-            <div key={b.name} className={'tile-badge' + (b.earned ? ' earned' : ' locked')} title={b.name}>
-              <span style={b.earned ? { color: b.color } : undefined}><b.icon size={18} /></span>
-              <em>{b.name}</em>
-            </div>
-          ))}
-        </div>
-      </section>
+      {tiles.map(t => {
+        const I = t.icon
+        const isOpen = open === t.id
+        return (
+          <section className={'tile' + (isOpen ? ' open' : '')} key={t.id}>
+            <button className="tile-head" onClick={() => setOpen(isOpen ? null : t.id)} aria-expanded={isOpen}>
+              <span className="tile-ico"><I size={16} /></span>
+              <b>{t.title}</b>
+              {t.id === 'vocab' && topWords[0] && <span className="tile-hint">top: {topWords[0].name}</span>}
+              <span className={'tile-chev' + (isOpen ? ' up' : '')}>⌄</span>
+            </button>
+            {isOpen && <div className="tile-body">{t.body}</div>}
+          </section>
+        )
+      })}
     </div>
   )
 }
