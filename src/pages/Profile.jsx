@@ -49,7 +49,7 @@ export default function Profile() {
       <section className="pf-account">
         <div className="pf-avatar">AV</div>
         <div className="pf-account-info">
-          <b>Ananya Verma</b>
+          <b>{profile.name || 'Ananya Verma'}</b>
           <span>{profile.stream} · CUET 2027</span>
         </div>
         <button className="btn btn-outline-sm"><LogOut size={13} /> Sign out</button>

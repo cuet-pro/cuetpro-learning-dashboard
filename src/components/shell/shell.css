@@ -112,3 +112,22 @@
   .tb-search { display: none; }
   .side-collapse { display: none; }
 }
+
+/* ── Sidebar: user block is the Profile & Settings entry ── */
+.side-user { display: flex; align-items: center; gap: 10px; width: 100%; text-align: left; cursor: pointer;
+  border: 1px solid transparent; background: none; border-radius: var(--r-md); padding: 8px 10px;
+  transition: background .2s ease, border-color .2s ease, transform .2s cubic-bezier(.22,.61,.36,1); }
+.side-user:hover { background: var(--primary-soft); border-color: var(--primary); transform: translateY(-1px); }
+.side-user:hover .side-user-gear { color: var(--primary); transform: rotate(35deg); }
+.side-user.active { background: var(--primary-soft); border-color: var(--primary); }
+.side-user-txt { display: flex; flex-direction: column; min-width: 0; flex: 1; }
+.side-user-txt b { font: 700 12.5px var(--font-display); color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.side-user-txt span { font-size: 10.5px; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.side-user-gear { color: var(--text-muted); flex-shrink: 0; transition: color .2s ease, transform .35s cubic-bezier(.22,.61,.36,1); }
+.side-user-av { width: 34px; height: 34px; flex-shrink: 0; display: grid; place-items: center; border-radius: var(--r-full);
+  background: linear-gradient(135deg, var(--primary), var(--secondary)); color: #fff; font: 700 11.5px var(--font-display); }
+/* icon-rail: only the avatar + gear stay visible */
+.side.rail .side-user { justify-content: center; padding: 8px 0; gap: 0; position: relative; }
+.side.rail .side-user-txt { display: none; }
+.side.rail .side-user-gear { position: absolute; right: 6px; bottom: 2px; width: 15px; height: 15px; padding: 2px;
+  background: var(--surface); border-radius: var(--r-full); }

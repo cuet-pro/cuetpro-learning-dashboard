@@ -14,6 +14,7 @@ export const STREAMS = {
 }
 
 const DEFAULTS = {
+  name: 'Ananya Verma',
   stream: 'Commerce',
   gender: 'not-set',
   subjects: [...STREAMS.Commerce],

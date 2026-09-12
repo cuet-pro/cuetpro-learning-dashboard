@@ -25,7 +25,7 @@ const LB = {
       { name: 'Arjun S.', pts: 2490 }, { name: 'Meera P.', pts: 2430 }, { name: 'Rohan V.', pts: 2380 },
       { name: 'Tanya G.', pts: 2310 }, { name: 'Yash D.', pts: 2250 }, { name: 'Sneha T.', pts: 2190 },
       { name: 'Kabir N.', pts: 2120 }, { name: 'Ishita R.', pts: 2060 }, { name: 'Advait M.', pts: 1980 },
-      { name: 'Naina S.', pts: 1900 }, { name: 'Vedant K.', pts: 1830 }, { name: 'Ananya Verma', pts: 1120, me: true },
+      { name: 'Naina S.', pts: 1900 }, { name: 'Vedant K.', pts: 1830 }, { name: 'You', pts: 1120, me: true },
       { name: 'Parth L.', pts: 980 }, { name: 'Divya C.', pts: 760 },
     ],
   },
@@ -34,7 +34,7 @@ const LB = {
     rows: [
       { name: 'Ishaan M.', pts: 890 }, { name: 'Aryan B.', pts: 860 }, { name: 'Meera P.', pts: 830 },
       { name: 'Ridhima K.', pts: 800 }, { name: 'Kiara J.', pts: 770 }, { name: 'Arjun S.', pts: 730 },
-      { name: 'Simran K.', pts: 690 }, { name: 'Tanya G.', pts: 640 }, { name: 'Ananya Verma', pts: 420, me: true },
+      { name: 'Simran K.', pts: 690 }, { name: 'Tanya G.', pts: 640 }, { name: 'You', pts: 420, me: true },
       { name: 'Yash D.', pts: 380 }, { name: 'Sneha T.', pts: 320 }, { name: 'Vedant K.', pts: 270 },
     ],
   },
@@ -145,7 +145,7 @@ export default function Dashboard({ onNavigate }) {
         <div className="hero-id">
           <div className="av-float"><div className="dash-avatar"><Avatar gender={profile.gender} blink={blink} /></div></div>
           <div className="hero-id-t">
-            <h1>Welcome back, Ananya</h1>
+            <h1>Welcome back, {(profile.name || 'Ananya').split(' ')[0]}</h1>
             <p>CUET 2027 · {profile.stream} · keep the streak alive</p>
           </div>
         </div>
@@ -288,7 +288,7 @@ export default function Dashboard({ onNavigate }) {
             <div className="board">
               <div className="board-title">TOP 5 · {lb.cohort.toUpperCase()}</div>
               {top5.map((p, i) => <div className="board-row" key={p.name}><span className="br">{i + 1}</span><span className="bname">{p.name}</span><b className="bpts">{p.pts} pts</b></div>)}
-              <div className="board-row me"><span className="br">#{lb.rank}</span><span className="bname">Ananya Verma (you)</span><b className="bpts">{lb.pts} pts</b></div>
+              <div className="board-row me"><span className="br">#{lb.rank}</span><span className="bname">{profile.name} (you)</span><b className="bpts">{lb.pts} pts</b></div>
             </div>
             <span className="st-full-hint">Tap to view full leaderboard <ArrowRight size={12} /></span>
           </section>
@@ -322,7 +322,7 @@ export default function Dashboard({ onNavigate }) {
           {lb.rows.map((r, i) => (
             <div className={'lb-row' + (r.me ? ' me' : '')} key={r.name}>
               <span className="lb-rank">{r.me ? '#' + lb.rank : i + 1}</span>
-              <span className="lb-name">{r.name}{r.me ? ' (you)' : ''}</span>
+              <span className="lb-name">{r.me ? profile.name : r.name}{r.me ? ' (you)' : ''}</span>
               <b className="lb-pts">{r.pts} pts</b>
             </div>
           ))}

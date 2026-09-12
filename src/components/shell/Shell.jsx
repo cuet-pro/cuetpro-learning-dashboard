@@ -4,6 +4,7 @@ import {
   Search, Sun, Moon, Bell, Menu, X, PanelLeftClose, PanelLeftOpen, ChevronDown,
   User, Crown, HelpCircle, LogOut, CircleCheck, CircleAlert, Info,
 } from 'lucide-react'
+import { useProfile } from '../../lib/profile'
 import './shell.css'
 
 const NAV = [
@@ -28,6 +29,8 @@ function useTheme() {
 
 /* ── Sidebar ── */
 function Sidebar({ active, onNavigate, rail, setRail, open, setOpen }) {
+  const [profile] = useProfile()
+  const initials = (profile.name || 'CUET Pro').split(/\s+/).map(w => w[0]).slice(0, 2).join('').toUpperCase()
   return (
     <>
       {open && <button className="scrim" onClick={() => setOpen(false)} aria-label="Close menu" />}
@@ -37,7 +40,7 @@ function Sidebar({ active, onNavigate, rail, setRail, open, setOpen }) {
           <span className="side-logo-name">CUET Pro</span>
         </div>
         <nav className="side-nav">
-          {NAV.map(({ id, label, icon: Icon }) => (
+          {NAV.filter(n => n.id !== 'profile').map(({ id, label, icon: Icon }) => (
             <button
               key={id}
               className={'side-item' + (active === id ? ' active' : '')}
@@ -50,10 +53,19 @@ function Sidebar({ active, onNavigate, rail, setRail, open, setOpen }) {
           ))}
         </nav>
         <div className="side-foot">
-          <div className="side-user">
-            <span className="side-user-av">AV</span>
-            <div><b>Ananya Verma</b><span>CUET 2027</span></div>
-          </div>
+          <button
+            className={'side-user' + (active === 'profile' ? ' active' : '')}
+            onClick={() => { onNavigate('profile'); setOpen(false) }}
+            title="Profile & settings"
+            aria-label="Open profile and settings"
+          >
+            <span className="side-user-av">{initials}</span>
+            <span className="side-user-txt">
+              <b>{profile.name}</b>
+              <span>{profile.stream ? 'CUET 2027 · ' + profile.stream : 'CUET 2027'}</span>
+            </span>
+            <Settings size={16} strokeWidth={1.9} className="side-user-gear" />
+          </button>
           <button
             className="side-collapse"
             onClick={() => setRail(!rail)}
@@ -96,6 +108,8 @@ function Dropdown({ onClose, children }) {
 
 /* ── Topbar ── */
 function Topbar({ onNavigate, setMenuOpen, theme, setTheme }) {
+  const [profile] = useProfile()
+  const initials = (profile.name || 'CUET Pro').split(/\s+/).map(w => w[0]).slice(0, 2).join('').toUpperCase()
   const [dd, setDd] = useState(null) // 'bell' | 'user'
   const closeDd = useCallback(() => setDd(null), [])
   const go = id => { onNavigate(id); closeDd() }
@@ -116,8 +130,8 @@ function Topbar({ onNavigate, setMenuOpen, theme, setTheme }) {
       </div>
       <div style={{ position: 'relative' }}>
         <button className="tb-user" onClick={e => { e.stopPropagation(); setDd(dd === 'user' ? null : 'user') }}>
-          <span className="tb-user-av">AV</span>
-          <b>Ananya</b>
+          <span className="tb-user-av">{initials}</span>
+          <b>{(profile.name || 'Ananya Verma').split(' ')[0]}</b>
           <ChevronDown size={14} />
         </button>
         {dd === 'user' && (
