@@ -42,3 +42,35 @@
 @media (max-width: 600px) { .ex-collist { grid-template-columns: 1fr; } }
 
 [data-theme="dark"] .ex-collo { background: var(--secondary-soft); color: var(--primary-hover); }
+
+/* ═══ Clarity polish — Explorer ═══ */
+.ex-coltitle { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.ex-logo { width: 30px; height: 30px; object-fit: contain; border-radius: 8px; background: var(--surface); padding: 3px; border: 1px solid var(--border); }
+.ex-collo img { width: 100%; height: 100%; object-fit: contain; border-radius: inherit; }
+
+.ex-table { overflow: hidden; }
+.ex-thead { display: grid; grid-template-columns: 2.4fr repeat(4, 1fr); gap: 6px; padding: 4px 6px 8px; border-bottom: 1px solid var(--border); }
+.ex-th { display: flex; align-items: center; gap: 4px; border: 0; background: none; cursor: pointer;
+  font: 700 10px var(--font-body); letter-spacing: .04em; text-transform: uppercase; color: var(--text-muted);
+  padding: 4px 6px; border-radius: var(--r-sm); transition: color .18s ease, background .18s ease; }
+.ex-th:hover { color: var(--primary); background: var(--primary-soft); }
+.ex-th.on { color: var(--primary); background: var(--primary-soft); }
+.ex-th-arrow { font-size: 9px; opacity: .65; }
+.ex-th:not(.on) .ex-th-arrow { opacity: .35; }
+
+.ex-trow { display: grid; grid-template-columns: 2.4fr repeat(4, 1fr); gap: 6px; align-items: center;
+  padding: 10px 6px; border-radius: var(--r-sm); border-bottom: 1px solid var(--border);
+  transition: background .18s ease, transform .18s ease, box-shadow .18s ease; animation: ex-row-in .34s cubic-bezier(.22,.61,.36,1) both; }
+.ex-trow:last-child { border-bottom: 0; }
+.ex-trow:hover { background: var(--primary-soft); transform: translateX(3px); box-shadow: var(--shadow-sm); }
+@keyframes ex-row-in { from { opacity: 0; transform: translateY(5px) } to { opacity: 1; transform: none } }
+
+.ex-colcard { transition: transform .22s cubic-bezier(.22,.61,.36,1), box-shadow .22s ease, border-color .22s ease; }
+.ex-colcard:hover { transform: translateY(-3px); box-shadow: var(--shadow-md); border-color: var(--primary); }
+.ex-collo { transition: transform .24s ease, background .24s ease; background: var(--primary-soft); color: var(--primary); overflow: hidden; }
+.ex-colcard:hover .ex-collo { transform: scale(1.08) rotate(-3deg); }
+
+.ex-row { transition: background .18s ease, transform .18s ease; }
+.ex-row:hover { background: var(--primary-soft); transform: translateX(3px); }
+.ex-input, .ex-select { transition: border-color .18s ease, box-shadow .18s ease; }
+.ex-input:focus, .ex-select:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(20,108,78,.12); }

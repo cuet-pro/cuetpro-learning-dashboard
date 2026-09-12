@@ -88,3 +88,35 @@
 [data-theme="dark"] .cz-room { background: linear-gradient(120deg, var(--primary-hover), var(--secondary-soft)); border: 1px solid var(--border); }
 [data-theme="dark"] .cz-toast { background: var(--secondary-soft); border: 1px solid var(--border); }
 [data-theme="dark"] .cz-join, [data-theme="dark"] .cz-min.on { background: var(--primary); border-color: var(--primary); color: #fff; }
+
+/* ═══ Clarity polish — Chill Zone ═══ */
+.cz-card { transition: transform .22s cubic-bezier(.22,.61,.36,1), box-shadow .22s ease, border-color .22s ease;
+  animation: cz-card-in .42s cubic-bezier(.22,.61,.36,1) both; }
+.cz-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-md); border-color: var(--primary); }
+.cz-grid > .cz-card:nth-child(1) { animation-delay: 0ms; }
+.cz-grid > .cz-card:nth-child(2) { animation-delay: 60ms; }
+.cz-grid > .cz-card:nth-child(3) { animation-delay: 120ms; }
+.cz-grid > .cz-card:nth-child(4) { animation-delay: 180ms; }
+@keyframes cz-card-in { from { opacity: 0; transform: translateY(10px) } to { opacity: 1; transform: none } }
+
+.cz-badges { display: grid; grid-template-columns: repeat(auto-fill, minmax(112px, 1fr)); gap: var(--sp-3); }
+.cz-badge { display: flex; flex-direction: column; align-items: center; gap: 7px; text-align: center;
+  padding: 14px 8px; border: 1px solid var(--border); border-radius: var(--r-md); background: var(--surface);
+  transition: transform .22s cubic-bezier(.22,.61,.36,1), box-shadow .22s ease, border-color .22s ease; }
+.cz-badge:hover { transform: translateY(-3px) scale(1.02); box-shadow: var(--shadow-md); border-color: var(--accent); }
+.cz-badge-ico { width: 44px; height: 44px; display: grid; place-items: center; border-radius: var(--r-full);
+  background: var(--accent-soft); color: var(--accent); transition: transform .26s ease; }
+.cz-badge:hover .cz-badge-ico { transform: scale(1.1) rotate(-6deg); }
+.cz-badge.locked { opacity: .55; }
+.cz-badge.locked .cz-badge-ico { background: var(--bg); color: var(--text-muted); border: 1px dashed var(--border-strong); }
+
+.cz-opt { transition: transform .18s cubic-bezier(.22,.61,.36,1), border-color .18s ease, background .18s ease, box-shadow .18s ease; }
+.cz-opt:hover { transform: translateY(-2px) translateX(2px); border-color: var(--primary); background: var(--primary-soft); box-shadow: var(--shadow-sm); }
+.cz-timer { animation: cz-timer-pulse 3.4s ease-in-out infinite; }
+@keyframes cz-timer-pulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(255,255,255,.14) } 50% { box-shadow: 0 0 0 8px rgba(255,255,255,0) } }
+.cz-toast { animation: cz-toast-in .34s cubic-bezier(.22,.61,.36,1) both; }
+@keyframes cz-toast-in { from { opacity: 0; transform: translateY(10px) } to { opacity: 1; transform: none } }
+.cz-live { animation: cz-live-pulse 1.8s ease-in-out infinite; }
+@keyframes cz-live-pulse { 0%, 100% { opacity: 1 } 50% { opacity: .45 } }
+.cz-invite-link { transition: background .18s ease, color .18s ease; }
+.cz-invite-link:hover { background: var(--primary-soft); color: var(--primary); }

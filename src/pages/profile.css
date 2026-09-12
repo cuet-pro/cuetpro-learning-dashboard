@@ -58,3 +58,33 @@
 [data-theme="dark"] .pf-account { background: linear-gradient(120deg, var(--secondary-soft), var(--surface-elevated)); border: 1px solid var(--border); }
 [data-theme="dark"] .pf-stream.on { background: var(--secondary-soft); border-color: var(--secondary-soft); }
 [data-theme="dark"] .pf-avatar { background: var(--primary); color: #fff; }
+
+/* ═══ Clarity polish — Profile ═══ */
+.pf-card { transition: box-shadow .22s ease, border-color .22s ease; animation: pf-card-in .4s cubic-bezier(.22,.61,.36,1) both; }
+.pf-card:nth-of-type(2) { animation-delay: 60ms; }
+.pf-card:nth-of-type(3) { animation-delay: 120ms; }
+@keyframes pf-card-in { from { opacity: 0; transform: translateY(9px) } to { opacity: 1; transform: none } }
+
+.pf-avatar { box-shadow: 0 0 0 3px var(--surface), 0 0 0 5px var(--primary-soft); transition: transform .26s ease, box-shadow .26s ease; }
+.pf-avatar:hover { transform: scale(1.05); box-shadow: 0 0 0 3px var(--surface), 0 0 0 6px var(--primary); }
+.pf-ico { transition: transform .24s ease; }
+.pf-card:hover .pf-ico { transform: scale(1.08) rotate(-4deg); }
+
+.pf-stream { transition: transform .2s cubic-bezier(.22,.61,.36,1), border-color .2s ease, background .2s ease, color .2s ease; }
+.pf-stream:hover { transform: translateY(-2px); border-color: var(--primary); color: var(--primary); }
+.pf-stream.on { box-shadow: var(--shadow-sm); }
+
+.pf-subject { transition: transform .18s ease, border-color .18s ease, background .18s ease; cursor: pointer; }
+.pf-subject:hover { transform: translateY(-2px); border-color: var(--primary); background: var(--primary-soft); }
+.pf-subject.on { font-weight: 700; }
+
+.pf-toggle { transition: background .2s ease, border-color .2s ease; }
+.pf-toggle:hover { border-color: var(--primary); }
+.pf-notif { transition: background .18s ease; }
+.pf-notif:hover { background: var(--bg); }
+.pf-link { transition: color .18s ease, transform .18s ease; display: inline-flex; align-items: center; gap: 5px; }
+.pf-link:hover { color: var(--primary); transform: translateX(2px); }
+.pf-save { transition: transform .2s cubic-bezier(.22,.61,.36,1), box-shadow .2s ease, background .2s ease; }
+.pf-save:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(20,108,78,.28); }
+.pf-fields input, .pf-fields select { transition: border-color .18s ease, box-shadow .18s ease; }
+.pf-fields input:focus, .pf-fields select:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(20,108,78,.12); }

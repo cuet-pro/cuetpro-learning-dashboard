@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { Search, Target, ArrowRight, Building2, BookOpen } from 'lucide-react'
 import { offerings, colleges, programs, getCutoff, getSeats, topCutoff } from '../data/duData'
+import { logoFor } from '../data/collegeLogos'
 import './explorer.css'
 
 export default function Explorer() {
@@ -111,12 +112,27 @@ function ResultGroup({ title, desc, color, rows }) {
 function CutoffExplorer() {
   const [collegeId, setCollegeId] = useState(colleges[0]?.id || '')
   const [q, setQ] = useState('')
+  const [sort, setSort] = useState({ key: 'r1', dir: 'desc' })
   const college = colleges.find(c => c.id === collegeId)
+
+  const val = (o, key) => {
+    if (key === 'course') return o.programName
+    if (key === 'seats') return o.seats?.UR?.total ?? -1
+    const r = Number(key.replace('r', ''))
+    return getCutoff(o, 'UR', r) ?? -1
+  }
+  const toggleSort = key => setSort(s2 => s2.key === key ? { key, dir: s2.dir === 'asc' ? 'desc' : 'asc' } : { key, dir: key === 'course' ? 'asc' : 'desc' })
+
   const rows = useMemo(() => {
     let list = offerings.filter(o => o.collegeId === collegeId)
     if (q.trim()) list = list.filter(o => o.programName.toLowerCase().includes(q.toLowerCase()))
-    return list.sort((a, b) => (getCutoff(b, 'UR', 1) || 0) - (getCutoff(a, 'UR', 1) || 0))
-  }, [collegeId, q])
+    const dir = sort.dir === 'asc' ? 1 : -1
+    return [...list].sort((a, b) => {
+      const va = val(a, sort.key), vb = val(b, sort.key)
+      if (typeof va === 'string' || typeof vb === 'string') return String(va).localeCompare(String(vb)) * dir
+      return (va - vb) * dir
+    })
+  }, [collegeId, q, sort])
 
   return (
     <div className="ex-stack">
@@ -129,9 +145,26 @@ function CutoffExplorer() {
         </div>
       </section>
       <section className="cuet-card">
-        <div className="card-head"><h3>{college?.name || ''}</h3><span className="card-sub">{rows.length} courses · Round 1 · UR</span></div>
+        <div className="card-head">
+          <div className="ex-coltitle">
+            {logoFor(college?.name) && <img className="ex-logo" src={logoFor(college?.name)} alt="" />}
+            <h3>{college?.name || ''}</h3>
+          </div>
+          <span className="card-sub">{rows.length} courses · Round 1 · UR · tap a column to sort</span>
+        </div>
         <div className="ex-table">
-          <div className="ex-thead"><span>Course</span><span>R1</span><span>R2</span><span>R3</span><span>UR seats</span></div>
+          <div className="ex-thead">
+            {[['course', 'Course'], ['r1', 'R1'], ['r2', 'R2'], ['r3', 'R3'], ['seats', 'UR seats']].map(([k, label]) => (
+              <button
+                key={k}
+                className={'ex-th' + (sort.key === k ? ' on' : '')}
+                onClick={() => toggleSort(k)}
+                title={'Sort by ' + label}
+              >
+                {label}<span className="ex-th-arrow">{sort.key === k ? (sort.dir === 'asc' ? '▲' : '▼') : '↕'}</span>
+              </button>
+            ))}
+          </div>
           {rows.slice(0, 15).map(o => (
             <div className="ex-trow" key={o.programId}>
               <span className="ex-tprog">{o.programName}</span>
@@ -162,7 +195,9 @@ function CollegeList() {
           return (
             <div className="ex-colcard" key={c.id}>
               <div className="ex-colhead">
-                <div className="ex-collo"><Building2 size={15} /></div>
+                <div className="ex-collo">{logoFor(c.name)
+                  ? <img src={logoFor(c.name)} alt="" />
+                  : <Building2 size={15} />}</div>
                 <div><b>{c.name}</b><span>{c.campus} Campus · {c.type}</span></div>
               </div>
               <div className="ex-colmeta">
