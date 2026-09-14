@@ -1,7 +1,7 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import {
   Flame, ArrowRight, BookOpen, ChevronDown, CalendarDays, Eye,
-  Trophy, Users, PieChart, ArrowUpRight, RefreshCw, Target, Quote, Medal,
+  Trophy, Users, PieChart, ArrowUpRight, RefreshCw, Lightbulb, GripVertical, Target, Quote, Medal,
 } from 'lucide-react'
 import { useProfile, dreamCollegeShort } from '../lib/profile'
 import { Modal } from '../components/shell/Shell.jsx'
@@ -122,11 +122,39 @@ export default function Dashboard({ onNavigate }) {
   const [showStanding, setShowStanding] = useState(false)
   const [stView, setStView] = useState('all')
   const [openRow, setOpenRow] = useState(null)
-  const [flipped, setFlipped] = useState(false)
+  /* swipeable Progress ⇄ Standing panel */
+  const [panel, setPanel] = useState(0)
+  const [drag, setDrag] = useState(0)
+  const dragRef = useRef(null)
 
   const weakest = [...SUBJECTS].sort((a, b) => a.pct - b.pct)[0]
+  const focusTwo = [...SUBJECTS].sort((a, b) => a.pct - b.pct).slice(0, 2)
   const lb = LB[stView]
-  const top5 = lb.rows.filter(r => !r.me).slice(0, 5)
+  const sortedRows = [...lb.rows].sort((a, b) => b.pts - a.pts)
+  const leaderPts = sortedRows[0]?.pts || 1
+  const top5 = sortedRows.filter(r => !r.me).slice(0, 5)
+  const pctOfLeader = pts => Math.max(4, Math.round((pts / leaderPts) * 100))
+
+  const onDown = e => {
+    if (e.pointerType === 'mouse' && e.button !== 0) return
+    dragRef.current = { x: e.clientX, active: true }
+    try { e.currentTarget.setPointerCapture(e.pointerId) } catch { /* ignore */ }
+  }
+  const onMove = e => {
+    if (!dragRef.current?.active) return
+    let dx = e.clientX - dragRef.current.x
+    if ((panel === 0 && dx > 0) || (panel === 1 && dx < 0)) dx = dx * 0.25      /* rubber-band at the edges */
+    setDrag(dx)
+  }
+  const onUp = () => {
+    if (!dragRef.current?.active) return
+    dragRef.current.active = false
+    setDrag(d => {
+      if (d <= -60 && panel === 0) setPanel(1)
+      else if (d >= 60 && panel === 1) setPanel(0)
+      return 0
+    })
+  }
 
   const pickWord = i => { if (wordPick === null) setWordPick(i) }
   const pickQuiz = i => {
@@ -221,42 +249,78 @@ export default function Dashboard({ onNavigate }) {
         )}
       </section>
 
-      {/* 4. Progress ⇄ Standing — combined flip card */}
-      <div className="flip-wrap">
-        <button className="flip-cue" onClick={() => setFlipped(f => !f)} title="Flip card" aria-label="Flip card">
-          <RefreshCw size={13} />
-        </button>
-        <div className={'flip-inner' + (flipped ? ' flipped' : '')}>
-          {/* FRONT — My Progress */}
-          <section className="cuet-card flip-face flip-front">
-            <div className="flip-bar">
-              <button className="flip-seg on" onClick={() => setFlipped(false)}><PieChart size={13} /> My Progress</button>
-              <button className="flip-seg" onClick={() => setFlipped(true)}><Trophy size={13} /> My Standing <RefreshCw size={12} /></button>
-            </div>
-            <button className="prog-head" onClick={() => onNavigate('analysis')}>
-              <span className="prog-head-ico"><PieChart size={17} /></span>
-              <span className="prog-head-t"><b>My Progress</b><em>CUET Commerce Batch 2027</em></span>
+      {/* 4. My Progress ⇄ My Standing — swipeable panel card */}
+      <div className="pg-card">
+        <div
+          className={'pg-track' + (panel ? ' at-1' : '') + (drag ? ' dragging' : '')}
+          onPointerDown={onDown}
+          onPointerMove={onMove}
+          onPointerUp={onUp}
+          onPointerCancel={onUp}
+        >
+          {/* ── PANEL 1 · My Progress ── */}
+          <section className="cuet-card pg-panel">
+            <div className="pg-head">
+              <span className="pg-ico tone-green"><PieChart size={17} /></span>
+              <div className="pg-head-t"><b>My Progress</b><em>CUET {profile.stream} Batch 2027</em></div>
               <span className="pill-green">On track</span>
-              <ArrowUpRight size={15} className="prog-head-arr" />
-            </button>
-            <button className="prog-ring-wrap" onClick={() => onNavigate('analysis')}>
-              <div className="ring" style={{ '--p': '64%' }}><div className="ring-in"><b>64%</b><span>Overall syllabus</span></div></div>
-            </button>
-            <p className="prog-exp">Expected by now: 62% · <b className="ok">ahead +2%</b></p>
+              <button className="pg-swap" onClick={() => setPanel(1)} title="See My Standing" aria-label="See My Standing">
+                <RefreshCw size={13} />
+              </button>
+            </div>
+
+            <div className="pg-2col">
+              {/* left — syllabus completion ring */}
+              <div className="pg-col pg-col-ring">
+                <button className="prog-ring-wrap" onClick={() => onNavigate('analysis')} title="Open Analysis">
+                  <div className="ring" style={{ '--p': '64%' }}><div className="ring-in"><b>64%</b><span>Overall syllabus</span></div></div>
+                </button>
+                <p className="prog-exp">Expected by now: 62% · <b className="ok">ahead +2%</b></p>
+              </div>
+
+              {/* right — dynamic weak-link insight + the two weakest sections */}
+              <div className="pg-col">
+                <div className="pg-insight">
+                  <span className="pg-insight-ico"><Lightbulb size={15} /></span>
+                  <div className="pg-insight-t">
+                    <b>{weakest.n} is your weakest link right now</b>
+                    <p>
+                      {weakest.pct}% accuracy. About {Math.max(1, Math.ceil((75 - weakest.pct) / 3))} focused fixes
+                      would take it to 75% and lift your overall percentile fastest.
+                    </p>
+                    <div className="pg-insight-actions">
+                      <button className="btn btn-primary-sm" onClick={() => onNavigate('studykit')}>Practice <BookOpen size={13} /></button>
+                      <button className="btn btn-outline-sm" onClick={() => onNavigate('analysis')}>Open Analysis</button>
+                    </div>
+                  </div>
+                </div>
+                <div className="pg-mini">
+                  {focusTwo.map(s2 => (
+                    <div className="pg-mini-row" key={s2.n}>
+                      <span className="pg-mini-name"><i className="pg-sdot" style={{ background: sc(s2.status) }} />{s2.n}</span>
+                      <span className="pg-mini-bar"><i style={{ width: s2.pct + '%', background: sc(s2.status) }} /></span>
+                      <b className="pg-mini-pct">{s2.pct}%</b>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* full section list keeps its expandable rows */}
             <div className="prog-subjects">
-              {SUBJECTS.map(s => (
-                <div key={s.n} className={'prow' + (openRow === s.n ? ' open' : '')}>
-                  <button className="prow-main" onClick={() => setOpenRow(openRow === s.n ? null : s.n)} aria-expanded={openRow === s.n}>
-                    <span className="pname">{s.n}</span>
-                    <div className="pbar"><i style={{ width: s.pct + '%', background: sc(s.status) }} /></div>
-                    <b className="ppct">{s.pct}%</b>
-                    <span className={'pstat ' + s.status.toLowerCase().replace(/ /g, '-')}>{s.status}</span>
+              {SUBJECTS.map(s2 => (
+                <div key={s2.n} className={'prow' + (openRow === s2.n ? ' open' : '')}>
+                  <button className="prow-main" onClick={() => setOpenRow(openRow === s2.n ? null : s2.n)} aria-expanded={openRow === s2.n}>
+                    <span className="pname">{s2.n}</span>
+                    <div className="pbar"><i style={{ width: s2.pct + '%', background: sc(s2.status) }} /></div>
+                    <b className="ppct">{s2.pct}%</b>
+                    <span className={'pstat ' + s2.status.toLowerCase().replace(/ /g, '-')}>{s2.status}</span>
                     <ChevronDown size={14} className="prow-chev" />
                   </button>
-                  {openRow === s.n && (
+                  {openRow === s2.n && (
                     <div className="prow-more">
-                      <span className={'prow-note' + (s.d >= 0 ? ' up' : ' down')}>
-                        {s.d >= 0 ? '▲ +' + s.d.toFixed(1) + '% vs last mock' : '▼ ' + s.d.toFixed(1) + '% vs last mock'} · {s.pct >= 75 ? 'keep the momentum' : (() => { const n = Math.ceil((75 - s.pct) / 3); return n + ' quick fix' + (n > 1 ? 'es' : '') + ' to reach 75%' })()}
+                      <span className={'prow-note' + (s2.d >= 0 ? ' up' : ' down')}>
+                        {s2.d >= 0 ? '▲ +' + s2.d.toFixed(1) + '% vs last mock' : '▼ ' + s2.d.toFixed(1) + '% vs last mock'} · {s2.pct >= 75 ? 'keep the momentum' : (() => { const n = Math.ceil((75 - s2.pct) / 3); return n + ' quick fix' + (n > 1 ? 'es' : '') + ' to reach 75%' })()}
                       </span>
                       <div className="prow-actions">
                         <button className="btn btn-primary-sm" onClick={() => onNavigate('studykit')}>Practice <BookOpen size={13} /></button>
@@ -269,29 +333,60 @@ export default function Dashboard({ onNavigate }) {
             </div>
           </section>
 
-          {/* BACK — My Standing */}
-          <section className="cuet-card flip-face flip-back" onClick={() => setShowStanding(true)}>
-            <div className="flip-bar" onClick={e => e.stopPropagation()}>
-              <button className="flip-seg" onClick={() => setFlipped(false)}><PieChart size={13} /> My Progress <RefreshCw size={12} /></button>
-              <button className="flip-seg on" onClick={() => setFlipped(true)}><Trophy size={13} /> My Standing</button>
+          {/* ── PANEL 2 · My Standing ── */}
+          <section className="cuet-card pg-panel">
+            <div className="pg-head">
+              <span className="pg-ico tone-amber"><Trophy size={17} /></span>
+              <div className="pg-head-t"><b>My Standing</b><em>Ranked by contest &amp; daily-challenge points</em></div>
+              <button className="pg-swap" onClick={() => setPanel(0)} title="See My Progress" aria-label="See My Progress">
+                <RefreshCw size={13} />
+              </button>
             </div>
-            <div className="card-title-row">
-              <div><h2>My Standing</h2><p>Ranked by contest & daily-challenge points</p></div>
-              <ChevronDown size={16} className="st-chev-up" />
-            </div>
-            <div className="st-tabs" onClick={e => e.stopPropagation()}>
+
+            <div className="st-tabs">
               <button className={'st-tab' + (stView === 'all' ? ' on' : '')} onClick={() => setStView('all')}>All CUET Pro</button>
               <button className={'st-tab' + (stView === 'subj' ? ' on' : '')} onClick={() => setStView('subj')}>My Subject</button>
             </div>
-            <div className="st-num"><b>#{lb.rank}</b><span>of {lb.of.toLocaleString('en-IN')} students</span></div>
-            <div className="st-pct"><Trophy size={14} /> <b>{lb.pctile}%ile</b> current standing</div>
-            <div className="board">
-              <div className="board-title">TOP 5 · {lb.cohort.toUpperCase()}</div>
-              {top5.map((p, i) => <div className="board-row" key={p.name}><span className="br">{i + 1}</span><span className="bname">{p.name}</span><b className="bpts">{p.pts} pts</b></div>)}
-              <div className="board-row me"><span className="br">#{lb.rank}</span><span className="bname">{profile.name} (you)</span><b className="bpts">{lb.pts} pts</b></div>
+
+            <div className="pg-2col">
+              {/* left — rank + percentile */}
+              <div className="pg-col">
+                <div className="st-num"><b>#{lb.rank}</b><span>of {lb.of.toLocaleString('en-IN')} students</span></div>
+                <div className="st-pct"><Trophy size={14} /> <b>{lb.pctile}%ile</b> current standing</div>
+                <div className="pg-pts"><b>{lb.pts.toLocaleString('en-IN')}</b><span>points earned</span></div>
+              </div>
+
+              {/* right — proportional top-5 + your row */}
+              <div className="pg-col">
+                <div className="board-title">TOP 5 · {lb.cohort.toUpperCase()}</div>
+                {top5.map((r, i) => (
+                  <div className="pg-brow" key={r.name}>
+                    <span className="br">{i + 1}</span>
+                    <span className="bname">{r.name}</span>
+                    <span className="bbar"><i style={{ width: pctOfLeader(r.pts) + '%' }} /></span>
+                    <b className="bpts">{r.pts.toLocaleString('en-IN')}</b>
+                  </div>
+                ))}
+                <div className="pg-div" />
+                <div className="pg-brow me">
+                  <span className="br">#{lb.rank}</span>
+                  <span className="bname">{profile.name} (you)</span>
+                  <span className="bbar"><i style={{ width: pctOfLeader(lb.pts) + '%' }} /></span>
+                  <b className="bpts">{lb.pts.toLocaleString('en-IN')}</b>
+                </div>
+              </div>
             </div>
-            <span className="st-full-hint">Tap to view full leaderboard <ArrowRight size={12} /></span>
+
+            <button className="pg-full" onClick={() => setShowStanding(true)}>
+              View full leaderboard <ArrowRight size={13} />
+            </button>
           </section>
+        </div>
+
+        {/* panel dots */}
+        <div className="pg-dots">
+          <button className={'pg-dot' + (!panel ? ' on' : '')} onClick={() => setPanel(0)} aria-label="My Progress" title="My Progress" />
+          <button className={'pg-dot' + (panel ? ' on' : '')} onClick={() => setPanel(1)} aria-label="My Standing" title="My Standing" />
         </div>
       </div>
 
@@ -311,22 +406,30 @@ export default function Dashboard({ onNavigate }) {
         </div>
       </Modal>
 
-      {/* Leaderboard modal */}
-      <Modal open={showStanding} onClose={() => setShowStanding(false)} title="Leaderboard">
-        <div className="st-tabs wide" onClick={e => e.stopPropagation()}>
+      {/* Full leaderboard — complete ranked list for the selected cohort */}
+      <Modal open={showStanding} onClose={() => setShowStanding(false)} title="Full leaderboard">
+        <div className="st-tabs wide">
           <button className={'st-tab' + (stView === 'all' ? ' on' : '')} onClick={() => setStView('all')}><Users size={13} /> All CUET Pro</button>
           <button className={'st-tab' + (stView === 'subj' ? ' on' : '')} onClick={() => setStView('subj')}><BookOpen size={13} /> My Subject</button>
         </div>
-        <p className="ov-sub">{lb.cohort} · {lb.of.toLocaleString('en-IN')} students · your rank #{lb.rank}</p>
+        <p className="ov-sub">{lb.cohort} · {lb.of.toLocaleString('en-IN')} students · your rank <b>#{lb.rank}</b></p>
         <div className="lb-list">
-          {lb.rows.map((r, i) => (
-            <div className={'lb-row' + (r.me ? ' me' : '')} key={r.name}>
-              <span className="lb-rank">{r.me ? '#' + lb.rank : i + 1}</span>
-              <span className="lb-name">{r.me ? profile.name : r.name}{r.me ? ' (you)' : ''}</span>
-              <b className="lb-pts">{r.pts} pts</b>
-            </div>
-          ))}
+          <div className="lb-head">
+            <span>#</span><span>Student</span><span>Progress to #1</span><span>Points</span>
+          </div>
+          {sortedRows.map((r, i) => {
+            const rank = r.me ? lb.rank : i + 1
+            return (
+              <div className={'lb-row' + (r.me ? ' me' : '')} key={r.name + rank}>
+                <span className="lb-rank">{rank}</span>
+                <span className="lb-name">{r.me ? profile.name : r.name}{r.me ? ' (you)' : ''}</span>
+                <span className="lb-bar"><i style={{ width: pctOfLeader(r.pts) + '%' }} /></span>
+                <b className="lb-pts">{r.pts.toLocaleString('en-IN')}</b>
+              </div>
+            )
+          })}
         </div>
+        <p className="lb-foot">Showing all {sortedRows.length} students you can see · {(lb.of - sortedRows.length).toLocaleString('en-IN')} more below you in this cohort</p>
       </Modal>
     </div>
   )
