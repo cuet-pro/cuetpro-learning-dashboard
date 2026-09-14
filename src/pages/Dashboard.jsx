@@ -229,7 +229,11 @@ export default function Dashboard({ onNavigate }) {
       <div className="pg-card">
         <div className={'pg-flip' + (panel ? ' is-back' : '')}>
           {/* ── FACE 1 · My Progress ── */}
-          <section className="cuet-card pg-face pg-face-front">
+          <section
+            className="cuet-card pg-face pg-face-front"
+            onClick={e => { if (e.target.closest('button, input, .pg-seg, .prow-main, .pg-full')) return; setPanel(1) }}
+            title="Tap the card to flip to My Standing"
+          >
             <div className="pg-head">
               <span className="pg-ico tone-green"><PieChart size={17} /></span>
               <div className="pg-head-t"><b>My Progress</b><em>CUET {profile.stream} Batch 2027</em></div>
@@ -309,7 +313,11 @@ export default function Dashboard({ onNavigate }) {
           </section>
 
           {/* ── FACE 2 · My Standing ── */}
-          <section className="cuet-card pg-face pg-face-back">
+          <section
+            className="cuet-card pg-face pg-face-back"
+            onClick={e => { if (e.target.closest('button, input, .pg-seg, .pg-full')) return; setPanel(0) }}
+            title="Tap the card to flip back to My Progress"
+          >
             <div className="pg-head">
               <span className="pg-ico tone-amber"><Trophy size={17} /></span>
               <div className="pg-head-t"><b>My Standing</b><em>Ranked by contest &amp; daily-challenge points</em></div>

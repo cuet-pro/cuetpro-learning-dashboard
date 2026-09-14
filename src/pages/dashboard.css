@@ -664,3 +664,43 @@ button.hero-chip:hover { border-color: var(--primary); }
 .pg-face-back .pg-full { margin-top: auto; padding: 9px; }
 
 .pg-face-front { min-height: 448px; }
+
+/* ═══ Flip hardening — the mirror/upside-down text happened because the 3D context
+   flattened out: iOS/Safari needs the -webkit- prefixes for perspective/preserve-3d,
+   and `overflow` on a face forces flattening too. Also: never mirror = graceful fallback. ═══ */
+.pg-card { perspective: 2000px; -webkit-perspective: 2000px; }
+.pg-flip {
+  position: relative;
+  transform-style: preserve-3d;
+  -webkit-transform-style: preserve-3d;
+  transition: transform .5s cubic-bezier(.22,.61,.36,1);
+  will-change: transform;
+}
+.pg-flip.is-back { transform: rotateY(180deg); }
+
+.pg-face {
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+  -webkit-transform: translateZ(0);
+}
+.pg-face-back { position: absolute; inset: 0; transform: rotateY(180deg); overflow: visible; }
+
+/* no-3D browsers: swap faces instead of mirroring them */
+@supports not ((transform-style: preserve-3d) or (-webkit-transform-style: preserve-3d)) {
+  .pg-flip, .pg-flip.is-back { transform: none; }
+  .pg-face-back { position: static; transform: none; }
+  .pg-flip:not(.is-back) .pg-face-back { display: none; }
+  .pg-flip.is-back .pg-face-front { display: none; }
+  .pg-flip.is-back .pg-face-back { display: flex; }
+}
+
+/* the flip needs a click target on the visible face too (whole card flips) */
+.pg-face-front, .pg-flip.is-back .pg-face-back { cursor: pointer; }
+
+/* Belt & braces: the inactive face is hidden outright, so mirrored text can never appear
+   even in engines that flatten the 3D context (older mobile WebViews, some Android skins). */
+.pg-face-back { visibility: hidden; }
+.pg-flip.is-back .pg-face-back { visibility: visible; }
+.pg-flip.is-back .pg-face-front { visibility: hidden; }
+.pg-face { transition: visibility 0s linear .25s; }
+.pg-flip.is-back .pg-face-back { transition: visibility 0s linear .0s; }
