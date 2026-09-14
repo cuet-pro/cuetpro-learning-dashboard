@@ -122,8 +122,19 @@ export default function Dashboard({ onNavigate }) {
   const [showStanding, setShowStanding] = useState(false)
   const [stView, setStView] = useState('all')
   const [openRow, setOpenRow] = useState(null)
-  /* Progress ⇄ Standing are two faces of one flip card */
+  /* Progress ⇄ Standing flip: one face mounted at a time, animated hinge flip.
+     (No backface/visibility tricks = no way for text to mirror or the card to vanish.) */
   const [panel, setPanel] = useState(0)
+  const [flipAnim, setFlipAnim] = useState(null)   // 'out' | 'in'
+  const flipTo = target => {
+    if (flipAnim || target === panel) return
+    setFlipAnim('out')
+    setTimeout(() => {
+      setPanel(target)
+      setFlipAnim('in')
+      setTimeout(() => setFlipAnim(null), 260)
+    }, 200)
+  }
 
   const weakest = [...SUBJECTS].sort((a, b) => a.pct - b.pct)[0]
   const lb = LB[stView]
@@ -227,18 +238,19 @@ export default function Dashboard({ onNavigate }) {
 
       {/* 4. My Progress ⇄ My Standing — swipeable panel card */}
       <div className="pg-card">
-        <div className={'pg-flip' + (panel ? ' is-back' : '')}>
+        <div className="pg-stage">
           {/* ── FACE 1 · My Progress ── */}
+          {panel === 0 && (
           <section
-            className="cuet-card pg-face pg-face-front"
-            onClick={e => { if (e.target.closest('button, input, .pg-seg, .prow-main, .pg-full')) return; setPanel(1) }}
+            className={'cuet-card pg-face' + (flipAnim ? ' pg-face-' + flipAnim : '')}
+            onClick={e => { if (e.target.closest('button, input, .pg-seg, .prow-main, .pg-full')) return; flipTo(1) }}
             title="Tap the card to flip to My Standing"
           >
             <div className="pg-head">
               <span className="pg-ico tone-green"><PieChart size={17} /></span>
               <div className="pg-head-t"><b>My Progress</b><em>CUET {profile.stream} Batch 2027</em></div>
-              <button className={'pg-seg on'} onClick={() => setPanel(0)} aria-pressed="true"><PieChart size={13} /> Progress</button>
-              <button className="pg-seg" onClick={() => setPanel(1)}><Trophy size={13} /> Standing</button>
+              <button className={'pg-seg' + (panel === 0 ? ' on' : '')} onClick={() => flipTo(0)} aria-pressed={panel === 0}><PieChart size={13} /> Progress</button>
+              <button className={'pg-seg' + (panel === 1 ? ' on' : '')} onClick={() => flipTo(1)} aria-pressed={panel === 1}><Trophy size={13} /> Standing</button>
             </div>
 
             <div className="pg-2col">
@@ -311,18 +323,20 @@ export default function Dashboard({ onNavigate }) {
             </div>
 
           </section>
+          )}
 
           {/* ── FACE 2 · My Standing ── */}
+          {panel === 1 && (
           <section
-            className="cuet-card pg-face pg-face-back"
-            onClick={e => { if (e.target.closest('button, input, .pg-seg, .pg-full')) return; setPanel(0) }}
+            className={'cuet-card pg-face' + (flipAnim ? ' pg-face-' + flipAnim : '')}
+            onClick={e => { if (e.target.closest('button, input, .pg-seg, .pg-full')) return; flipTo(0) }}
             title="Tap the card to flip back to My Progress"
           >
             <div className="pg-head">
               <span className="pg-ico tone-amber"><Trophy size={17} /></span>
               <div className="pg-head-t"><b>My Standing</b><em>Ranked by contest &amp; daily-challenge points</em></div>
-              <button className="pg-seg" onClick={() => setPanel(0)}><PieChart size={13} /> Progress</button>
-              <button className={'pg-seg on'} onClick={() => setPanel(1)} aria-pressed="true"><Trophy size={13} /> Standing</button>
+              <button className={'pg-seg' + (panel === 0 ? ' on' : '')} onClick={() => flipTo(0)} aria-pressed={panel === 0}><PieChart size={13} /> Progress</button>
+              <button className={'pg-seg' + (panel === 1 ? ' on' : '')} onClick={() => flipTo(1)} aria-pressed={panel === 1}><Trophy size={13} /> Standing</button>
             </div>
 
             <div className="st-tabs">
@@ -380,6 +394,7 @@ export default function Dashboard({ onNavigate }) {
               View full leaderboard <ArrowRight size={13} />
             </button>
           </section>
+          )}
         </div>
 
       </div>
