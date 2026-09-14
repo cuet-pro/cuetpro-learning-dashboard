@@ -631,3 +631,36 @@ button.hero-chip:hover { border-color: var(--primary); }
 .pg-sum-chip.ok { border-color: #B9DFCE; background: var(--primary-soft); color: var(--primary); }
 .pg-sum-chip.warn { border-color: #EBD6AE; background: var(--warning-soft); color: var(--warning); }
 .pg-sum-chip.bad { border-color: #F3C9C4; background: var(--error-soft); color: var(--error); }
+
+/* ═══ Progress ⇄ Standing: real 3D flip card (replaces the sliding track) ═══ */
+.pg-card { perspective: 2000px; }
+.pg-flip { position: relative; transform-style: preserve-3d;
+  transition: transform .5s cubic-bezier(.22,.61,.36,1); will-change: transform; }
+.pg-flip.is-back { transform: rotateY(180deg); }
+
+.pg-face { backface-visibility: hidden; -webkit-backface-visibility: hidden; display: flex; flex-direction: column; }
+.pg-face-front { position: relative; }
+.pg-face-back { position: absolute; inset: 0; transform: rotateY(180deg); overflow: auto; }
+
+/* only the visible face reacts to clicks */
+.pg-face-back { pointer-events: none; }
+.pg-flip.is-back .pg-face-back { pointer-events: auto; }
+.pg-flip.is-back .pg-face-front { pointer-events: none; }
+
+.pg-card:hover .pg-flip { filter: drop-shadow(0 10px 26px rgba(20,23,31,.10)); }
+
+/* Back face fits the card height exactly — tighter vertical rhythm, same content */
+.pg-face-back { padding: var(--sp-4) var(--sp-5); }
+.pg-face-back .pg-head { margin-bottom: var(--sp-3); }
+.pg-face-back .st-tabs { margin-bottom: var(--sp-3); }
+.pg-face-back .pg-2col { gap: var(--sp-4); }
+.pg-face-back .pg-stat { padding: 9px 11px; margin-bottom: 7px; }
+.pg-face-back .pg-stat-t b { font-size: 15px; }
+.pg-face-back .pg-top-chip { margin-top: 0; padding: 5px 10px; }
+.pg-face-back .pg-rank-bar { margin-top: 10px; gap: 5px; }
+.pg-face-back .board-title { margin-bottom: 6px; }
+.pg-face-back .pg-brow { padding: 6px; }
+.pg-face-back .pg-div { margin: 4px 0; }
+.pg-face-back .pg-full { margin-top: auto; padding: 9px; }
+
+.pg-face-front { min-height: 448px; }
