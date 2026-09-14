@@ -576,3 +576,58 @@ button.hero-chip:hover { border-color: var(--primary); }
 .pg-mini-name .pg-sdot { width: 7px; height: 7px; border-radius: var(--r-full); flex-shrink: 0; }
 .st-num b { margin-right: 6px; }
 .st-pct { display: inline-flex; align-items: center; gap: 6px; }
+
+/* ═══ Progress/Standing: clear segmented buttons + balanced panels ═══ */
+.pg-head { flex-wrap: wrap; }
+
+.pg-seg { display: inline-flex; align-items: center; gap: 6px; padding: 7px 13px; border-radius: var(--r-full);
+  border: 1px solid var(--border-strong); background: var(--surface); color: var(--text-secondary);
+  font: 700 12px var(--font-body); cursor: pointer; white-space: nowrap;
+  transition: background .2s ease, color .2s ease, border-color .2s ease, transform .2s ease, box-shadow .2s ease; }
+.pg-seg:hover { border-color: var(--primary); color: var(--primary); background: var(--primary-soft); transform: translateY(-1px); }
+.pg-seg.on { background: linear-gradient(120deg, var(--primary), var(--secondary)); border-color: transparent; color: #fff;
+  box-shadow: 0 6px 14px rgba(20,108,78,.24); }
+.pg-seg.on:hover { transform: translateY(-1px); }
+
+/* both panels fill the card height so neither side looks empty */
+.pg-panel { display: flex; flex-direction: column; }
+.pg-2col { flex: 1; }
+.pg-col-ring { justify-content: center; height: 100%; }
+
+/* cohort position bar (standing, left column) */
+.pg-rank-bar { margin-top: 14px; display: grid; gap: 6px; }
+.pg-rank-lbl { font-size: 11px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--text-muted); }
+.pg-rank-track { height: 9px; border-radius: var(--r-full); background: var(--border); overflow: hidden; }
+.pg-rank-track i { display: block; height: 100%; border-radius: var(--r-full);
+  background: linear-gradient(90deg, var(--primary), var(--secondary)); transform-origin: left; animation: pg-bar-grow .6s cubic-bezier(.22,.61,.36,1) both; }
+.pg-rank-val { font: 700 11.5px var(--font-mono); color: var(--primary); }
+
+/* keep the leaderboard CTA pinned to the bottom of the standing panel */
+.pg-full { margin-top: auto; padding-top: 11px; }
+.pg-subjects-wrap { margin-top: var(--sp-4); }
+
+/* ═══ Standing left column: stat rows (no more sparse numbers) ═══ */
+.pg-stat { display: flex; align-items: center; gap: 11px; padding: 11px 12px; border: 1px solid var(--border);
+  border-radius: var(--r-md); background: var(--surface); margin-bottom: 9px;
+  transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease; }
+.pg-stat:hover { transform: translateY(-2px); box-shadow: var(--shadow-sm); border-color: var(--primary); }
+.pg-stat-ico { width: 32px; height: 32px; border-radius: 10px; display: grid; place-items: center; flex-shrink: 0; }
+.pg-stat-ico.tone-green { background: var(--primary-soft); color: var(--primary); }
+.pg-stat-ico.tone-blue { background: var(--info-soft); color: var(--info); }
+.pg-stat-ico.tone-amber { background: var(--warning-soft); color: var(--warning); }
+.pg-stat-t { display: flex; flex-direction: column; min-width: 0; }
+.pg-stat-t em { font-style: normal; font-size: 10.5px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--text-muted); }
+.pg-stat-t b { font: 800 16px var(--font-display); color: var(--text); display: flex; align-items: baseline; gap: 6px; }
+.pg-stat-t b i { font-style: normal; font-size: 11px; font-weight: 600; color: var(--text-muted); }
+.pg-top-chip { display: inline-flex; align-items: center; gap: 6px; margin-top: 4px; padding: 6px 11px; border-radius: var(--r-full);
+  background: var(--accent-soft); color: var(--warning); font: 700 11px var(--font-body); }
+
+/* left column: status summary chips + slightly narrower rail column */
+.pg-2col { grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.6fr); }
+.pg-sum { display: flex; flex-wrap: wrap; gap: 7px; justify-content: center; margin-top: 4px; }
+.pg-sum-chip { display: inline-flex; align-items: center; gap: 5px; padding: 5px 10px; border-radius: var(--r-full);
+  font: 600 11px var(--font-body); border: 1px solid var(--border); background: var(--surface); color: var(--text-secondary); }
+.pg-sum-chip b { font: 800 12px var(--font-mono); }
+.pg-sum-chip.ok { border-color: #B9DFCE; background: var(--primary-soft); color: var(--primary); }
+.pg-sum-chip.warn { border-color: #EBD6AE; background: var(--warning-soft); color: var(--warning); }
+.pg-sum-chip.bad { border-color: #F3C9C4; background: var(--error-soft); color: var(--error); }

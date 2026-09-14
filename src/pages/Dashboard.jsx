@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import {
   Flame, ArrowRight, BookOpen, ChevronDown, CalendarDays, Eye,
-  Trophy, Users, PieChart, ArrowUpRight, RefreshCw, Lightbulb, GripVertical, Target, Quote, Medal,
+  Trophy, Users, PieChart, ArrowUpRight, RefreshCw, Lightbulb, Zap, Target, Quote, Medal,
 } from 'lucide-react'
 import { useProfile, dreamCollegeShort } from '../lib/profile'
 import { Modal } from '../components/shell/Shell.jsx'
@@ -263,10 +263,8 @@ export default function Dashboard({ onNavigate }) {
             <div className="pg-head">
               <span className="pg-ico tone-green"><PieChart size={17} /></span>
               <div className="pg-head-t"><b>My Progress</b><em>CUET {profile.stream} Batch 2027</em></div>
-              <span className="pill-green">On track</span>
-              <button className="pg-swap" onClick={() => setPanel(1)} title="See My Standing" aria-label="See My Standing">
-                <RefreshCw size={13} />
-              </button>
+              <button className={'pg-seg on'} onClick={() => setPanel(0)} aria-pressed="true"><PieChart size={13} /> Progress</button>
+              <button className="pg-seg" onClick={() => setPanel(1)}><Trophy size={13} /> Standing</button>
             </div>
 
             <div className="pg-2col">
@@ -276,6 +274,20 @@ export default function Dashboard({ onNavigate }) {
                   <div className="ring" style={{ '--p': '64%' }}><div className="ring-in"><b>64%</b><span>Overall syllabus</span></div></div>
                 </button>
                 <p className="prog-exp">Expected by now: 62% · <b className="ok">ahead +2%</b></p>
+
+                <div className="pg-sum">
+                  {(() => {
+                    const by = st => SUBJECTS.filter(s2 => s2.status === st).length
+                    const items = [
+                      { k: 'on track', n: by('On track'), tone: 'ok' },
+                      { k: 'needs attention', n: by('Needs attention'), tone: 'warn' },
+                      { k: 'behind', n: by('Behind'), tone: 'bad' },
+                    ].filter(i => i.n > 0)
+                    return items.map(i => (
+                      <span key={i.k} className={'pg-sum-chip ' + i.tone}><b>{i.n}</b> {i.k}</span>
+                    ))
+                  })()}
+                </div>
               </div>
 
               {/* right — dynamic weak-link insight + the two weakest sections */}
@@ -294,43 +306,36 @@ export default function Dashboard({ onNavigate }) {
                     </div>
                   </div>
                 </div>
-                <div className="pg-mini">
-                  {focusTwo.map(s2 => (
-                    <div className="pg-mini-row" key={s2.n}>
-                      <span className="pg-mini-name"><i className="pg-sdot" style={{ background: sc(s2.status) }} />{s2.n}</span>
-                      <span className="pg-mini-bar"><i style={{ width: s2.pct + '%', background: sc(s2.status) }} /></span>
-                      <b className="pg-mini-pct">{s2.pct}%</b>
-                    </div>
-                  ))}
+
+                <div className="prog-subjects">
+                {SUBJECTS.map(s2 => (
+                <div key={s2.n} className={'prow' + (openRow === s2.n ? ' open' : '')}>
+                <button className="prow-main" onClick={() => setOpenRow(openRow === s2.n ? null : s2.n)} aria-expanded={openRow === s2.n}>
+                <span className="pname">{s2.n}</span>
+                <div className="pbar"><i style={{ width: s2.pct + '%', background: sc(s2.status) }} /></div>
+                <b className="ppct">{s2.pct}%</b>
+                <span className={'pstat ' + s2.status.toLowerCase().replace(/ /g, '-')}>{s2.status}</span>
+                <ChevronDown size={14} className="prow-chev" />
+                </button>
+                {openRow === s2.n && (
+                <div className="prow-more">
+                <span className={'prow-note' + (s2.d >= 0 ? ' up' : ' down')}>
+                {s2.d >= 0 ? '▲ +' + s2.d.toFixed(1) + '% vs last mock' : '▼ ' + s2.d.toFixed(1) + '% vs last mock'} · {s2.pct >= 75 ? 'keep the momentum' : (() => { const n = Math.ceil((75 - s2.pct) / 3); return n + ' quick fix' + (n > 1 ? 'es' : '') + ' to reach 75%' })()}
+                </span>
+                <div className="prow-actions">
+                <button className="btn btn-primary-sm" onClick={() => onNavigate('studykit')}>Practice <BookOpen size={13} /></button>
+                <button className="btn btn-outline-sm" onClick={() => onNavigate('analysis')}>Open Analysis</button>
+                </div>
+                </div>
+                )}
+                </div>
+                ))}
                 </div>
               </div>
+            {/* full section list keeps its expandable rows */}
+            
             </div>
 
-            {/* full section list keeps its expandable rows */}
-            <div className="prog-subjects">
-              {SUBJECTS.map(s2 => (
-                <div key={s2.n} className={'prow' + (openRow === s2.n ? ' open' : '')}>
-                  <button className="prow-main" onClick={() => setOpenRow(openRow === s2.n ? null : s2.n)} aria-expanded={openRow === s2.n}>
-                    <span className="pname">{s2.n}</span>
-                    <div className="pbar"><i style={{ width: s2.pct + '%', background: sc(s2.status) }} /></div>
-                    <b className="ppct">{s2.pct}%</b>
-                    <span className={'pstat ' + s2.status.toLowerCase().replace(/ /g, '-')}>{s2.status}</span>
-                    <ChevronDown size={14} className="prow-chev" />
-                  </button>
-                  {openRow === s2.n && (
-                    <div className="prow-more">
-                      <span className={'prow-note' + (s2.d >= 0 ? ' up' : ' down')}>
-                        {s2.d >= 0 ? '▲ +' + s2.d.toFixed(1) + '% vs last mock' : '▼ ' + s2.d.toFixed(1) + '% vs last mock'} · {s2.pct >= 75 ? 'keep the momentum' : (() => { const n = Math.ceil((75 - s2.pct) / 3); return n + ' quick fix' + (n > 1 ? 'es' : '') + ' to reach 75%' })()}
-                      </span>
-                      <div className="prow-actions">
-                        <button className="btn btn-primary-sm" onClick={() => onNavigate('studykit')}>Practice <BookOpen size={13} /></button>
-                        <button className="btn btn-outline-sm" onClick={() => onNavigate('analysis')}>Open Analysis</button>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
           </section>
 
           {/* ── PANEL 2 · My Standing ── */}
@@ -338,9 +343,8 @@ export default function Dashboard({ onNavigate }) {
             <div className="pg-head">
               <span className="pg-ico tone-amber"><Trophy size={17} /></span>
               <div className="pg-head-t"><b>My Standing</b><em>Ranked by contest &amp; daily-challenge points</em></div>
-              <button className="pg-swap" onClick={() => setPanel(0)} title="See My Progress" aria-label="See My Progress">
-                <RefreshCw size={13} />
-              </button>
+              <button className="pg-seg" onClick={() => setPanel(0)}><PieChart size={13} /> Progress</button>
+              <button className={'pg-seg on'} onClick={() => setPanel(1)} aria-pressed="true"><Trophy size={13} /> Standing</button>
             </div>
 
             <div className="st-tabs">
@@ -351,9 +355,24 @@ export default function Dashboard({ onNavigate }) {
             <div className="pg-2col">
               {/* left — rank + percentile */}
               <div className="pg-col">
-                <div className="st-num"><b>#{lb.rank}</b><span>of {lb.of.toLocaleString('en-IN')} students</span></div>
-                <div className="st-pct"><Trophy size={14} /> <b>{lb.pctile}%ile</b> current standing</div>
-                <div className="pg-pts"><b>{lb.pts.toLocaleString('en-IN')}</b><span>points earned</span></div>
+                <div className="pg-stat">
+                  <span className="pg-stat-ico tone-green"><Trophy size={15} /></span>
+                  <span className="pg-stat-t"><em>Your rank</em><b>#{lb.rank} <i>of {lb.of.toLocaleString('en-IN')}</i></b></span>
+                </div>
+                <div className="pg-stat">
+                  <span className="pg-stat-ico tone-blue"><ArrowUpRight size={15} /></span>
+                  <span className="pg-stat-t"><em>Percentile</em><b>{lb.pctile}%ile <i>current standing</i></b></span>
+                </div>
+                <div className="pg-stat">
+                  <span className="pg-stat-ico tone-amber"><Zap size={15} /></span>
+                  <span className="pg-stat-t"><em>Points earned</em><b>{lb.pts.toLocaleString('en-IN')} <i>pts</i></b></span>
+                </div>
+                <span className="pg-top-chip">Top {Math.max(1, Math.round((lb.rank / lb.of) * 100))}% of {lb.cohort}</span>
+                <div className="pg-rank-bar">
+                  <span className="pg-rank-lbl">Position in cohort</span>
+                  <span className="pg-rank-track"><i style={{ width: Math.max(4, Math.round((1 - lb.rank / lb.of) * 100)) + '%' }} /></span>
+                  <b className="pg-rank-val">{Math.max(1, Math.round((1 - lb.rank / lb.of) * 100))}% ahead</b>
+                </div>
               </div>
 
               {/* right — proportional top-5 + your row */}
@@ -374,6 +393,8 @@ export default function Dashboard({ onNavigate }) {
                   <span className="bbar"><i style={{ width: pctOfLeader(lb.pts) + '%' }} /></span>
                   <b className="bpts">{lb.pts.toLocaleString('en-IN')}</b>
                 </div>
+
+  
               </div>
             </div>
 
@@ -383,11 +404,6 @@ export default function Dashboard({ onNavigate }) {
           </section>
         </div>
 
-        {/* panel dots */}
-        <div className="pg-dots">
-          <button className={'pg-dot' + (!panel ? ' on' : '')} onClick={() => setPanel(0)} aria-label="My Progress" title="My Progress" />
-          <button className={'pg-dot' + (panel ? ' on' : '')} onClick={() => setPanel(1)} aria-label="My Standing" title="My Standing" />
-        </div>
       </div>
 
       {/* 5. Tool tiles (4 grouped) */}
