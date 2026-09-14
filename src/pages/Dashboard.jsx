@@ -1,7 +1,7 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import {
   Flame, ArrowRight, BookOpen, ChevronDown, CalendarDays, Eye,
-  Trophy, Users, PieChart, ArrowUpRight, RefreshCw, Lightbulb, Zap, Target, Quote, Medal,
+  Trophy, Users, PieChart, ArrowUpRight, Lightbulb, Zap, Target, Quote, Medal,
 } from 'lucide-react'
 import { useProfile, dreamCollegeShort } from '../lib/profile'
 import { Modal } from '../components/shell/Shell.jsx'
@@ -122,39 +122,15 @@ export default function Dashboard({ onNavigate }) {
   const [showStanding, setShowStanding] = useState(false)
   const [stView, setStView] = useState('all')
   const [openRow, setOpenRow] = useState(null)
-  /* swipeable Progress ⇄ Standing panel */
+  /* Progress ⇄ Standing are two faces of one flip card */
   const [panel, setPanel] = useState(0)
-  const [drag, setDrag] = useState(0)
-  const dragRef = useRef(null)
 
   const weakest = [...SUBJECTS].sort((a, b) => a.pct - b.pct)[0]
-  const focusTwo = [...SUBJECTS].sort((a, b) => a.pct - b.pct).slice(0, 2)
   const lb = LB[stView]
   const sortedRows = [...lb.rows].sort((a, b) => b.pts - a.pts)
   const leaderPts = sortedRows[0]?.pts || 1
   const top5 = sortedRows.filter(r => !r.me).slice(0, 5)
   const pctOfLeader = pts => Math.max(4, Math.round((pts / leaderPts) * 100))
-
-  const onDown = e => {
-    if (e.pointerType === 'mouse' && e.button !== 0) return
-    dragRef.current = { x: e.clientX, active: true }
-    try { e.currentTarget.setPointerCapture(e.pointerId) } catch { /* ignore */ }
-  }
-  const onMove = e => {
-    if (!dragRef.current?.active) return
-    let dx = e.clientX - dragRef.current.x
-    if ((panel === 0 && dx > 0) || (panel === 1 && dx < 0)) dx = dx * 0.25      /* rubber-band at the edges */
-    setDrag(dx)
-  }
-  const onUp = () => {
-    if (!dragRef.current?.active) return
-    dragRef.current.active = false
-    setDrag(d => {
-      if (d <= -60 && panel === 0) setPanel(1)
-      else if (d >= 60 && panel === 1) setPanel(0)
-      return 0
-    })
-  }
 
   const pickWord = i => { if (wordPick === null) setWordPick(i) }
   const pickQuiz = i => {
@@ -251,15 +227,9 @@ export default function Dashboard({ onNavigate }) {
 
       {/* 4. My Progress ⇄ My Standing — swipeable panel card */}
       <div className="pg-card">
-        <div
-          className={'pg-track' + (panel ? ' at-1' : '') + (drag ? ' dragging' : '')}
-          onPointerDown={onDown}
-          onPointerMove={onMove}
-          onPointerUp={onUp}
-          onPointerCancel={onUp}
-        >
-          {/* ── PANEL 1 · My Progress ── */}
-          <section className="cuet-card pg-panel">
+        <div className={'pg-flip' + (panel ? ' is-back' : '')}>
+          {/* ── FACE 1 · My Progress ── */}
+          <section className="cuet-card pg-face pg-face-front">
             <div className="pg-head">
               <span className="pg-ico tone-green"><PieChart size={17} /></span>
               <div className="pg-head-t"><b>My Progress</b><em>CUET {profile.stream} Batch 2027</em></div>
@@ -338,8 +308,8 @@ export default function Dashboard({ onNavigate }) {
 
           </section>
 
-          {/* ── PANEL 2 · My Standing ── */}
-          <section className="cuet-card pg-panel">
+          {/* ── FACE 2 · My Standing ── */}
+          <section className="cuet-card pg-face pg-face-back">
             <div className="pg-head">
               <span className="pg-ico tone-amber"><Trophy size={17} /></span>
               <div className="pg-head-t"><b>My Standing</b><em>Ranked by contest &amp; daily-challenge points</em></div>
