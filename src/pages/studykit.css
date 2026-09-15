@@ -324,3 +324,10 @@
 
 /* PYQ content: vertical flow (was caught in the 3-col subgrid) */
 .sk-pyq-flow { display: flex; flex-direction: column; gap: 14px; }
+
+/* ═══ Tool card CTA line (one action line under each card) ═══ */
+.sk-tcard { grid-template-areas: 'ico t arr' 'cta cta cta' 'prog prog prog'; row-gap: 8px; }
+.sk-tcard-cta { grid-area: cta; display: inline-flex; align-items: center; gap: 5px;
+  font: 700 11px var(--font-body); color: var(--tone, var(--primary)); letter-spacing: .01em; }
+.sk-tcard-cta svg { transition: transform .2s ease; }
+.sk-tcard:hover .sk-tcard-cta svg { transform: translateX(3px); }

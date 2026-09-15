@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import {
-  NotebookText, Layers, Map as MapIcon, Dumbbell, Timer, FileQuestion, Archive, ArrowLeft, PlayCircle, Video, Sigma, Zap, ChevronRight, CheckSquare,
+  NotebookText, Layers, Dumbbell, Timer, FileQuestion, Archive, ArrowLeft, ArrowRight, PlayCircle, Video, Sigma, Zap, ChevronRight, CheckSquare,
   Search, GraduationCap, FlaskConical, Settings, Maximize2, Minimize2,
 } from 'lucide-react'
 import { boostRanking, weakTopicNames, allSubSkills } from '../lib/analysisData'
@@ -26,17 +26,16 @@ const NOTES_BY_STREAM = {
 }
 
 const LEARNING_TOOLS = [
-  { id: 'notes', tone: 'green', icon: NotebookText, title: 'Notes', desc: 'Concise NCERT-based notes, chapter by chapter.', progress: { done: 12, total: 18, label: 'chapters' } },
-  { id: 'flashcards', tone: 'blue', icon: Layers, title: 'Flashcards', desc: 'Swipeable quick-revision cards, mark as learned.', progress: { done: 56, total: 80, label: 'cards mastered' } },
-  { id: 'mindmaps', tone: 'violet', icon: MapIcon, title: 'Mind Maps', desc: 'Visual chapter maps for fast pre-exam revision.', progress: { done: 6, total: 10, label: 'viewed' } },
-  { id: 'exercises', tone: 'green', icon: Dumbbell, title: 'Exercises', desc: 'Topic-wise practice tied to specific topics.', progress: { done: 9, total: 14, label: 'sets done' } },
-  { id: 'videos', tone: 'amber', icon: Video, title: 'Video lectures', desc: 'Short concept videos — 5-10 min each.', progress: { done: 7, total: 12, label: 'watched' } },
-  { id: 'formulas', tone: 'violet', icon: Sigma, title: 'Formula sheets', desc: 'Quick-reference formula cards per subject.', progress: { done: 4, total: 6, label: 'viewed' } },
+  { id: 'notes', tone: 'green', icon: NotebookText, title: 'Notes', desc: 'Concise NCERT-based notes, chapter by chapter.', cta: 'Pick up where you left off', progress: { done: 12, total: 18, label: 'chapters' } },
+  { id: 'flashcards', tone: 'blue', icon: Layers, title: 'Flashcards', desc: 'Swipeable quick-revision cards, mark as learned.', cta: 'Flip 20 cards in 5 minutes', progress: { done: 56, total: 80, label: 'cards mastered' } },
+  { id: 'exercises', tone: 'green', icon: Dumbbell, title: 'Exercises', desc: 'Topic-wise practice tied to specific topics.', cta: 'Start a 10-question set', progress: { done: 9, total: 14, label: 'sets done' } },
+  { id: 'videos', tone: 'amber', icon: Video, title: 'Video lectures', desc: 'Short concept videos — 5-10 min each.', cta: 'Watch one 7-minute concept', progress: { done: 7, total: 12, label: 'watched' } },
+  { id: 'cheats', tone: 'violet', icon: Sigma, title: 'Cheat Sheets', desc: 'Every formula and key definition, one page per subject.', cta: 'Revise all formulas in 10 minutes', progress: { done: 4, total: 6, label: 'viewed' } },
 ]
 const TESTING_TOOLS = [
-  { id: 'quizzes', tone: 'blue', icon: Timer, title: '5-Minute Quick Quizzes', desc: 'Short, low-pressure self-checks — repeat anytime.', meta: { streak: '3-day streak', last: 'Last score 82%' } },
-  { id: 'mocks', tone: 'amber', icon: FileQuestion, title: 'Mock Tests', desc: 'Full-length, CUET-pattern, timed & auto-scored.', meta: { inProgress: 'Mock Test 7 · 60%', sub: 'Section 3 of 5 left' } },
-  { id: 'pyqs', tone: 'red', icon: Archive, title: 'Previous Year Questions', desc: 'Shift-wise & topic-wise PYQ bank, filterable.', progress: { done: 60, total: 100, label: 'attempted' } },
+  { id: 'quizzes', tone: 'blue', icon: Timer, title: '5-Minute Quick Quizzes', desc: 'Short, low-pressure self-checks — repeat anytime.', cta: 'Take today’s quick quiz', meta: { streak: '3-day streak', last: 'Last score 82%' } },
+  { id: 'mocks', tone: 'amber', icon: FileQuestion, title: 'Mock Tests', desc: 'Full-length, CUET-pattern, timed & auto-scored.', cta: 'Resume Mock 7 · 3 sections left', meta: { inProgress: 'Mock Test 7 · 60%', sub: 'Section 3 of 5 left' } },
+  { id: 'pyqs', tone: 'red', icon: Archive, title: 'Previous Year Questions', desc: 'Shift-wise & topic-wise PYQ bank, filterable.', cta: 'Browse 2022–2026, shift-wise', progress: { done: 60, total: 100, label: 'attempted' } },
 ]
 const ALL_TOOLS = [...LEARNING_TOOLS, ...TESTING_TOOLS]
 
@@ -145,7 +144,7 @@ export default function StudyKit({ onNavigate }) {
             {selected === 'quizzes' && <QuizView />}
             {selected === 'pyqs' && <PyqView subject={subject} stream={stream} weakOnly={weakOnly} setWeakOnly={setWeakOnly} />}
             {selected === 'mocks' && <MockView examMode={examMode} setExamMode={setExamMode} />}
-            {(selected === 'mindmaps' || selected === 'exercises' || selected === 'videos' || selected === 'formulas') && (
+            {(selected === 'exercises' || selected === 'videos' || selected === 'cheats') && (
               <div className="sk-placeholder">
                 <PlayCircle size={30} />
                 <p>Working content for this tool ships in the next iteration — design is ready, content pipeline is in progress.</p>
@@ -180,6 +179,8 @@ export default function StudyKit({ onNavigate }) {
                         <b>{t.title}</b>
                         <em>{p.total > 0 ? p.done + '/' + p.total + ' ' + p.label : t.desc}</em>
                       </span>
+                      <span className="sk-tcard-cta">{t.cta} <ArrowRight size={12} /></span>
+                      <span className="sk-tcard-cta">{t.cta} <ArrowRight size={12} /></span>
                       {p.total > 0 && (
                         <span className="sk-tcard-prog">
                           <i><s style={{ width: (p.done / p.total * 100) + '%' }} /></i>
@@ -212,6 +213,7 @@ export default function StudyKit({ onNavigate }) {
                       <b>{t.title}</b>
                       <em>{t.meta ? (t.meta.streak || t.meta.inProgress) : t.desc}</em>
                     </span>
+                    <span className="sk-tcard-cta">{t.cta} <ArrowRight size={12} /></span>
                     {t.progress && (
                       <span className="sk-tcard-prog">
                         <i><s style={{ width: t.progress.done + '%' }} /></i>
