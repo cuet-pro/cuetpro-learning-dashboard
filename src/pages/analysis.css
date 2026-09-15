@@ -402,3 +402,8 @@
 .sq-mark.two { background: var(--violet-soft); color: var(--violet); }
 .sq-mark.four { background: var(--primary-soft); color: var(--primary); }
 .sq-mark.one, .sq-mark.two, .sq-mark.four { font-size: 12px; }
+
+/* dynamic-total stat card spans two columns on wide rows */
+.an-stat.wide { grid-column: span 2; }
+.an-stat.wide b { font-size: 16px; }
+@media (max-width: 640px) { .an-stat.wide { grid-column: span 1; } }

@@ -117,6 +117,10 @@ function OverviewTab({ subject, target, dt, onNavigate }) {
   const latest = hasMocks ? attempts[nAttempts - 1].pct : 0
   const avgPct = hasMocks ? attempts.reduce((sum, m) => sum + m.pct, 0) / nAttempts : 0
   const bestPct = hasMocks ? Math.max(...attempts.map(m => m.pct)) : 0
+  /* totals scale with the student: 3 mocks → out of 3 × 1000, not a fixed 1000 */
+  const totalMax = nAttempts * TOTAL_MARKS
+  const totalMarks = attempts.reduce((sum, m) => sum + marksOf(m.pct), 0)
+  const fmtNum = n => n.toLocaleString('en-IN')
   /* with 1 mock there is no trend to draw, with 2 it is too early to trust — say so instead of pretending */
   const trendNote =
     nAttempts === 1 ? 'Only 1 mock so far — one point shows where you stand, but there is no trend or delta yet. Two more and the line becomes worth reading.'
@@ -169,8 +173,10 @@ function OverviewTab({ subject, target, dt, onNavigate }) {
               <div>
                 <h3 className="an-card-title">Score trend &amp; college reach</h3>
                 <p className="an-card-sub">
-                  Every point is one mock test — your score out of {TOTAL_MARKS}
-                  {dt ? ' against ' + shortName(dt.college) + ' \u00b7 ' + dt.program + ' at ' + dt.score : ''}
+                  {hasMocks
+                    ? nAttempts + (nAttempts === 1 ? ' mock' : ' mocks') + ' · ' + fmtNum(totalMarks) + '/' + fmtNum(totalMax) + ' total · avg ' + marksOf(avgPct) + ' per mock'
+                    : 'Your score out of ' + TOTAL_MARKS + ' per mock'}
+                  {dt ? ' — target ' + shortName(dt.college) + ' \u00b7 ' + dt.program + ' at ' + dt.score : ''}
                 </p>
               </div>
               <div className="an-face-tools">
@@ -202,9 +208,10 @@ function OverviewTab({ subject, target, dt, onNavigate }) {
             {hasMocks && (
               <div className="an-stats">
                 <div className="an-stat"><span className="an-stat-k">Mocks taken</span><b className="mono">{nAttempts}<i>/6</i></b></div>
-                <div className="an-stat"><span className="an-stat-k">Average score</span><b className="mono">{marksOf(avgPct)}<i>/{TOTAL_MARKS}</i></b></div>
+                <div className="an-stat wide"><span className="an-stat-k">Total across {nAttempts} {nAttempts === 1 ? 'mock' : 'mocks'}</span><b className="mono">{fmtNum(totalMarks)}<i>/{fmtNum(totalMax)}</i></b></div>
+                <div className="an-stat"><span className="an-stat-k">Average per mock</span><b className="mono">{marksOf(avgPct)}<i>/{TOTAL_MARKS}</i></b></div>
                 <div className="an-stat"><span className="an-stat-k">Best mock</span><b className="mono ok">{marksOf(bestPct)}</b></div>
-                <div className="an-stat"><span className="an-stat-k">Latest</span><b className="mono">{marksOf(latest)}</b></div>
+                <div className="an-stat"><span className="an-stat-k">Latest mock</span><b className="mono">{marksOf(latest)}</b></div>
                 {dt && <div className={'an-stat' + (marksOf(latest) >= dt.score ? ' good' : '')}><span className="an-stat-k">Gap to target</span><b className="mono">{marksOf(latest) >= dt.score ? 'crossed' : '+' + (dt.score - marksOf(latest))}</b></div>}
               </div>
             )}
@@ -347,7 +354,8 @@ function OverviewTab({ subject, target, dt, onNavigate }) {
           <div className="sq-row"><span className="sq-mark ok">+5</span><div><b>Correct answer</b><p>Every right answer is worth 5 marks.</p></div></div>
           <div className="sq-row"><span className="sq-mark bad">−1</span><div><b>Wrong answer — the penalty</b><p>CUET deducts 1 mark for every wrong answer. This is the single biggest reason marks dip between mocks: 10 casual guesses can wipe out 50 marks even after you got them “almost right”.</p></div></div>
           <div className="sq-row"><span className="sq-mark skip">0</span><div><b>Skipped</b><p>Left blank costs nothing. If you are below 70% sure, skipping beats guessing — that is the one-mock penalty to avoid.</p></div></div>
-          <div className="sq-row"><span className="sq-mark tot">1000</span><div><b>Your total</b><p>4 sections × 50 questions × 5 marks. The graph plots each mock on this same 0–1000 scale, so it lines up exactly with DU cutoffs.</p></div></div>
+          <div className="sq-row"><span className="sq-mark tot">×N</span><div><b>The total follows your mocks</b><p>Whatever you have taken is what we add up: <b>3 mocks → 3 × 1000 = 3,000</b> (so 1,767/3,000), 6 mocks → 6,000. The average per mock is the number to compare against your target, because the target is a single-mock cutoff.</p></div></div>
+          <div className="sq-row"><span className="sq-mark tot">1000</span><div><b>One mock&apos;s max</b><p>4 sections × 50 questions × 5 marks. The graph plots each mock on this same 0–1000 scale, so it lines up exactly with DU cutoffs.</p></div></div>
           <div className="sq-sub">How many mocks do I need for this graph to be useful?</div>
           <div className="sq-row"><span className="sq-mark one">1</span><div><b>One mock</b><p>A single dot. There is nothing to compare yet, so the line, the delta and the average stay hidden — we say so instead of drawing a flat fake trend.</p></div></div>
           <div className="sq-row"><span className="sq-mark two">2–3</span><div><b>Two or three mocks</b><p>The line appears and you get your first delta (▲ / ▼ vs the previous mock). The average is the average of the mocks you actually took — untouched slots are never counted.</p></div></div>
