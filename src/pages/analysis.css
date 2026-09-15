@@ -372,3 +372,15 @@
 .an-slider-ticks { margin-top: 6px; display: flex; justify-content: space-between; }
 .an-slider-ticks button { opacity: .75; }
 .an-slider-ticks button.on { opacity: 1; }
+
+/* ═══ Analysis: no-mocks empty state ═══ */
+.an-empty { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 8px;
+  padding: var(--sp-7) var(--sp-5); border: 1px dashed var(--border-strong); border-radius: var(--r-md);
+  background: linear-gradient(180deg, var(--bg), var(--surface)); animation: sk-card-in .35s cubic-bezier(.22,.61,.36,1) both; }
+.an-empty-ico { width: 44px; height: 44px; border-radius: 14px; display: grid; place-items: center;
+  background: var(--primary-soft); color: var(--primary); margin-bottom: 2px; }
+.an-empty b { font: 700 15px var(--font-display); color: var(--text); }
+.an-empty p { max-width: 460px; font-size: 12.5px; line-height: 1.6; color: var(--text-secondary); }
+.an-empty p b { font: 700 12.5px var(--font-body); color: var(--text); }
+.an-empty-acts { display: flex; gap: 9px; margin-top: 6px; flex-wrap: wrap; justify-content: center; }
+.sq-mark.zero { background: var(--secondary-soft); color: var(--secondary); }

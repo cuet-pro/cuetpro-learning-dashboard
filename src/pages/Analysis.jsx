@@ -55,7 +55,7 @@ function selectedSubjects(scope) {
   return subjectsFor(scope)
 }
 
-export default function Analysis() {
+export default function Analysis({ onNavigate }) {
   const [profile] = useProfile()
   const dt = dreamTarget(profile)
   const [subject, setSubject] = useState('all')
@@ -91,7 +91,7 @@ export default function Analysis() {
         ))}
       </div>
 
-      {tab === 'overview' && <OverviewTab subject={scope} target={profile.targetPercentile} dt={dt} />}
+      {tab === 'overview' && <OverviewTab subject={scope} target={profile.targetPercentile} dt={dt} onNavigate={onNavigate} />}
       {tab === 'swot' && <SwotTab subject={scope} />}
       {tab === 'mocks' && <MockPapersTab subject={scope} />}
       {tab === 'boost' && <BoostTab subject={scope} single={subjectsFor(scope).length === 1} />}
@@ -100,7 +100,7 @@ export default function Analysis() {
 }
 
 /* ═══════════ 1. Overview ═══════════ */
-function OverviewTab({ subject, target, dt }) {
+function OverviewTab({ subject, target, dt, onNavigate }) {
   const subs = selectedSubjects(subject)
   const isAll = subs.length > 1
   const [showSkills, setShowSkills] = useState(false)
@@ -109,6 +109,8 @@ function OverviewTab({ subject, target, dt }) {
   const [metric, setMetric] = useState('marks')      // 'marks' | 'pct'
   const [showScoring, setShowScoring] = useState(false)
   const mocks = (isAll ? OVERALL.trend : subs[0].trend).map((v, i) => ({ mock: 'M' + (i + 2), pct: v }))
+  /* a brand-new student has no attempts yet: the trend + target need at least one mock */
+  const hasMocks = mocks.some(m => m.pct > 0)
   const acc = isAll ? OVERALL.acc : Math.round(subs.reduce((s, x) => s + x.acc, 0) / subs.length)
   const mistakes = subs.flatMap(s => (s.mistakes || []).map(m => ({ ...m, subj: s.name })))
   const weakTopics = allSubSkills(subject).filter(sk => sk.acc < 50).length
@@ -169,6 +171,23 @@ function OverviewTab({ subject, target, dt }) {
               </div>
             </div>
 
+            {!hasMocks && (
+              <div className="an-empty">
+                <span className="an-empty-ico"><FileQuestion size={20} /></span>
+                <b>You haven&apos;t taken a single mock yet</b>
+                <p>
+                  Your score trend, the college each score reaches and the gap to your dream course
+                  all unlock after your <b>first mock test</b>. Nothing to read yet — so take Mock 1 and
+                  this graph starts filling in.
+                </p>
+                <div className="an-empty-acts">
+                  <button className="btn btn-primary-sm" onClick={() => onNavigate('studykit')}>Take your first mock</button>
+                  <button className="btn btn-outline-sm" onClick={() => setShowScoring(true)}>How scoring works</button>
+                </div>
+              </div>
+            )}
+
+            {hasMocks && (
             <TrendChart
               mocks={mocks}
               metric={metric}
@@ -179,7 +198,9 @@ function OverviewTab({ subject, target, dt }) {
               activeIndex={sel}
               onPick={setSel}
             />
+            )}
 
+            {hasMocks && (<>
             {/* slider — drag it, or tap a mock chip */}
             <div className="an-slider-row">
               <input
@@ -217,6 +238,7 @@ function OverviewTab({ subject, target, dt }) {
                 </span>
               )}
             </div>
+            </>)}
           </div>
 
           {/* BACK — section-wise accuracy */}
@@ -299,6 +321,7 @@ function OverviewTab({ subject, target, dt }) {
           <div className="sq-row"><span className="sq-mark bad">−1</span><div><b>Wrong answer — the penalty</b><p>CUET deducts 1 mark for every wrong answer. This is the single biggest reason marks dip between mocks: 10 casual guesses can wipe out 50 marks even after you got them “almost right”.</p></div></div>
           <div className="sq-row"><span className="sq-mark skip">0</span><div><b>Skipped</b><p>Left blank costs nothing. If you are below 70% sure, skipping beats guessing — that is the one-mock penalty to avoid.</p></div></div>
           <div className="sq-row"><span className="sq-mark tot">1000</span><div><b>Your total</b><p>4 sections × 50 questions × 5 marks. The graph plots each mock on this same 0–1000 scale, so it lines up exactly with DU cutoffs.</p></div></div>
+          <div className="sq-row"><span className="sq-mark zero">0</span><div><b>No mocks yet?</b><p>Then there is nothing to plot. Your first mock test creates the first point on this graph — before that we simply say so instead of showing an empty line.</p></div></div>
           <div className="sq-note">
             <b>The dashed line is your target.</b>
             <p>It is the last declared cutoff of your dream college&apos;s hardest course{dt ? ' — ' + dt.college + ' · ' + dt.program + ' at ' + dt.score + '/' + TOTAL_MARKS : ''}. Cross it and that course is realistically open to you.</p>
