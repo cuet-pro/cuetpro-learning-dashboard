@@ -407,3 +407,70 @@
 .an-stat.wide { grid-column: span 2; }
 .an-stat.wide b { font-size: 16px; }
 @media (max-width: 640px) { .an-stat.wide { grid-column: span 1; } }
+
+/* ═══════════ Mock paper analyser (filters · navigator · solution) ═══════════ */
+.mp-card.real { border-color: var(--primary); background: linear-gradient(120deg, var(--primary-soft), var(--surface)); }
+.mp-real { font-size: 10.5px; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; color: var(--primary); }
+
+.pa-card { animation: an-card-in .3s ease; }
+.pa-filters { display: grid; gap: 9px; padding: 13px; border: 1px solid var(--border); border-radius: var(--r-md); background: var(--bg); margin-bottom: 14px; }
+.pa-frow { display: grid; grid-template-columns: 86px minmax(0, 1fr); align-items: start; gap: 10px; }
+.pa-flabel { font: 700 10.5px var(--font-body); letter-spacing: .05em; text-transform: uppercase; color: var(--text-muted); padding-top: 5px; }
+.pa-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.pa-chip { padding: 5px 11px; border-radius: 999px; border: 1px solid var(--border); background: var(--surface);
+  font: 600 11.5px var(--font-body); color: var(--text-secondary); cursor: pointer; transition: all .18s; }
+.pa-chip:hover { border-color: var(--primary); color: var(--primary); background: var(--primary-soft); transform: translateY(-1px); }
+.pa-chip.on { background: var(--primary); border-color: var(--primary); color: #fff; box-shadow: 0 2px 8px rgba(20,108,78,.25); }
+.pa-chip.st-correct.on { background: var(--primary); }
+.pa-chip.st-wrong.on { background: var(--error); border-color: var(--error); box-shadow: 0 2px 8px rgba(229,72,77,.25); }
+.pa-chip.st-skipped.on { background: var(--text-muted); border-color: var(--text-muted); }
+
+.pa-nav { margin-bottom: 14px; }
+.pa-navgrid { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 7px; }
+.pa-qbtn { width: 30px; height: 30px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface);
+  font: 700 11px var(--font-mono); color: var(--text-secondary); cursor: pointer; position: relative; transition: all .16s; }
+.pa-qbtn:hover { transform: translateY(-2px); box-shadow: var(--shadow-sm); }
+.pa-qbtn.correct { border-color: rgba(20,108,78,.35); color: var(--primary); background: rgba(20,108,78,.06); }
+.pa-qbtn.wrong { border-color: rgba(229,72,77,.35); color: var(--error); background: rgba(229,72,77,.06); }
+.pa-qbtn.skipped { border-color: var(--border-strong); color: var(--text-muted); background: var(--bg); }
+.pa-qbtn.cur { outline: 2px solid var(--primary); outline-offset: 1px; transform: translateY(-2px); box-shadow: var(--shadow-sm); }
+.pa-qbtn.marked::after { content: ''; position: absolute; top: 3px; right: 3px; width: 5px; height: 5px; border-radius: 999px; background: var(--accent, #E8A33D); }
+.pa-none { font-size: 12px; color: var(--text-muted); }
+
+.pa-view { border: 1px solid var(--border); border-radius: var(--r-md); padding: 15px; background: var(--surface); animation: an-card-in .25s ease; }
+.pa-viewhead { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
+.pa-badge { padding: 3px 9px; border-radius: 999px; font: 700 10px var(--font-body); letter-spacing: .04em; text-transform: uppercase; }
+.pa-badge.correct { background: var(--primary-soft); color: var(--primary); }
+.pa-badge.wrong { background: var(--error-soft); color: var(--error); }
+.pa-badge.skipped { background: var(--bg); color: var(--text-muted); border: 1px solid var(--border); }
+.pa-meta { font-size: 11.5px; color: var(--text-muted); flex: 1; min-width: 0; }
+.pa-viewacts { display: flex; gap: 6px; }
+.pa-iconbtn { width: 28px; height: 28px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface);
+  color: var(--text-secondary); display: grid; place-items: center; cursor: pointer; transition: all .18s; }
+.pa-iconbtn:hover:not(:disabled) { border-color: var(--primary); color: var(--primary); background: var(--primary-soft); }
+.pa-iconbtn:disabled { opacity: .4; cursor: default; }
+.pa-iconbtn.on { color: var(--accent, #E8A33D); border-color: var(--accent, #E8A33D); background: rgba(232,163,61,.1); }
+
+.pa-qtext { font-size: 13.5px; line-height: 1.65; color: var(--text); margin-bottom: 12px; }
+.pa-ghost { color: var(--text-secondary); font-size: 12.5px; }
+.pa-opts { display: grid; gap: 7px; }
+.pa-opt { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border: 1px solid var(--border); border-radius: var(--r-sm);
+  background: var(--bg); transition: all .18s; }
+.pa-opt:hover { border-color: var(--border-strong); transform: translateX(2px); }
+.pa-opt.right { border-color: var(--primary); background: var(--primary-soft); }
+.pa-optk { width: 22px; height: 22px; border-radius: 6px; background: var(--surface); border: 1px solid var(--border);
+  display: grid; place-items: center; font: 700 11px var(--font-mono); color: var(--text-secondary); flex-shrink: 0; }
+.pa-opt.right .pa-optk { background: var(--primary); border-color: var(--primary); color: #fff; }
+.pa-optt { font-size: 12.5px; color: var(--text); flex: 1; min-width: 0; }
+.pa-opttag { font: 700 9.5px var(--font-body); letter-spacing: .05em; text-transform: uppercase; color: var(--primary); }
+
+.pa-solbar { display: flex; align-items: center; gap: 12px; margin-top: 14px; flex-wrap: wrap; }
+.pa-key { margin-left: 6px; padding: 1px 5px; border-radius: 4px; background: rgba(255,255,255,.22); font: 700 9.5px var(--font-mono); }
+.pa-hint { font-size: 11px; color: var(--text-muted); }
+.pa-sol { margin-top: 13px; padding: 13px; border-radius: var(--r-md); border: 1px solid var(--border);
+  background: linear-gradient(120deg, var(--primary-soft), var(--surface)); animation: pa-sol-in .28s cubic-bezier(.22,.61,.36,1) both; }
+.pa-solhead { font: 700 11px var(--font-body); letter-spacing: .05em; text-transform: uppercase; color: var(--primary); margin-bottom: 7px; }
+.pa-soltext { font-size: 12.5px; line-height: 1.7; color: var(--text-secondary); }
+.pa-solacts { display: flex; gap: 8px; margin-top: 11px; flex-wrap: wrap; }
+@keyframes pa-sol-in { from { opacity: 0; transform: translateY(6px) } to { opacity: 1; transform: none } }
+@media (max-width: 640px) { .pa-frow { grid-template-columns: 1fr; } .pa-flabel { padding-top: 0; } }

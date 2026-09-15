@@ -1,7 +1,8 @@
-import { useState } from 'react'
-import { Home, Grid3x3, Zap, TrendingUp, ChevronRight, Target, BookOpen, Info, FileQuestion, CheckCircle2, XCircle, Clock, RefreshCw } from 'lucide-react'
+import { useEffect, useMemo, useState } from 'react'
+import { Home, Grid3x3, Zap, TrendingUp, ChevronRight, Target, BookOpen, Info, FileQuestion, RefreshCw, Bookmark, ChevronLeft, ArrowLeft } from 'lucide-react'
 import { status, allSubSkills, boostRanking, boostReason, subjectsFor } from '../lib/analysisData'
 import { offerings, topCutoff } from '../data/duData'
+import { MATH_PAPER } from '../data/mockPaperMath'
 import { logoFor } from '../data/collegeLogos'
 import { useProfile } from '../lib/profile'
 import { Modal } from '../components/shell/Shell'
@@ -93,7 +94,7 @@ export default function Analysis({ onNavigate }) {
 
       {tab === 'overview' && <OverviewTab subject={scope} target={profile.targetPercentile} dt={dt} onNavigate={onNavigate} />}
       {tab === 'swot' && <SwotTab subject={scope} />}
-      {tab === 'mocks' && <MockPapersTab subject={scope} />}
+      {tab === 'mocks' && <MockPapersTab subject={scope} onNavigate={onNavigate} />}
       {tab === 'boost' && <BoostTab subject={scope} single={subjectsFor(scope).length === 1} />}
     </div>
   )
@@ -544,19 +545,6 @@ function collegeAt(p) {
 /* section-wise accuracy for a given mock (deterministic, derived from real subject accuracies) */
 
 /* question-wise log for a mock paper (deterministic; topics come from the real sub-skill engine) */
-function mockQuestions(paperIdx) {
-  const topics = allSubSkills('all')
-  const out = []
-  for (let q = 0; q < 45; q++) {
-    const t = topics[(q * 7 + paperIdx * 3) % topics.length]
-    const r = (q * 31 + paperIdx * 17) % 100
-    const correct = r < 52 + paperIdx * 3
-    const skipped = !correct && ((q * 13 + paperIdx) % 11 === 0)
-    out.push({ q: q + 1, topic: t.name, subject: t.subject, correct, skipped, time: 18 + ((q * 5 + paperIdx * 7) % 40) })
-  }
-  return out
-}
-
 function TrendChart({ mocks, metric = 'marks', target, targetScore, targetLabel, avgPct, showColleges, activeIndex, onPick }) {
   const [hover, setHover] = useState(null)
   const W = 560, H = 214, PAD = 30
@@ -787,75 +775,253 @@ function ImpactBadge({ tier }) {
 }
 
 /* ═══════════ Mock paper analysis — question-wise ═══════════ */
-function MockPapersTab({ subject }) {
+/* ═══════════ Mock papers → question-wise analyser (AfterBoards-style flow, our UI) ═══════════ */
+function attemptFor(seed, i) {
+  const r = (i * 37 + seed * 17) % 100
+  const status = r < 58 ? 'correct' : r < 82 ? 'wrong' : 'skipped'
+  const time = 22 + ((i * 13 + seed * 7) % 55)
+  const bookmarked = (i * 7 + seed) % 9 === 0
+  return { status, time, bookmarked }
+}
+
+function syntheticQuestions(paperIdx) {
+  const topics = allSubSkills('all')
+  return Array.from({ length: 45 }, (_, i) => {
+    const t = topics[(i * 7 + paperIdx * 3) % topics.length]
+    return {
+      n: i + 1, section: t.subject, topic: t.name,
+      difficulty: ['Easy', 'Medium', 'Hard'][(i + paperIdx) % 3],
+      text: '', options: [], correct: null, explanation: '',
+    }
+  })
+}
+
+function MockPapersTab({ subject, onNavigate }) {
   const subs = selectedSubjects(subject)
   const isAll = subs.length > 1
   const [paper, setPaper] = useState(null)
-  const [filter, setFilter] = useState('all')
-  const mocks = (isAll ? OVERALL.trend : subs[0].trend).map((v, i) => ({ mock: i + 2, pct: v }))
+  const mocks = (isAll ? OVERALL.trend : subs[0].trend).map((v, i) => ({ mock: 'M' + (i + 2), pct: v }))
 
-  if (paper === null) {
-    return (
-      <section className="an-card">
-        <div className="an-card-head">
-          <div>
-            <h3 className="an-card-title">Mock paper analysis</h3>
-            <p className="an-card-sub">Open any paper to review every question — topic, time and where you slipped</p>
-          </div>
-        </div>
-        <div className="mp-grid">
-          {mocks.map((m, i) => {
-            const qs = mockQuestions(i)
-            const correct = qs.filter(q => q.correct).length
-            const skipped = qs.filter(q => q.skipped).length
-            const wrong = qs.length - correct - skipped
-            return (
-              <button className="mp-card" key={m.mock} style={{ animationDelay: (i * 55) + 'ms' }} onClick={() => { setPaper(m.mock); setFilter('all') }}>
-                <span className="mp-card-top"><b>Mock {m.mock}</b><em>{pct1(m.pct)}%ile</em></span>
-                <span className="mp-card-meta">
-                  <span className="mp-ok"><CheckCircle2 size={11} /> {correct}</span>
-                  <span className="mp-bad"><XCircle size={11} /> {wrong}</span>
-                  <span className="mp-skip">— {skipped}</span>
-                </span>
-                <span className="mp-card-bar"><i style={{ width: Math.round(correct / qs.length * 100) + '%' }} /></span>
-                <span className="mp-card-cta">Analyse paper <ChevronRight size={13} /></span>
-              </button>
-            )
-          })}
-        </div>
-      </section>
-    )
-  }
+  if (paper) return <PaperAnalyser paperKey={paper} onBack={() => setPaper(null)} onNavigate={onNavigate} />
 
-  const qs = mockQuestions(paper - 2)
-  const correct = qs.filter(q => q.correct).length
-  const skipped = qs.filter(q => q.skipped).length
-  const shown = qs.filter(q => filter === 'all' ? true : filter === 'wrong' ? (!q.correct && !q.skipped) : filter === 'skip' ? q.skipped : q.correct)
   return (
     <section className="an-card">
       <div className="an-card-head">
         <div>
-          <h3 className="an-card-title">Mock {paper} — question-wise</h3>
-          <p className="an-card-sub">{correct} correct · {qs.length - correct - skipped} wrong · {skipped} skipped · {qs.length} questions</p>
+          <h3 className="an-card-title">Mock paper analysis</h3>
+          <p className="an-card-sub">Open a paper to go question by question — filter by section, topic, difficulty and your attempt, then read the solution</p>
         </div>
-        <button className="an-view-more" onClick={() => setPaper(null)}>All papers <ChevronRight size={14} /></button>
       </div>
-      <div className="mq-filters">
-        {[['all', 'All ' + qs.length], ['right', 'Correct ' + correct], ['wrong', 'Wrong ' + (qs.length - correct - skipped)], ['skip', 'Skipped ' + skipped]].map(([id, label]) => (
-          <button key={id} className={'mq-filter' + (filter === id ? ' on' : '')} onClick={() => setFilter(id)}>{label}</button>
-        ))}
+      <div className="mp-grid">
+        <button className="mp-card real" onClick={() => setPaper('real')}>
+          <span className="mp-card-top"><b>{MATH_PAPER.title}</b><em>{MATH_PAPER.questions.length} Qs</em></span>
+          <span className="mp-card-meta"><span className="mp-real">past paper · with solutions</span></span>
+          <span className="mp-card-cta">Analyse question-wise <ChevronRight size={13} /></span>
+        </button>
+        {mocks.map((m, i) => {
+          const qs = syntheticQuestions(i + 1)
+          const correct = qs.filter(x => attemptFor(i + 1, x.n - 1).status === 'correct').length
+          const skipped = qs.filter(x => attemptFor(i + 1, x.n - 1).status === 'skipped').length
+          const wrong = qs.length - correct - skipped
+          return (
+            <button className="mp-card" key={m.mock} style={{ animationDelay: (i * 50) + 'ms' }} onClick={() => setPaper('mock:' + i)}>
+              <span className="mp-card-top"><b>Mock {m.mock}</b><em>{pct1(m.pct)}%ile</em></span>
+              <span className="mp-card-meta">
+                <span className="mp-ok">{correct} correct</span>
+                <span className="mp-bad">{wrong} wrong</span>
+                <span className="mp-skip">{skipped} skipped</span>
+              </span>
+              <span className="mp-card-bar"><i style={{ width: (correct / qs.length * 100) + '%' }} /></span>
+              <span className="mp-card-cta">Analyse paper <ChevronRight size={13} /></span>
+            </button>
+          )
+        })}
       </div>
-      <div className="mq-list">
-        {shown.map((q, i) => (
-          <div className={'mq-row ' + (q.correct ? 'ok' : q.skipped ? 'skip' : 'bad')} key={q.q} style={{ animationDelay: (i * 12) + 'ms' }}>
-            <span className="mq-n">Q{q.q}</span>
-            <span className="mq-topic">{q.topic}<em>{q.subject}</em></span>
-            <span className="mq-time"><Clock size={11} /> {q.time}s</span>
-            <span className="mq-ic">{q.correct ? <CheckCircle2 size={15} /> : q.skipped ? <span className="mq-dash">—</span> : <XCircle size={15} />}</span>
+    </section>
+  )
+}
+
+function PaperAnalyser({ paperKey, onBack, onNavigate }) {
+  const isReal = paperKey === 'real'
+  const seed = isReal ? 3 : Number(String(paperKey).split(':')[1] || 0) + 1
+  const base = useMemo(() => {
+    const src = isReal ? MATH_PAPER.questions : syntheticQuestions(seed)
+    return src.map((q, i) => ({ ...q, ...attemptFor(seed, i) }))
+  }, [isReal, seed])
+
+  const [sec, setSec] = useState('All')
+  const [topicF, setTopicF] = useState('All')
+  const [diff, setDiff] = useState('All')
+  const [st, setSt] = useState('All')
+  const [onlyBm, setOnlyBm] = useState(false)
+  const [idx, setIdx] = useState(0)
+  const [showSol, setShowSol] = useState(false)
+  const [marks, setMarks] = useState({})
+
+  const sections = ['All', ...new Set(base.map(q => q.section))]
+  const topics = ['All', ...new Set(base.filter(q => sec === 'All' || q.section === sec).map(q => q.topic))]
+  const items = base.filter(q =>
+    (sec === 'All' || q.section === sec) &&
+    (topicF === 'All' || q.topic === topicF) &&
+    (diff === 'All' || q.difficulty === diff) &&
+    (st === 'All' || q.status === st) &&
+    (!onlyBm || q.bookmarked || marks[q.n])
+  )
+  const cur = items[Math.min(idx, Math.max(0, items.length - 1))]
+  const cnt = {
+    correct: base.filter(q => q.status === 'correct').length,
+    wrong: base.filter(q => q.status === 'wrong').length,
+    skipped: base.filter(q => q.status === 'skipped').length,
+  }
+  const score = cnt.correct * 5 - cnt.wrong
+
+  useEffect(() => { setIdx(0); setShowSol(false) }, [sec, topicF, diff, st, onlyBm])
+  useEffect(() => {
+    const h = e => {
+      if (e.target && /INPUT|TEXTAREA/.test(e.target.tagName)) return
+      if (e.key === 'ArrowRight' || e.key === 'd') setIdx(i => Math.min(items.length - 1, i + 1))
+      else if (e.key === 'ArrowLeft' || e.key === 'a') setIdx(i => Math.max(0, i - 1))
+      else if (e.key === 's' || e.key === 'S') setShowSol(v => !v)
+    }
+    window.addEventListener('keydown', h)
+    return () => window.removeEventListener('keydown', h)
+  }, [items.length])
+
+  return (
+    <section className="an-card pa-card">
+      <div className="an-card-head">
+        <div>
+          <h3 className="an-card-title">{isReal ? MATH_PAPER.title : 'Mock paper · question-wise'}</h3>
+          <p className="an-card-sub">
+            {base.length} questions · {cnt.correct} correct · {cnt.wrong} wrong · {cnt.skipped} skipped ·
+            score <b>{score}/{base.length * 5}</b> (that is {cnt.correct * 5} earned − {cnt.wrong} penalty)
+          </p>
+        </div>
+        <button className="an-view-more" onClick={onBack}><ArrowLeft size={13} /> All papers</button>
+      </div>
+
+      {/* filters */}
+      <div className="pa-filters">
+        <div className="pa-frow">
+          <span className="pa-flabel">Section</span>
+          <div className="pa-chips">{sections.map(s => (
+            <button key={s} className={'pa-chip' + (sec === s ? ' on' : '')} onClick={() => { setSec(s); setTopicF('All') }}>{s}</button>
+          ))}</div>
+        </div>
+        <div className="pa-frow">
+          <span className="pa-flabel">Topic</span>
+          <div className="pa-chips">{topics.map(t => (
+            <button key={t} className={'pa-chip' + (topicF === t ? ' on' : '')} onClick={() => setTopicF(t)}>{t}</button>
+          ))}</div>
+        </div>
+        <div className="pa-frow">
+          <span className="pa-flabel">Difficulty</span>
+          <div className="pa-chips">{['All', 'Easy', 'Medium', 'Hard'].map(d => (
+            <button key={d} className={'pa-chip' + (diff === d ? ' on' : '')} onClick={() => setDiff(d)}>{d}</button>
+          ))}</div>
+        </div>
+        <div className="pa-frow">
+          <span className="pa-flabel">Your attempt</span>
+          <div className="pa-chips">
+            {[['All', 'All'], ['correct', 'Correct ' + cnt.correct], ['wrong', 'Wrong ' + cnt.wrong], ['skipped', 'Skipped ' + cnt.skipped]].map(([k, label]) => (
+              <button key={k} className={'pa-chip st-' + k + (st === k ? ' on' : '')} onClick={() => setSt(k)}>{label}</button>
+            ))}
+            <button className={'pa-chip' + (onlyBm ? ' on' : '')} onClick={() => setOnlyBm(v => !v)}>Bookmarked</button>
           </div>
-        ))}
-        {shown.length === 0 && <p className="muted-empty">Nothing in this filter for Mock {paper}.</p>}
+        </div>
       </div>
+
+      {/* navigator */}
+      <div className="pa-nav">
+        <span className="pa-flabel">Questions</span>
+        <div className="pa-navgrid">
+          {items.map((q, i) => (
+            <button
+              key={q.n}
+              className={'pa-qbtn ' + q.status + (i === idx ? ' cur' : '') + ((q.bookmarked || marks[q.n]) ? ' marked' : '')}
+              onClick={() => { setIdx(i); setShowSol(false) }}
+              title={'Q' + q.n + ' · ' + q.topic + ' · ' + q.status}
+            >{q.n}</button>
+          ))}
+          {items.length === 0 && <span className="pa-none">No questions match these filters.</span>}
+        </div>
+      </div>
+
+      {/* question */}
+      {cur && (
+        <div className="pa-view">
+          <div className="pa-viewhead">
+            <span className={'pa-badge ' + cur.status}>{cur.status}</span>
+            <span className="pa-meta">Q{cur.n} · {cur.section} &gt; {cur.topic} · {cur.difficulty} · {cur.time}s</span>
+            <div className="pa-viewacts">
+              <button className={'pa-iconbtn' + ((cur.bookmarked || marks[cur.n]) ? ' on' : '')}
+                onClick={() => setMarks(m => ({ ...m, [cur.n]: !(m[cur.n] || cur.bookmarked) }))} title="Bookmark">
+                <Bookmark size={13} />
+              </button>
+              <button className="pa-iconbtn" disabled={idx === 0} onClick={() => { setIdx(i => Math.max(0, i - 1)); setShowSol(false) }} title="Previous (A / ←)">
+                <ChevronLeft size={14} />
+              </button>
+              <button className="pa-iconbtn" disabled={idx >= items.length - 1} onClick={() => { setIdx(i => Math.min(items.length - 1, i + 1)); setShowSol(false) }} title="Next (D / →)">
+                <ChevronRight size={14} />
+              </button>
+            </div>
+          </div>
+
+          {cur.text ? (
+            <>
+              <p className="pa-qtext">{cur.text}</p>
+              <div className="pa-opts">
+                {cur.options.map(o => {
+                  const isCorrect = String(cur.correct) === String(o.k)
+                  return (
+                    <div key={o.k} className={'pa-opt' + (isCorrect && showSol ? ' right' : '')}>
+                      <span className="pa-optk">{o.k}</span>
+                      <span className="pa-optt">{o.t}</span>
+                      {isCorrect && showSol && <span className="pa-opttag">correct</span>}
+                    </div>
+                  )
+                })}
+              </div>
+            </>
+          ) : (
+            <p className="pa-qtext pa-ghost">
+              Question text is not stored for this attempt — here is the breakdown instead: <b>{cur.topic}</b> ({cur.difficulty}),
+              you spent <b>{cur.time}s</b> and marked it <b>{cur.status}</b>.
+            </p>
+          )}
+
+          <div className="pa-solbar">
+            <button className="btn btn-primary-sm" onClick={() => setShowSol(v => !v)}>
+              {showSol ? 'Hide solution' : 'Show solution'} <span className="pa-key">S</span>
+            </button>
+            <span className="pa-hint">A / D or ← → to move · S toggles the solution</span>
+          </div>
+
+          {showSol && (
+            <div className="pa-sol">
+              {cur.explanation ? (
+                <>
+                  <div className="pa-solhead">Solution</div>
+                  <p className="pa-soltext">{cur.explanation}</p>
+                </>
+              ) : (
+                <>
+                  <div className="pa-solhead">What this question says about you</div>
+                  <p className="pa-soltext">
+                    This came from <b>{cur.topic}</b> ({cur.difficulty}). You took {cur.time}s and got it {cur.status}.
+                    {cur.status === 'wrong' && ' It cost you 1 penalty mark plus the 5 you could have earned — the fastest fix is practising this exact topic.'}
+                    {cur.status === 'skipped' && ' Skipping never costs marks, but if it was a guess you avoided, that is the right call at low confidence.'}
+                  </p>
+                  <div className="pa-solacts">
+                    <button className="btn btn-primary-sm" onClick={() => onNavigate && onNavigate('studykit')}>Practice {cur.topic}</button>
+                    <button className="btn btn-outline-sm" onClick={() => onNavigate && onNavigate('analysis')}>See it in the boost plan</button>
+                  </div>
+                </>
+              )}
+            </div>
+          )}
+        </div>
+      )}
     </section>
   )
 }
