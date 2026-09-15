@@ -109,8 +109,20 @@ function OverviewTab({ subject, target, dt, onNavigate }) {
   const [metric, setMetric] = useState('marks')      // 'marks' | 'pct'
   const [showScoring, setShowScoring] = useState(false)
   const mocks = (isAll ? OVERALL.trend : subs[0].trend).map((v, i) => ({ mock: 'M' + (i + 2), pct: v }))
-  /* a brand-new student has no attempts yet: the trend + target need at least one mock */
-  const hasMocks = mocks.some(m => m.pct > 0)
+  /* only mocks the student actually took count — an untouched M6 never drags the average down */
+  const attempts = mocks.filter(m => m.pct > 0)
+  const nAttempts = attempts.length
+  const hasMocks = nAttempts > 0
+  const selIdx = Math.min(sel, Math.max(0, nAttempts - 1))
+  const latest = hasMocks ? attempts[nAttempts - 1].pct : 0
+  const avgPct = hasMocks ? attempts.reduce((sum, m) => sum + m.pct, 0) / nAttempts : 0
+  const bestPct = hasMocks ? Math.max(...attempts.map(m => m.pct)) : 0
+  /* with 1 mock there is no trend to draw, with 2 it is too early to trust — say so instead of pretending */
+  const trendNote =
+    nAttempts === 1 ? 'Only 1 mock so far — one point shows where you stand, but there is no trend or delta yet. Two more and the line becomes worth reading.'
+    : nAttempts === 2 ? 'Only 2 mocks so far — you can already see your first delta. From 3 onwards the line, the average and the target gap get reliable.'
+    : nAttempts === 3 ? 'Only 3 mocks so far — the trend is forming. Average shown is of the 3 mocks you took, not of all 6 slots.'
+    : null
   const acc = isAll ? OVERALL.acc : Math.round(subs.reduce((s, x) => s + x.acc, 0) / subs.length)
   const mistakes = subs.flatMap(s => (s.mistakes || []).map(m => ({ ...m, subj: s.name })))
   const weakTopics = allSubSkills(subject).filter(sk => sk.acc < 50).length
@@ -188,12 +200,27 @@ function OverviewTab({ subject, target, dt, onNavigate }) {
             )}
 
             {hasMocks && (
+              <div className="an-stats">
+                <div className="an-stat"><span className="an-stat-k">Mocks taken</span><b className="mono">{nAttempts}<i>/6</i></b></div>
+                <div className="an-stat"><span className="an-stat-k">Average score</span><b className="mono">{marksOf(avgPct)}<i>/{TOTAL_MARKS}</i></b></div>
+                <div className="an-stat"><span className="an-stat-k">Best mock</span><b className="mono ok">{marksOf(bestPct)}</b></div>
+                <div className="an-stat"><span className="an-stat-k">Latest</span><b className="mono">{marksOf(latest)}</b></div>
+                {dt && <div className={'an-stat' + (marksOf(latest) >= dt.score ? ' good' : '')}><span className="an-stat-k">Gap to target</span><b className="mono">{marksOf(latest) >= dt.score ? 'crossed' : '+' + (dt.score - marksOf(latest))}</b></div>}
+              </div>
+            )}
+
+            {trendNote && (
+              <p className="an-trend-note"><Info size={13} /> {trendNote}</p>
+            )}
+
+            {hasMocks && (
             <TrendChart
-              mocks={mocks}
+              mocks={attempts}
               metric={metric}
               target={target}
               targetScore={dt ? dt.score : null}
               targetLabel={dt ? shortName(dt.college) + ' \u00b7 ' + dt.program : null}
+              avgPct={nAttempts >= 2 ? avgPct : null}
               showColleges
               activeIndex={sel}
               onPick={setSel}
@@ -205,36 +232,36 @@ function OverviewTab({ subject, target, dt, onNavigate }) {
             <div className="an-slider-row">
               <input
                 type="range" className="an-slider" min={0} max={mocks.length - 1} step={1}
-                value={sel} onChange={e => setSel(Number(e.target.value))}
-                style={{ '--fill': Math.round((sel / (mocks.length - 1)) * 100) + '%' }}
+                value={selIdx} onChange={e => setSel(Number(e.target.value))}
+                style={{ '--fill': Math.round((selIdx / Math.max(1, nAttempts - 1)) * 100) + '%' }}
                 aria-label="Select mock attempt"
               />
               <span className="an-slider-val mono">
-                {metric === 'marks' ? marksOf(mocks[sel].pct) + '/' + TOTAL_MARKS : pct1(mocks[sel].pct) + '%ile'}
+                {metric === 'marks' ? marksOf(attempts[selIdx].pct) + '/' + TOTAL_MARKS : pct1(attempts[selIdx].pct) + '%ile'}
               </span>
             </div>
 
-            <div className="an-slider-ticks">{mocks.map((m, i) => (
+            <div className="an-slider-ticks">{attempts.map((m, i) => (
               <button key={m.mock} className={i === sel ? 'on' : ''} onClick={() => setSel(i)} title={'Mock ' + m.mock}>{m.mock}</button>
             ))}</div>
 
             <div className="an-attempt-head an-attempt-head-front">
-              <span className="an-attempt-badge">{mocks[sel].mock}</span>
-              <b className="mono">{marksOf(mocks[sel].pct)}<i>/{TOTAL_MARKS}</i></b>
-              <span className="an-att-sub">marks · {pct1(mocks[sel].pct)} percentile</span>
+              <span className="an-attempt-badge">{attempts[selIdx].mock}</span>
+              <b className="mono">{marksOf(attempts[selIdx].pct)}<i>/{TOTAL_MARKS}</i></b>
+              <span className="an-att-sub">marks · {pct1(attempts[selIdx].pct)} percentile{nAttempts === 1 ? ' · first attempt' : ''}</span>
               {(() => {
-                const prev = sel > 0 ? marksOf(mocks[sel - 1].pct) : null
-                const now = marksOf(mocks[sel].pct)
+                const prev = selIdx > 0 ? marksOf(attempts[selIdx - 1].pct) : null
+                const now = marksOf(attempts[selIdx].pct)
                 if (prev === null) return null
                 const d = now - prev
-                return <span className={'an-delta ' + scoreTone(d)}>{d >= 0 ? '▲ +' + d : '▼ ' + d} marks vs {mocks[sel - 1].mock}</span>
+                return <span className={'an-delta ' + scoreTone(d)}>{d >= 0 ? '▲ +' + d : '▼ ' + d} marks vs {attempts[selIdx - 1].mock}</span>
               })()}
               {dt && (
-                <span className={'an-college-chip' + (marksOf(mocks[sel].pct) >= dt.score ? ' on' : '')}>
+                <span className={'an-college-chip' + (marksOf(attempts[selIdx].pct) >= dt.score ? ' on' : '')}>
                   <Target size={12} />
-                  {marksOf(mocks[sel].pct) >= dt.score
+                  {marksOf(attempts[selIdx].pct) >= dt.score
                     ? shortName(dt.college) + ' target crossed'
-                    : 'needs +' + (dt.score - marksOf(mocks[sel].pct)) + ' marks for ' + shortName(dt.college)}
+                    : 'needs +' + (dt.score - marksOf(attempts[selIdx].pct)) + ' marks for ' + shortName(dt.college)}
                 </span>
               )}
             </div>
@@ -321,6 +348,10 @@ function OverviewTab({ subject, target, dt, onNavigate }) {
           <div className="sq-row"><span className="sq-mark bad">−1</span><div><b>Wrong answer — the penalty</b><p>CUET deducts 1 mark for every wrong answer. This is the single biggest reason marks dip between mocks: 10 casual guesses can wipe out 50 marks even after you got them “almost right”.</p></div></div>
           <div className="sq-row"><span className="sq-mark skip">0</span><div><b>Skipped</b><p>Left blank costs nothing. If you are below 70% sure, skipping beats guessing — that is the one-mock penalty to avoid.</p></div></div>
           <div className="sq-row"><span className="sq-mark tot">1000</span><div><b>Your total</b><p>4 sections × 50 questions × 5 marks. The graph plots each mock on this same 0–1000 scale, so it lines up exactly with DU cutoffs.</p></div></div>
+          <div className="sq-sub">How many mocks do I need for this graph to be useful?</div>
+          <div className="sq-row"><span className="sq-mark one">1</span><div><b>One mock</b><p>A single dot. There is nothing to compare yet, so the line, the delta and the average stay hidden — we say so instead of drawing a flat fake trend.</p></div></div>
+          <div className="sq-row"><span className="sq-mark two">2–3</span><div><b>Two or three mocks</b><p>The line appears and you get your first delta (▲ / ▼ vs the previous mock). The average is the average of the mocks you actually took — untouched slots are never counted.</p></div></div>
+          <div className="sq-row"><span className="sq-mark four">4+</span><div><b>Four or more</b><p>That is when the trend, the average line and the target gap become trustworthy — one bad day no longer tells the story.</p></div></div>
           <div className="sq-row"><span className="sq-mark zero">0</span><div><b>No mocks yet?</b><p>Then there is nothing to plot. Your first mock test creates the first point on this graph — before that we simply say so instead of showing an empty line.</p></div></div>
           <div className="sq-note">
             <b>The dashed line is your target.</b>
@@ -518,7 +549,7 @@ function mockQuestions(paperIdx) {
   return out
 }
 
-function TrendChart({ mocks, metric = 'marks', target, targetScore, targetLabel, showColleges, activeIndex, onPick }) {
+function TrendChart({ mocks, metric = 'marks', target, targetScore, targetLabel, avgPct, showColleges, activeIndex, onPick }) {
   const [hover, setHover] = useState(null)
   const W = 560, H = 214, PAD = 30
 
@@ -533,7 +564,9 @@ function TrendChart({ mocks, metric = 'marks', target, targetScore, targetLabel,
 
   const x = i => PAD + (i / (mocks.length - 1)) * (W - PAD * 2)
   const y = v => H - PAD - ((v - loD) / (hiD - loD || 1)) * (H - PAD * 2)
+  const single = mocks.length < 2
   const line = mocks.map((p, i) => `${i === 0 ? 'M' : 'L'}${x(i).toFixed(1)},${y(val(p)).toFixed(1)}`).join(' ')
+  const xAt = i => (single ? W / 2 : x(i))
   const gridCount = 5
   const gridVals = Array.from({ length: gridCount }, (_, k) => loD + ((hiD - loD) * k) / (gridCount - 1))
   const fmt = v => (metric === 'marks' ? Math.round(v) : Math.round(v) + '%')
@@ -575,12 +608,20 @@ function TrendChart({ mocks, metric = 'marks', target, targetScore, targetLabel,
             <stop offset="100%" stopColor="var(--primary)" stopOpacity="0" />
           </linearGradient>
         </defs>
-        <path className="trend-area" d={`${line} L${x(mocks.length - 1).toFixed(1)},${H - PAD} L${x(0).toFixed(1)},${H - PAD} Z`} fill="url(#trendArea)" />
-        <path className="trend-line" d={line} fill="none" stroke="var(--primary)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+        {!single && (
+          <path className="trend-area" d={`${line} L${x(mocks.length - 1).toFixed(1)},${H - PAD} L${x(0).toFixed(1)},${H - PAD} Z`} fill="url(#trendArea)" />
+        )}
+        {!single && <path className="trend-line" d={line} fill="none" stroke="var(--primary)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />}
+        {avgPct ? (
+          <g>
+            <line x1={PAD} x2={W - PAD} y1={y(val({ pct: avgPct }))} y2={y(val({ pct: avgPct }))} stroke="var(--info)" strokeWidth="1.2" strokeDasharray="3 4" />
+            <text x={PAD + 2} y={y(val({ pct: avgPct })) - 5} fontSize="9" fontWeight="700" fill="var(--info)">average {metric === 'marks' ? marksOf(avgPct) : pct1(avgPct) + '%'}</text>
+          </g>
+        ) : null}
 
         {pts.map((p, i) => {
           const active = activeIndex === i
-          const cx = x(i), cy = y(p.v)
+          const cx = single ? W / 2 : x(i), cy = y(p.v)
           const up = above[i]
           const ly = up ? cy - 30 : cy + 20
           const prevP = pts[i - 1]
