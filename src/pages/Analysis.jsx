@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Home, Grid3x3, Zap, ChevronRight, Target, BookOpen, Info, FileQuestion, CheckCircle2, XCircle, Clock, RefreshCw } from 'lucide-react'
+import { Home, Grid3x3, Zap, TrendingUp, ChevronRight, Target, BookOpen, Info, FileQuestion, CheckCircle2, XCircle, Clock, RefreshCw } from 'lucide-react'
 import { status, allSubSkills, boostRanking, boostReason, subjectsFor } from '../lib/analysisData'
 import { offerings, topCutoff } from '../data/duData'
 import { logoFor } from '../data/collegeLogos'
@@ -23,6 +23,27 @@ const HIGH_WEIGHT = 5 /* exam-weight threshold for urgent (Threat/Opportunity) *
 const pct = v => Math.round(v)
 const pct1 = v => v.toFixed(1)
 
+/* Marks model — CUET UG: 4 sections × 50 questions, +5 correct, −1 wrong, 0 skipped
+   → 1000 is the maximum. Same 0-1000 scale the DU cutoffs use, so the two line up. */
+const TOTAL_MARKS = 1000
+const marksOf = pct => Math.round(pct * 10)          // percentile ⇄ score on the cutoff scale
+const scoreTone = n => (n >= 0 ? 'up' : 'down')
+
+/* the dream college's hardest programme = today's target line (real cutoff data) */
+function dreamTarget(profile) {
+  const key = (profile?.dreamCollege || '').split('(')[0].trim().toLowerCase()
+  if (!key) return null
+  const parts = key.split(' ').filter(w => w.length > 2)
+  if (!parts.length) return null
+  const match = offerings.filter(o => {
+    const c = (o.collegeName || '').toLowerCase()
+    return c && parts.every(w => c.includes(w))
+  })
+  if (!match.length) return null
+  const best = match.sort((a, b) => (topCutoff(b) || 0) - (topCutoff(a) || 0))[0]
+  return { score: Math.round(topCutoff(best)), college: best.collegeName, program: best.programName }
+}
+
 const TABS = [
   { id: 'overview', label: 'Overview', icon: Home },
   { id: 'swot', label: 'SWOT', icon: Grid3x3 },
@@ -36,6 +57,7 @@ function selectedSubjects(scope) {
 
 export default function Analysis() {
   const [profile] = useProfile()
+  const dt = dreamTarget(profile)
   const [subject, setSubject] = useState('all')
   const [tab, setTab] = useState('overview')
 
@@ -69,7 +91,7 @@ export default function Analysis() {
         ))}
       </div>
 
-      {tab === 'overview' && <OverviewTab subject={scope} target={profile.targetPercentile} />}
+      {tab === 'overview' && <OverviewTab subject={scope} target={profile.targetPercentile} dt={dt} />}
       {tab === 'swot' && <SwotTab subject={scope} />}
       {tab === 'mocks' && <MockPapersTab subject={scope} />}
       {tab === 'boost' && <BoostTab subject={scope} single={subjectsFor(scope).length === 1} />}
@@ -78,12 +100,14 @@ export default function Analysis() {
 }
 
 /* ═══════════ 1. Overview ═══════════ */
-function OverviewTab({ subject, target }) {
+function OverviewTab({ subject, target, dt }) {
   const subs = selectedSubjects(subject)
   const isAll = subs.length > 1
   const [showSkills, setShowSkills] = useState(false)
   const [sel, setSel] = useState(5)
   const [flipped, setFlipped] = useState(false)
+  const [metric, setMetric] = useState('marks')      // 'marks' | 'pct'
+  const [showScoring, setShowScoring] = useState(false)
   const mocks = (isAll ? OVERALL.trend : subs[0].trend).map((v, i) => ({ mock: 'M' + (i + 2), pct: v }))
   const acc = isAll ? OVERALL.acc : Math.round(subs.reduce((s, x) => s + x.acc, 0) / subs.length)
   const mistakes = subs.flatMap(s => (s.mistakes || []).map(m => ({ ...m, subj: s.name })))
@@ -129,42 +153,69 @@ function OverviewTab({ subject, target }) {
           <div className="an-face an-front">
             <div className="an-card-head">
               <div>
-                <h3 className="an-card-title">Percentile trend &amp; college reach</h3>
-                <p className="an-card-sub">Every point shows the DU college that opens up at that score — hover a point, or drag the slider</p>
+                <h3 className="an-card-title">Score trend &amp; college reach</h3>
+                <p className="an-card-sub">
+                  Every point is one mock test — your score out of {TOTAL_MARKS}
+                  {dt ? ' against ' + shortName(dt.college) + ' \u00b7 ' + dt.program + ' at ' + dt.score : ''}
+                </p>
               </div>
               <div className="an-face-tools">
-                <span className="an-live-chip">{pct1(mocks[sel].pct)}%ile</span>
+                <button className={'an-seg' + (metric === 'marks' ? ' on' : '')} onClick={() => setMetric('marks')}><Zap size={12} /> Marks</button>
+                <button className={'an-seg' + (metric === 'pct' ? ' on' : '')} onClick={() => setMetric('pct')}><TrendingUp size={12} /> Percentile</button>
+                <button className="an-flip-btn" onClick={() => setShowScoring(true)} title="How is this score calculated?" aria-label="How is this score calculated?">?</button>
                 <button className="an-flip-btn" onClick={() => setFlipped(true)} title="See section-wise accuracy" aria-label="See section-wise accuracy">
                   <RefreshCw size={13} />
                 </button>
               </div>
             </div>
 
-            <TrendChart mocks={mocks} target={target} showColleges activeIndex={sel} onPick={setSel} />
-
-            <input
-              type="range" className="an-slider" min={0} max={mocks.length - 1} step={1}
-              value={sel} onChange={e => setSel(Number(e.target.value))}
-              style={{ '--fill': Math.round((sel / (mocks.length - 1)) * 100) + '%' }}
-              aria-label="Select mock attempt"
+            <TrendChart
+              mocks={mocks}
+              metric={metric}
+              target={target}
+              targetScore={dt ? dt.score : null}
+              targetLabel={dt ? shortName(dt.college) + ' \u00b7 ' + dt.program : null}
+              showColleges
+              activeIndex={sel}
+              onPick={setSel}
             />
+
+            {/* slider — drag it, or tap a mock chip */}
+            <div className="an-slider-row">
+              <input
+                type="range" className="an-slider" min={0} max={mocks.length - 1} step={1}
+                value={sel} onChange={e => setSel(Number(e.target.value))}
+                style={{ '--fill': Math.round((sel / (mocks.length - 1)) * 100) + '%' }}
+                aria-label="Select mock attempt"
+              />
+              <span className="an-slider-val mono">
+                {metric === 'marks' ? marksOf(mocks[sel].pct) + '/' + TOTAL_MARKS : pct1(mocks[sel].pct) + '%ile'}
+              </span>
+            </div>
+
             <div className="an-slider-ticks">{mocks.map((m, i) => (
               <button key={m.mock} className={i === sel ? 'on' : ''} onClick={() => setSel(i)} title={'Mock ' + m.mock}>{m.mock}</button>
             ))}</div>
 
             <div className="an-attempt-head an-attempt-head-front">
               <span className="an-attempt-badge">{mocks[sel].mock}</span>
-              <b>{pct1(mocks[sel].pct)} percentile</b>
+              <b className="mono">{marksOf(mocks[sel].pct)}<i>/{TOTAL_MARKS}</i></b>
+              <span className="an-att-sub">marks · {pct1(mocks[sel].pct)} percentile</span>
               {(() => {
-                const c = collegeAt(mocks[sel].pct)
-                if (!c) return null
-                return (
-                  <span className={'an-college-chip' + (c.reached ? ' on' : '')}>
-                    <Target size={12} />
-                    {c.reached ? c.label + ' — reached' : c.label + ' · ' + pct1(c.gap) + '%ile away'}
-                  </span>
-                )
+                const prev = sel > 0 ? marksOf(mocks[sel - 1].pct) : null
+                const now = marksOf(mocks[sel].pct)
+                if (prev === null) return null
+                const d = now - prev
+                return <span className={'an-delta ' + scoreTone(d)}>{d >= 0 ? '▲ +' + d : '▼ ' + d} marks vs {mocks[sel - 1].mock}</span>
               })()}
+              {dt && (
+                <span className={'an-college-chip' + (marksOf(mocks[sel].pct) >= dt.score ? ' on' : '')}>
+                  <Target size={12} />
+                  {marksOf(mocks[sel].pct) >= dt.score
+                    ? shortName(dt.college) + ' target crossed'
+                    : 'needs +' + (dt.score - marksOf(mocks[sel].pct)) + ' marks for ' + shortName(dt.college)}
+                </span>
+              )}
             </div>
           </div>
 
@@ -240,6 +291,20 @@ function OverviewTab({ subject, target }) {
           </div>
         </section>
       </div>
+
+      {/* "?" — how the score is built, and why marks dip */}
+      <Modal open={showScoring} onClose={() => setShowScoring(false)} title="How this score works">
+        <div className="sq-wrap">
+          <div className="sq-row"><span className="sq-mark ok">+5</span><div><b>Correct answer</b><p>Every right answer is worth 5 marks.</p></div></div>
+          <div className="sq-row"><span className="sq-mark bad">−1</span><div><b>Wrong answer — the penalty</b><p>CUET deducts 1 mark for every wrong answer. This is the single biggest reason marks dip between mocks: 10 casual guesses can wipe out 50 marks even after you got them “almost right”.</p></div></div>
+          <div className="sq-row"><span className="sq-mark skip">0</span><div><b>Skipped</b><p>Left blank costs nothing. If you are below 70% sure, skipping beats guessing — that is the one-mock penalty to avoid.</p></div></div>
+          <div className="sq-row"><span className="sq-mark tot">1000</span><div><b>Your total</b><p>4 sections × 50 questions × 5 marks. The graph plots each mock on this same 0–1000 scale, so it lines up exactly with DU cutoffs.</p></div></div>
+          <div className="sq-note">
+            <b>The dashed line is your target.</b>
+            <p>It is the last declared cutoff of your dream college&apos;s hardest course{dt ? ' — ' + dt.college + ' · ' + dt.program + ' at ' + dt.score + '/' + TOTAL_MARKS : ''}. Cross it and that course is realistically open to you.</p>
+          </div>
+        </div>
+      </Modal>
 
       {/* View more → sub-skill breakdown behind the repeated mistakes */}
       <Modal open={showSkills} onClose={() => setShowSkills(false)} title="Sub-skills behind your mistakes">
@@ -430,19 +495,29 @@ function mockQuestions(paperIdx) {
   return out
 }
 
-function TrendChart({ mocks, target, showColleges, activeIndex, onPick }) {
+function TrendChart({ mocks, metric = 'marks', target, targetScore, targetLabel, showColleges, activeIndex, onPick }) {
   const [hover, setHover] = useState(null)
-  const W = 560, H = 210, PAD = 30
-  const min = 30, max = 100
-  const x = i => PAD + (i / (mocks.length - 1)) * (W - PAD * 2)
-  const y = v => H - PAD - ((v - min) / (max - min)) * (H - PAD * 2)
-  const line = mocks.map((p, i) => `${i === 0 ? 'M' : 'L'}${x(i).toFixed(1)},${y(p.pct).toFixed(1)}`).join(' ')
-  const targetY = y(target)
+  const W = 560, H = 214, PAD = 30
 
-  /* college + logo per point, with alternating offset so logos never collide */
+  /* value in the active unit: marks out of 1000, or percentile */
+  const val = p => (metric === 'marks' ? marksOf(p.pct) : p.pct)
+  const vals = mocks.map(val)
+  const tgt = metric === 'marks' ? targetScore : target
+  const span = [...vals, ...(tgt ? [tgt] : [])]
+  const lo = Math.min(...span), hi = Math.max(...span)
+  const pad = Math.max(metric === 'marks' ? 25 : 1.5, (hi - lo) * 0.22)
+  const loD = Math.max(0, lo - pad), hiD = hi + pad
+
+  const x = i => PAD + (i / (mocks.length - 1)) * (W - PAD * 2)
+  const y = v => H - PAD - ((v - loD) / (hiD - loD || 1)) * (H - PAD * 2)
+  const line = mocks.map((p, i) => `${i === 0 ? 'M' : 'L'}${x(i).toFixed(1)},${y(val(p)).toFixed(1)}`).join(' ')
+  const gridCount = 5
+  const gridVals = Array.from({ length: gridCount }, (_, k) => loD + ((hiD - loD) * k) / (gridCount - 1))
+  const fmt = v => (metric === 'marks' ? Math.round(v) : Math.round(v) + '%')
+
   const pts = mocks.map((p, i) => {
     const c = showColleges ? collegeAt(p.pct) : null
-    return { ...p, i, c, logo: c ? logoFor(c.name) : null }
+    return { ...p, i, v: val(p), c, logo: c ? logoFor(c.name) : null }
   })
   const above = []
   pts.forEach((p, i) => {
@@ -454,11 +529,23 @@ function TrendChart({ mocks, target, showColleges, activeIndex, onPick }) {
   return (
     <div className="trend-wrap">
       <svg viewBox={`0 0 ${W} ${H}`} className="trend-svg">
-        {[40, 50, 60, 70, 80, 90, 100].map(g => (
-          <line key={g} x1={PAD} x2={W - PAD} y1={y(g)} y2={y(g)} stroke="var(--border)" strokeWidth="1" />
+        {gridVals.map((g, k) => (
+          <g key={k}>
+            <line x1={PAD} x2={W - PAD} y1={y(g)} y2={y(g)} stroke="var(--border)" strokeWidth="1" />
+            <text x={PAD - 5} y={y(g) + 3} textAnchor="end" fontSize="8.5" className="trend-axis">{fmt(g)}</text>
+          </g>
         ))}
-        <line x1={PAD} x2={W - PAD} y1={targetY} y2={targetY} stroke="var(--warning)" strokeWidth="1.5" strokeDasharray="6 5" />
-        <text x={W - PAD} y={targetY - 6} textAnchor="end" fontSize="10" fontWeight="700" fill="var(--warning)">target {target}%ile</text>
+
+        {/* dream-college target line */}
+        {tgt ? (
+          <g>
+            <line x1={PAD} x2={W - PAD} y1={y(tgt)} y2={y(tgt)} stroke="var(--warning)" strokeWidth="1.6" strokeDasharray="7 5" />
+            <text x={W - PAD} y={y(tgt) - 6} textAnchor="end" fontSize="9.5" fontWeight="700" fill="var(--warning)">
+              {targetLabel ? targetLabel + ' · ' : ''}{fmt(tgt)}
+            </text>
+          </g>
+        ) : null}
+
         <defs>
           <linearGradient id="trendArea" x1="0" y1="0" x2="0" y2="1">
             <stop offset="0%" stopColor="var(--primary)" stopOpacity="0.28" />
@@ -467,31 +554,29 @@ function TrendChart({ mocks, target, showColleges, activeIndex, onPick }) {
         </defs>
         <path className="trend-area" d={`${line} L${x(mocks.length - 1).toFixed(1)},${H - PAD} L${x(0).toFixed(1)},${H - PAD} Z`} fill="url(#trendArea)" />
         <path className="trend-line" d={line} fill="none" stroke="var(--primary)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+
         {pts.map((p, i) => {
           const active = activeIndex === i
-          const cx = x(i), cy = y(p.pct)
+          const cx = x(i), cy = y(p.v)
           const up = above[i]
           const ly = up ? cy - 30 : cy + 20
+          const prevP = pts[i - 1]
+          const drop = prevP && p.v < prevP.v
           return (
             <g
               key={p.mock}
-              className={'trend-pt' + (active ? ' on' : '')}
+              className={'trend-pt' + (active ? ' on' : '') + (drop ? ' dipped' : '')}
               onMouseEnter={() => setHover(i)}
               onMouseLeave={() => setHover(h => (h === i ? null : h))}
               onClick={() => onPick && onPick(i)}
             >
               <circle className={active ? 'trend-dot on' : 'trend-dot'} cx={cx} cy={cy} r={active ? 5.5 : 3.6} />
               {active && <circle cx={cx} cy={cy} r="9" className="trend-ring" />}
-              <text x={cx} y={up ? cy - 11 : cy + 16} textAnchor="middle" fontSize="9.5" fontWeight="700" className="trend-val">{pct1(p.pct)}%</text>
+              <text x={cx} y={up ? cy - 11 : cy + 16} textAnchor="middle" fontSize="9.5" fontWeight="700" className="trend-val">{fmt(p.v)}</text>
               {p.logo && (
                 <>
                   <circle className="trend-logo-halo" cx={cx} cy={ly} r="14" />
-                  <image
-                    className="trend-logo"
-                    href={p.logo}
-                    x={cx - 10.5} y={ly - 10.5} width="21" height="21"
-                    preserveAspectRatio="xMidYMid meet"
-                  />
+                  <image className="trend-logo" href={p.logo} x={cx - 10.5} y={ly - 10.5} width="21" height="21" preserveAspectRatio="xMidYMid meet" />
                 </>
               )}
               <text x={cx} y={H - 9} textAnchor="middle" fontSize="9.5" className="trend-mock">{p.mock}</text>
@@ -500,13 +585,13 @@ function TrendChart({ mocks, target, showColleges, activeIndex, onPick }) {
         })}
       </svg>
 
-      {/* animated tooltip — score, college, status */}
       {hover !== null && (
         <div
           className="trend-tip"
           style={{ left: (pts[hover].i / (mocks.length - 1)) * 100 + '%', '--tip-shift': pts[hover].i > mocks.length / 2 ? '-100%' : '0%' }}
         >
-          <span className="trend-tip-score">{pct1(pts[hover].pct)} percentile</span>
+          <span className="trend-tip-score mono">{marksOf(pts[hover].pct)}<i>/{TOTAL_MARKS}</i> marks</span>
+          <span className="trend-tip-sub">{pct1(pts[hover].pct)} percentile{pts[hover].i > 0 ? (() => { const d = marksOf(pts[hover].pct) - marksOf(pts[hover - 1].pct); return ' · ' + (d >= 0 ? '+' + d : d) + ' vs ' + pts[hover - 1].mock })() : ''}</span>
           {pts[hover].c && (
             <>
               <b className="trend-tip-college">{pts[hover].c.name}</b>

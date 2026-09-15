@@ -330,3 +330,45 @@
 .an-flipcard.is-flipped:hover .an-flip-inner { transform: translateY(-2px) rotateY(180deg); }
 .an-flip-hint { margin: 14px 0 0; font-size: 11.5px; color: var(--text-muted); text-align: center; }
 .an-attempt-head-front { margin-top: 14px; padding: 12px 14px; border-radius: var(--r-md); background: var(--bg); border: 1px solid var(--border); }
+
+/* ═══ Analysis score trend: metric segments, slider row, target line, delta, ? modal ═══ */
+.an-seg { display: inline-flex; align-items: center; gap: 5px; padding: 6px 11px; border-radius: var(--r-full);
+  border: 1px solid var(--border-strong); background: var(--surface); color: var(--text-secondary);
+  font: 700 11.5px var(--font-body); cursor: pointer; transition: all .2s ease; }
+.an-seg:hover { border-color: var(--primary); color: var(--primary); background: var(--primary-soft); }
+.an-seg.on { background: linear-gradient(120deg, var(--primary), var(--secondary)); border-color: transparent; color: #fff; box-shadow: 0 5px 12px rgba(20,108,78,.22); }
+.an-flip-btn[aria-label*="calculated"] { font-weight: 800; font-size: 13px; }
+
+.an-slider-row { display: flex; align-items: center; gap: 12px; margin-top: 10px; }
+.an-slider-row .an-slider { flex: 1; margin: 0; }
+.an-slider-val { font: 800 12.5px var(--font-mono); color: var(--text); background: var(--bg); border: 1px solid var(--border);
+  border-radius: var(--r-full); padding: 5px 11px; white-space: nowrap; }
+
+.an-attempt-head b i { font-style: normal; font-size: 11px; color: var(--text-muted); font-weight: 600; }
+.an-att-sub { font-size: 11.5px; color: var(--text-muted); }
+.an-delta { display: inline-flex; align-items: center; padding: 4px 9px; border-radius: var(--r-full); font: 700 11px var(--font-body); }
+.an-delta.up { background: var(--primary-soft); color: var(--primary); }
+.an-delta.down { background: var(--error-soft); color: var(--error); }
+.trend-axis { fill: var(--text-muted); }
+.trend-pt.dipped .trend-dot { fill: var(--error); }
+.trend-tip-score i { font-style: normal; font-size: 10.5px; opacity: .75; }
+.trend-tip-sub { display: block; font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+
+.sq-wrap { display: grid; gap: 12px; }
+.sq-row { display: grid; grid-template-columns: 46px 1fr; gap: 12px; align-items: start; }
+.sq-mark { display: grid; place-items: center; height: 34px; border-radius: 10px; font: 800 13px var(--font-mono); }
+.sq-mark.ok { background: var(--primary-soft); color: var(--primary); }
+.sq-mark.bad { background: var(--error-soft); color: var(--error); }
+.sq-mark.skip { background: var(--bg); color: var(--text-muted); border: 1px solid var(--border); }
+.sq-mark.tot { background: var(--info-soft); color: var(--info); font-size: 11.5px; }
+.sq-row b { display: block; font: 700 13px var(--font-display); color: var(--text); }
+.sq-row p { font-size: 12px; color: var(--text-secondary); line-height: 1.5; margin-top: 2px; }
+.sq-note { margin-top: 4px; padding: 12px 14px; border-radius: var(--r-md); background: var(--warning-soft); border: 1px solid #EBD6AE; }
+.sq-note b { display: block; font: 700 12.5px var(--font-display); color: var(--warning); }
+.sq-note p { font-size: 12px; color: var(--text-secondary); line-height: 1.5; margin-top: 3px; }
+
+/* slider + ticks spacing (ticks were clipping under the slider thumb) */
+.an-slider { margin: 0; height: 22px; }
+.an-slider-ticks { margin-top: 6px; display: flex; justify-content: space-between; }
+.an-slider-ticks button { opacity: .75; }
+.an-slider-ticks button.on { opacity: 1; }
