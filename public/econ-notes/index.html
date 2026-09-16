@@ -15586,13 +15586,21 @@
 
 <!-- CUET Pro: chapter-preview bootstrap (Study Kit opens one chapter with ?topic=...&embed=1) -->
 <style>
+  /* embed mode: hide the dashboard's own navigation, but KEEP its comfortable reading
+     padding and column width — zeroing those made the text hug the left edge. */
   html.embed-chapter .sidebar,
   html.embed-chapter .crumb,
   html.embed-chapter .chapters-tab-head { display: none !important; }
   html.embed-chapter .app-shell { display: block !important; }
-  html.embed-chapter .main, html.embed-chapter .main-inner {
-    padding: 0 !important; margin: 0 !important; max-width: 100% !important; width: 100% !important;
+  html.embed-chapter .main,
+  html.embed-chapter .main-inner {
+    margin: 0 auto !important;
+    max-width: 1080px !important;
+    padding-left: clamp(20px, 5vw, 44px) !important;
+    padding-right: clamp(20px, 5vw, 44px) !important;
   }
+  html.embed-chapter .main { padding-top: 26px !important; padding-bottom: 60px !important; }
+  html.embed-chapter .main-inner { padding-top: 0 !important; padding-bottom: 0 !important; }
 </style>
 <script>
 (function () {
@@ -15618,8 +15626,8 @@
     return false;
   }
 
-  /* fail-safe: if the topic never opened, drop the embed chrome-hiding so the student
-     still sees the full dashboard instead of a page without navigation */
+  /* fail-safe: if the topic never opened, drop the chrome-hiding so the student still
+     gets the full dashboard instead of a page without navigation */
   function verify() {
     var active = document.querySelector('.view.active');
     var isTopic = active && active.id === 'view-topic';
@@ -15627,10 +15635,7 @@
   }
 
   function run(tries) {
-    if (pick()) {
-      setTimeout(function () { verify(); }, 400);
-      return;
-    }
+    if (pick()) { setTimeout(verify, 400); return; }
     if (tries > 60) { document.documentElement.classList.remove('embed-chapter'); return; }
     setTimeout(function () { run(tries + 1); }, 250);
   }
