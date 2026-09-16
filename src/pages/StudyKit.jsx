@@ -1,9 +1,7 @@
 import { useEffect, useState } from 'react'
-import {
-  NotebookText, Layers, Dumbbell, Timer, FileQuestion, Archive, ArrowLeft, ArrowRight, PlayCircle, Video, Sigma, Zap, ChevronRight, CheckSquare,
-  Search, GraduationCap, FlaskConical, Settings, Maximize2, Minimize2,
-} from 'lucide-react'
+import { NotebookText, Layers, Dumbbell, Timer, FileQuestion, Archive, ArrowLeft, ArrowRight, PlayCircle, Video, Sigma, Zap, ChevronRight, CheckSquare, Search, GraduationCap, FlaskConical, Settings, Maximize2, Minimize2 } from 'lucide-react'
 import { boostRanking, weakTopicNames, allSubSkills } from '../lib/analysisData'
+import { ECON_CHAPTERS } from '../data/econNotes'
 import { useProfile, STREAMS } from '../lib/profile'
 import './studykit.css'
 
@@ -233,6 +231,90 @@ export default function StudyKit({ onNavigate }) {
 }
 
 /* Notes dashboard (Economics / Geography) with fullscreen expand */
+/* Economics notes — chapter breakdown, one chapter opens on its own */
+function EconNotes({ record }) {
+  const [open, setOpen] = useState(null)
+  const total = ECON_CHAPTERS.reduce((n, c) => n + c.topics.length, 0)
+
+  if (open) {
+    const ch = ECON_CHAPTERS.find(c => c.id === open.chapter)
+    const tp = ch && ch.topics.find(t => t.id === open.topic)
+    return (
+      <div className="econ-note-open">
+        <div className="econ-crumb">
+          <button className="econ-back" onClick={() => setOpen(null)}>
+            <ArrowLeft size={14} /> All chapters
+          </button>
+          <span className="econ-crumb-t">
+            {ch && ch.title} <i>/</i> <b>{tp && tp.title}</b>
+          </span>
+        </div>
+        <NoteDashboard
+          src={'/econ-notes/index.html?chapter=' + open.chapter + '&topic=' + open.topic + '&embed=1'}
+          title={(tp ? tp.title : 'Economics') + ' — CUET Pro notes'}
+          subject="Economics"
+          record={record}
+        />
+      </div>
+    )
+  }
+
+  return (
+    <div className="econ-bd">
+      <div className="econ-bd-head">
+        <div className="econ-bd-title">
+          <b>Economics notes</b>
+          <span>{ECON_CHAPTERS.length} chapters · {total} topic pages · open any one on its own</span>
+        </div>
+        <label className="econ-jump">
+          <select defaultValue="" onChange={e => {
+            const v = e.target.value
+            if (!v) return
+            const [c, t] = v.split('|')
+            setOpen({ chapter: c, topic: t })
+          }}>
+            <option value="">Jump to a topic…</option>
+            {ECON_CHAPTERS.map(c => (
+              <optgroup key={c.id} label={'Ch ' + c.num + ' · ' + c.title}>
+                {c.topics.map(t => <option key={t.id} value={c.id + '|' + t.id}>{t.num} · {t.title}</option>)}
+              </optgroup>
+            ))}
+          </select>
+        </label>
+      </div>
+
+      <div className="econ-chapters">
+        {ECON_CHAPTERS.map((c, ci) => (
+          <section className="econ-chapter" key={c.id} style={{ animationDelay: (ci * 70) + 'ms' }}>
+            <header className="econ-chapter-head">
+              <span className="econ-chapter-num">Ch {c.num}</span>
+              <div className="econ-chapter-t">
+                <b>{c.title}</b>
+                <p>{c.desc}</p>
+              </div>
+              <span className="econ-chapter-meta">{c.topics.length} topics</span>
+            </header>
+            <div className="econ-topics">
+              {c.topics.map(t => (
+                <button className="econ-topic" key={t.id} onClick={() => setOpen({ chapter: c.id, topic: t.id })}>
+                  <span className="econ-topic-num">{t.num}</span>
+                  <span className="econ-topic-t">{t.title}</span>
+                  {t.frequency > 0 && (
+                    <span className="econ-freq" title="How often CUET has asked this">
+                      asked {t.frequency}×<i>{Object.keys(t.years).join(' · ')}</i>
+                    </span>
+                  )}
+                  <ChevronRight size={14} className="econ-topic-arrow" />
+                </button>
+              ))}
+            </div>
+          </section>
+        ))}
+      </div>
+    </div>
+  )
+}
+
 function NoteDashboard({ src, title, subject, record }) {
   const [full, setFull] = useState(false)
 
@@ -265,14 +347,7 @@ function NoteDashboard({ src, title, subject, record }) {
 }
 
 function NotesView({ stream, subject, record }) {
-  if (subject === 'Economics') {
-    return (
-      <div className="sk-econ-wrap">
-        <p className="sk-econ-note">Economics notes dashboard — pattern breakdown, chapters & syllabus.</p>
-        <NoteDashboard src="/econ-notes/index.html" title="Economics notes — CUET Pro" subject="Economics" record={record} />
-      </div>
-    )
-  }
+  if (subject === 'Economics') return <EconNotes record={record} />
   if (subject === 'Geography') {
     return (
       <div className="sk-econ-wrap">
