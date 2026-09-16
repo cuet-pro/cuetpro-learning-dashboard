@@ -239,8 +239,12 @@ function EconNotes({ record }) {
   const topicCount = ECON_UNITS.reduce((n, u) => n + u.chapters.reduce((m, c) => m + c.topics.length, 0), 0)
 
   if (open) {
-    const ch = ECON_CHAPTERS.find(c => c.id === open.chapter)
-    const tp = ch && ch.topics.find(t => t.id === open.topic)
+    const all = ECON_UNITS.flatMap(u => u.chapters)
+    const ch = all.find(c => c.id === open.chapter)
+    const tp = ch && open.topic ? ch.topics.find(t => t.id === open.topic) : null
+    const src = open.topic
+      ? '/econ-notes/index.html?chapter=' + open.chapter + '&topic=' + open.topic + '&embed=1'
+      : '/econ-notes/index.html?chapter=' + open.chapter + '&view=chapter&embed=1'
     return (
       <div className="econ-note-open">
         <div className="econ-crumb">
@@ -248,12 +252,13 @@ function EconNotes({ record }) {
             <ArrowLeft size={14} /> All chapters
           </button>
           <span className="econ-crumb-t">
-            {ch && ch.title} <i>/</i> <b>{tp && tp.title}</b>
+            {ch && ch.title} {tp && <><i>/</i> <b>{tp.title}</b></>}
           </span>
+          {!open.topic && <span className="econ-soon-chip">notes coming soon · chapter overview</span>}
         </div>
         <NoteDashboard
-          src={'/econ-notes/index.html?chapter=' + open.chapter + '&topic=' + open.topic + '&embed=1'}
-          title={(tp ? tp.title : 'Economics') + ' — CUET Pro notes'}
+          src={src}
+          title={(tp ? tp.title : (ch ? ch.title : 'Economics')) + ' — CUET Pro'}
           subject="Economics"
           record={record}
         />
@@ -329,11 +334,17 @@ function EconNotes({ record }) {
             {soon.length > 0 && (
               <div className="econ-soon">
                 {soon.map(c => (
-                  <div className="econ-soon-row" key={c.id} title={c.desc}>
+                  <button
+                    className="econ-soon-row"
+                    key={c.id}
+                    title={c.desc}
+                    onClick={() => setOpen({ chapter: c.id, topic: null })}
+                  >
                     <span className="econ-soon-num">Ch {c.num}</span>
                     <span className="econ-soon-t">{c.title}</span>
                     <span className="econ-soon-chip">notes coming soon</span>
-                  </div>
+                    <ChevronRight size={14} className="econ-topic-arrow" />
+                  </button>
                 ))}
               </div>
             )}

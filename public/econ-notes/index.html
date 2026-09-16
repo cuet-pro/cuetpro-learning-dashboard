@@ -15584,7 +15584,7 @@
 </script>
 
 
-<!-- CUET Pro: chapter-preview bootstrap (Study Kit opens one chapter with ?topic=...&embed=1) -->
+<!-- CUET Pro: chapter-preview bootstrap (Study Kit opens one topic or one chapter with ?embed=1) -->
 <style>
   /* embed mode: hide the dashboard's own navigation, but KEEP its comfortable reading
      padding and column width — zeroing those made the text hug the left edge. */
@@ -15605,38 +15605,48 @@
 <script>
 (function () {
   var q = new URLSearchParams(location.search);
-  var topic = q.get('topic'), chapter = q.get('chapter'), embed = q.get('embed') === '1';
+  var topic = q.get('topic'), chapter = q.get('chapter');
+  var view = q.get('view') || (topic ? 'topic' : 'chapter');
+  var embed = q.get('embed') === '1';
   if (embed) document.documentElement.classList.add('embed-chapter');
 
   function pick() {
-    if (!topic) return true;
-    /* the sidebar topic buttons are built by the dashboard itself: .sb-topic[data-topic] */
-    var btn = document.querySelector('.sb-topic[data-topic="' + topic + '"]');
-    if (btn) { btn.click(); return true; }
-    /* fallback: whichever topic select lists this topic */
-    var sels = document.querySelectorAll('select.topic-select');
-    for (var i = 0; i < sels.length; i++) {
-      if (sels[i].querySelector('option[value="' + topic + '"]')) {
-        sels[i].value = topic;
-        sels[i].dispatchEvent(new Event('change', { bubbles: true }));
-        return true;
+    /* a single topic of a chapter that has notes */
+    if (view === 'topic' && topic) {
+      var btn = document.querySelector('.sb-topic[data-topic="' + topic + '"]');
+      if (btn) { btn.click(); return true; }
+      var sels = document.querySelectorAll('select.topic-select');
+      for (var i = 0; i < sels.length; i++) {
+        if (sels[i].querySelector('option[value="' + topic + '"]')) {
+          sels[i].value = topic;
+          sels[i].dispatchEvent(new Event('change', { bubbles: true }));
+          return true;
+        }
       }
+      if (typeof window.openTopicView === 'function') { window.openTopicView(chapter, topic, 'notes'); return true; }
+      return false;
     }
-    if (typeof window.openTopicView === 'function' && chapter) { window.openTopicView(chapter, topic, 'notes'); return true; }
-    return false;
+    /* a chapter: the dashboard's own chapter overview (works even where notes are not written yet) */
+    if (chapter) {
+      var row = document.querySelector('.sb-chapter[data-chapter="' + chapter + '"]');
+      if (row) { row.click(); return true; }
+      if (typeof window.openChapterOverview === 'function') { window.openChapterOverview(chapter); return true; }
+      return false;
+    }
+    return true;
   }
 
-  /* fail-safe: if the topic never opened, drop the chrome-hiding so the student still
+  /* fail-safe: if nothing opened, drop the chrome-hiding so the student still
      gets the full dashboard instead of a page without navigation */
   function verify() {
     var active = document.querySelector('.view.active');
-    var isTopic = active && active.id === 'view-topic';
-    if (!isTopic) document.documentElement.classList.remove('embed-chapter');
+    var ok = active && (active.id === 'view-topic' || active.id === 'view-chapter');
+    if (!ok) document.documentElement.classList.remove('embed-chapter');
   }
 
   function run(tries) {
-    if (pick()) { setTimeout(verify, 400); return; }
-    if (tries > 60) { document.documentElement.classList.remove('embed-chapter'); return; }
+    if (pick()) { setTimeout(verify, 500); return; }
+    if (tries > 80) { document.documentElement.classList.remove('embed-chapter'); return; }
     setTimeout(function () { run(tries + 1); }, 250);
   }
   if (document.readyState === 'complete') setTimeout(function () { run(0); }, 150);
