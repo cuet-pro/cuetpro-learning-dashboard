@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { NotebookText, Layers, Dumbbell, Timer, FileQuestion, Archive, ArrowLeft, ArrowRight, PlayCircle, Video, Sigma, Zap, ChevronRight, CheckSquare, Search, GraduationCap, FlaskConical, Settings, Maximize2, Minimize2 } from 'lucide-react'
 import { boostRanking, weakTopicNames, allSubSkills } from '../lib/analysisData'
-import { ECON_CHAPTERS } from '../data/econNotes'
+import { ECON_CHAPTERS, ECON_UNITS } from '../data/econNotes'
 import { useProfile, STREAMS } from '../lib/profile'
 import './studykit.css'
 
@@ -231,10 +231,12 @@ export default function StudyKit({ onNavigate }) {
 }
 
 /* Notes dashboard (Economics / Geography) with fullscreen expand */
-/* Economics notes — chapter breakdown, one chapter opens on its own */
+/* Economics notes — full syllabus map: every chapter grouped by unit, ready ones open on their own */
 function EconNotes({ record }) {
   const [open, setOpen] = useState(null)
-  const total = ECON_CHAPTERS.reduce((n, c) => n + c.topics.length, 0)
+  const readyChapters = ECON_UNITS.reduce((n, u) => n + u.chapters.filter(c => c.ready).length, 0)
+  const allChapters = ECON_UNITS.reduce((n, u) => n + u.chapters.length, 0)
+  const topicCount = ECON_UNITS.reduce((n, u) => n + u.chapters.reduce((m, c) => m + c.topics.length, 0), 0)
 
   if (open) {
     const ch = ECON_CHAPTERS.find(c => c.id === open.chapter)
@@ -264,7 +266,9 @@ function EconNotes({ record }) {
       <div className="econ-bd-head">
         <div className="econ-bd-title">
           <b>Economics notes</b>
-          <span>{ECON_CHAPTERS.length} chapters · {total} topic pages · open any one on its own</span>
+          <span>
+            {allChapters} chapters in the syllabus · {readyChapters} written so far ({topicCount} topic pages, each opens on its own)
+          </span>
         </div>
         <label className="econ-jump">
           <select defaultValue="" onChange={e => {
@@ -274,43 +278,68 @@ function EconNotes({ record }) {
             setOpen({ chapter: c, topic: t })
           }}>
             <option value="">Jump to a topic…</option>
-            {ECON_CHAPTERS.map(c => (
-              <optgroup key={c.id} label={'Ch ' + c.num + ' · ' + c.title}>
-                {c.topics.map(t => <option key={t.id} value={c.id + '|' + t.id}>{t.num} · {t.title}</option>)}
+            {ECON_UNITS.map(u => (
+              <optgroup key={u.key} label={u.name}>
+                {u.chapters.filter(c => c.ready).map(c => c.topics.map(t => (
+                  <option key={c.id + t.id} value={c.id + '|' + t.id}>{c.num}.{t.num} · {t.title}</option>
+                )))}
               </optgroup>
             ))}
           </select>
         </label>
       </div>
 
-      <div className="econ-chapters">
-        {ECON_CHAPTERS.map((c, ci) => (
-          <section className="econ-chapter" key={c.id} style={{ animationDelay: (ci * 70) + 'ms' }}>
-            <header className="econ-chapter-head">
-              <span className="econ-chapter-num">Ch {c.num}</span>
-              <div className="econ-chapter-t">
-                <b>{c.title}</b>
-                <p>{c.desc}</p>
-              </div>
-              <span className="econ-chapter-meta">{c.topics.length} topics</span>
+      {ECON_UNITS.map((u, ui) => {
+        const ready = u.chapters.filter(c => c.ready)
+        const soon = u.chapters.filter(c => !c.ready)
+        return (
+          <section className="econ-unit" key={u.key} style={{ animationDelay: (ui * 70) + 'ms' }}>
+            <header className="econ-unit-head">
+              <b>{u.name}</b>
+              <span>{ready.length} of {u.chapters.length} chapters written</span>
             </header>
-            <div className="econ-topics">
-              {c.topics.map(t => (
-                <button className="econ-topic" key={t.id} onClick={() => setOpen({ chapter: c.id, topic: t.id })}>
-                  <span className="econ-topic-num">{t.num}</span>
-                  <span className="econ-topic-t">{t.title}</span>
-                  {t.frequency > 0 && (
-                    <span className="econ-freq" title="How often CUET has asked this">
-                      asked {t.frequency}×<i>{Object.keys(t.years).join(' · ')}</i>
-                    </span>
-                  )}
-                  <ChevronRight size={14} className="econ-topic-arrow" />
-                </button>
-              ))}
-            </div>
+
+            {ready.map(c => (
+              <div className="econ-chapter" key={c.id}>
+                <header className="econ-chapter-head">
+                  <span className="econ-chapter-num">Ch {c.num}</span>
+                  <div className="econ-chapter-t">
+                    <b>{c.title}</b>
+                    <p>{c.desc}</p>
+                  </div>
+                  <span className="econ-chapter-meta">{c.topics.length} topics</span>
+                </header>
+                <div className="econ-topics">
+                  {c.topics.map(t => (
+                    <button className="econ-topic" key={t.id} onClick={() => setOpen({ chapter: c.id, topic: t.id })}>
+                      <span className="econ-topic-num">{t.num}</span>
+                      <span className="econ-topic-t">{t.title}</span>
+                      {t.frequency > 0 && (
+                        <span className="econ-freq" title="How often CUET has asked this">
+                          asked {t.frequency}×<i>{Object.keys(t.years).join(' · ')}</i>
+                        </span>
+                      )}
+                      <ChevronRight size={14} className="econ-topic-arrow" />
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ))}
+
+            {soon.length > 0 && (
+              <div className="econ-soon">
+                {soon.map(c => (
+                  <div className="econ-soon-row" key={c.id} title={c.desc}>
+                    <span className="econ-soon-num">Ch {c.num}</span>
+                    <span className="econ-soon-t">{c.title}</span>
+                    <span className="econ-soon-chip">notes coming soon</span>
+                  </div>
+                ))}
+              </div>
+            )}
           </section>
-        ))}
-      </div>
+        )
+      })}
     </div>
   )
 }

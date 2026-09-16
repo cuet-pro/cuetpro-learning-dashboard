@@ -386,3 +386,16 @@
   .econ-freq { display: none; }
   .econ-jump select { min-width: 0; width: 100%; }
 }
+
+/* unit grouping + coming-soon chapters */
+.econ-unit { display: grid; gap: 12px; animation: sk-card-in .45s cubic-bezier(.22,.61,.36,1) both; }
+.econ-unit-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; padding-bottom: 2px; }
+.econ-unit-head b { font: 800 13px var(--font-display); color: var(--text); letter-spacing: .01em; }
+.econ-unit-head span { font: 600 11px var(--font-body); color: var(--text-muted); }
+.econ-soon { display: grid; gap: 6px; padding: 10px; border: 1px dashed var(--border-strong); border-radius: var(--r-md); background: var(--bg); }
+.econ-soon-row { display: grid; grid-template-columns: 46px minmax(0, 1fr) auto; align-items: center; gap: 10px; padding: 5px 6px; border-radius: var(--r-sm); opacity: .85; transition: opacity .18s, background .18s; }
+.econ-soon-row:hover { opacity: 1; background: var(--surface); }
+.econ-soon-num { font: 700 10.5px var(--font-mono); color: var(--text-muted); }
+.econ-soon-t { font-size: 12px; color: var(--text-secondary); }
+.econ-soon-chip { font: 700 9.5px var(--font-body); letter-spacing: .04em; text-transform: uppercase;
+  color: var(--text-muted); background: var(--surface); border: 1px solid var(--border); border-radius: 999px; padding: 3px 8px; white-space: nowrap; }
