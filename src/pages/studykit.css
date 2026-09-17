@@ -407,3 +407,9 @@
 .econ-soon-row:hover .econ-soon-chip { border-color: var(--primary); color: var(--primary); }
 .econ-soon-row:hover .econ-topic-arrow { transform: translateX(3px); color: var(--primary); }
 .econ-crumb .econ-soon-chip { margin-left: auto; }
+
+/* topic importance chip (used where the dashboard gives a tier instead of a frequency) */
+.econ-tier { font: 700 10px var(--font-body); border-radius: 999px; padding: 3px 8px; white-space: nowrap; border: 1px solid; }
+.econ-tier.t-high { color: #123B5E; background: #DCE9F7; border-color: #B9D2EC; }
+.econ-tier.t-medium { color: #7A5310; background: #FDF1D8; border-color: #EFD9A8; }
+.econ-tier.t-low { color: var(--text-muted); background: var(--bg); border-color: var(--border); }

@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
 import { NotebookText, Layers, Dumbbell, Timer, FileQuestion, Archive, ArrowLeft, ArrowRight, PlayCircle, Video, Sigma, Zap, ChevronRight, CheckSquare, Search, GraduationCap, FlaskConical, Settings, Maximize2, Minimize2 } from 'lucide-react'
 import { boostRanking, weakTopicNames, allSubSkills } from '../lib/analysisData'
-import { ECON_CHAPTERS, ECON_UNITS } from '../data/econNotes'
+import { ECON_UNITS } from '../data/econNotes'
+import { GEO_UNITS } from '../data/geoNotes'
 import { useProfile, STREAMS } from '../lib/profile'
 import './studykit.css'
 
@@ -231,20 +232,28 @@ export default function StudyKit({ onNavigate }) {
 }
 
 /* Notes dashboard (Economics / Geography) with fullscreen expand */
-/* Economics notes — full syllabus map: every chapter grouped by unit, ready ones open on their own */
-function EconNotes({ record }) {
+/* Notes breakdown — one component, same format for every subject:
+   units (book/chapter groups) → chapters → topics, each topic opens on its own page */
+function NotesBreakdown({ units, base, label, record }) {
   const [open, setOpen] = useState(null)
-  const readyChapters = ECON_UNITS.reduce((n, u) => n + u.chapters.filter(c => c.ready).length, 0)
-  const allChapters = ECON_UNITS.reduce((n, u) => n + u.chapters.length, 0)
-  const topicCount = ECON_UNITS.reduce((n, u) => n + u.chapters.reduce((m, c) => m + c.topics.length, 0), 0)
+  const allChapters = units.reduce((n, u) => n + u.chapters.length, 0)
+  const readyChapters = units.reduce((n, u) => n + u.chapters.filter(c => c.ready).length, 0)
+  const topicCount = units.reduce((n, u) => n + u.chapters.reduce((m, c) => m + c.topics.length, 0), 0)
+
+  const srcFor = (chapterId, topicId) => {
+    const unit = units.find(u => u.chapters.some(c => c.id === chapterId))
+    const parts = []
+    if (unit && unit.key && /^b\d+$/.test(unit.key)) parts.push('book=' + unit.key)
+    parts.push('chapter=' + chapterId)
+    parts.push(topicId ? 'topic=' + topicId : 'view=chapter')
+    parts.push('embed=1')
+    return base + '?' + parts.join('&')
+  }
 
   if (open) {
-    const all = ECON_UNITS.flatMap(u => u.chapters)
+    const all = units.flatMap(u => u.chapters)
     const ch = all.find(c => c.id === open.chapter)
     const tp = ch && open.topic ? ch.topics.find(t => t.id === open.topic) : null
-    const src = open.topic
-      ? '/econ-notes/index.html?chapter=' + open.chapter + '&topic=' + open.topic + '&embed=1'
-      : '/econ-notes/index.html?chapter=' + open.chapter + '&view=chapter&embed=1'
     return (
       <div className="econ-note-open">
         <div className="econ-crumb">
@@ -254,12 +263,12 @@ function EconNotes({ record }) {
           <span className="econ-crumb-t">
             {ch && ch.title} {tp && <><i>/</i> <b>{tp.title}</b></>}
           </span>
-          {!open.topic && <span className="econ-soon-chip">notes coming soon · chapter overview</span>}
+          {!open.topic && <span className="econ-soon-chip">chapter overview</span>}
         </div>
         <NoteDashboard
-          src={src}
-          title={(tp ? tp.title : (ch ? ch.title : 'Economics')) + ' — CUET Pro'}
-          subject="Economics"
+          src={srcFor(open.chapter, open.topic)}
+          title={(tp ? tp.title : (ch ? ch.title : label)) + ' — CUET Pro'}
+          subject={label}
           record={record}
         />
       </div>
@@ -270,9 +279,9 @@ function EconNotes({ record }) {
     <div className="econ-bd">
       <div className="econ-bd-head">
         <div className="econ-bd-title">
-          <b>Economics notes</b>
+          <b>{label} notes</b>
           <span>
-            {allChapters} chapters in the syllabus · {readyChapters} written so far ({topicCount} topic pages, each opens on its own)
+            {allChapters} chapters · {readyChapters} written so far ({topicCount} topic pages, each opens on its own)
           </span>
         </div>
         <label className="econ-jump">
@@ -280,11 +289,11 @@ function EconNotes({ record }) {
             const v = e.target.value
             if (!v) return
             const [c, t] = v.split('|')
-            setOpen({ chapter: c, topic: t })
+            setOpen({ chapter: c, topic: t || null })
           }}>
             <option value="">Jump to a topic…</option>
-            {ECON_UNITS.map(u => (
-              <optgroup key={u.key} label={u.name}>
+            {units.map(u => (
+              <optgroup key={u.key} label={(u.emoji ? u.emoji + ' ' : '') + u.name}>
                 {u.chapters.filter(c => c.ready).map(c => c.topics.map(t => (
                   <option key={c.id + t.id} value={c.id + '|' + t.id}>{c.num}.{t.num} · {t.title}</option>
                 )))}
@@ -294,13 +303,13 @@ function EconNotes({ record }) {
         </label>
       </div>
 
-      {ECON_UNITS.map((u, ui) => {
+      {units.map((u, ui) => {
         const ready = u.chapters.filter(c => c.ready)
         const soon = u.chapters.filter(c => !c.ready)
         return (
           <section className="econ-unit" key={u.key} style={{ animationDelay: (ui * 70) + 'ms' }}>
             <header className="econ-unit-head">
-              <b>{u.name}</b>
+              <b>{(u.emoji ? u.emoji + ' ' : '') + u.name}</b>
               <span>{ready.length} of {u.chapters.length} chapters written</span>
             </header>
 
@@ -321,7 +330,12 @@ function EconNotes({ record }) {
                       <span className="econ-topic-t">{t.title}</span>
                       {t.frequency > 0 && (
                         <span className="econ-freq" title="How often CUET has asked this">
-                          asked {t.frequency}×<i>{Object.keys(t.years).join(' · ')}</i>
+                          asked {t.frequency}×<i>{Object.keys(t.years || {}).join(' · ')}</i>
+                        </span>
+                      )}
+                      {!(t.frequency > 0) && t.tier && (
+                        <span className={'econ-tier t-' + t.tier} title="Importance">
+                          {t.tier === 'high' ? 'high weight' : t.tier === 'medium' ? 'medium weight' : 'low weight'}
                         </span>
                       )}
                       <ChevronRight size={14} className="econ-topic-arrow" />
@@ -387,15 +401,13 @@ function NoteDashboard({ src, title, subject, record }) {
 }
 
 function NotesView({ stream, subject, record }) {
-  if (subject === 'Economics') return <EconNotes record={record} />
-  if (subject === 'Geography') {
-    return (
-      <div className="sk-econ-wrap">
-        <p className="sk-econ-note">Geography notes dashboard — NCERT chapters, syllabus & exam pattern.</p>
-        <NoteDashboard src="/geo-notes/index.html" title="Geography notes — CUET Pro" subject="Geography" record={record} />
-      </div>
-    )
+  if (subject === 'Economics') {
+    return <NotesBreakdown units={ECON_UNITS} base="/econ-notes/index.html" label="Economics" record={record} />
   }
+  if (subject === 'Geography') {
+    return <NotesBreakdown units={GEO_UNITS} base="/geo-notes/index.html" label="Geography" record={record} />
+  }
+
   const subs = NOTES_BY_STREAM[stream] || NOTES_BY_STREAM.Commerce
   const list = subject === 'all' ? subs : subs.filter(n => n.s === subject)
   if (list.length === 0) return <p className="muted-empty">Notes for {subject} are being prepared — check back soon.</p>

@@ -10087,3 +10087,65 @@ var CHAPTER17_NCERT_PDF_URI = "https://drive.google.com/file/d/1J_gTeV_p55uvEUb5
 })();
 </script>
 
+<!-- CUET Pro: notes-preview bootstrap (Study Kit opens one topic or one chapter with ?embed=1) -->
+<style>
+  /* embed mode: hide the dashboard navigation, and give the reader a centred column
+     with real gutters (no zeroed padding, which made text hug the left edge) */
+  html.embed-chapter .sidebar,
+  html.embed-chapter .crumb { display: none !important; }
+  html.embed-chapter .app-shell { display: block !important; height: auto !important; }
+  html.embed-chapter .main {
+    display: block !important; height: auto !important; overflow: visible !important; width: 100% !important;
+  }
+  html.embed-chapter .main-inner {
+    max-width: 1080px !important;
+    margin: 0 auto !important;
+    padding-left: clamp(20px, 5vw, 44px) !important;
+    padding-right: clamp(20px, 5vw, 44px) !important;
+  }
+</style>
+<script>
+(function () {
+  var q = new URLSearchParams(location.search);
+  var topic = q.get('topic'), chapter = q.get('chapter');
+  var view = q.get('view') || (topic ? 'topic' : 'chapter');
+  var embed = q.get('embed') === '1';
+  if (embed) document.documentElement.classList.add('embed-chapter');
+
+  function pick() {
+    /* a single topic of a chapter that has notes */
+    if (view === 'topic' && topic) {
+      var t = document.querySelector('.sb-topic[data-topic="' + topic + '"]');
+      if (t) { t.click(); return true; }
+      return false;
+    }
+    /* a chapter: its own overview page */
+    if (chapter) {
+      var row = document.querySelector('.sb-chapter[data-chapter="' + chapter + '"]');
+      if (row) {
+        if (row.classList.contains('active')) return true;   /* already the open chapter */
+        row.click();
+        return true;
+      }
+      return false;
+    }
+    return true;
+  }
+
+  /* fail-safe: if nothing opened, drop the chrome-hiding so the student still
+     gets the full dashboard instead of a page without navigation */
+  function verify() {
+    var active = document.querySelector('.view.active');
+    var ok = active && /^view-(topicdetail|chapter|book)$/.test(active.id);
+    if (!ok) document.documentElement.classList.remove('embed-chapter');
+  }
+
+  function run(tries) {
+    if (pick()) { setTimeout(verify, 600); return; }
+    if (tries > 80) { document.documentElement.classList.remove('embed-chapter'); return; }
+    setTimeout(function () { run(tries + 1); }, 250);
+  }
+  if (document.readyState === 'complete') setTimeout(function () { run(0); }, 150);
+  else window.addEventListener('load', function () { setTimeout(function () { run(0); }, 150); });
+})();
+</script>
