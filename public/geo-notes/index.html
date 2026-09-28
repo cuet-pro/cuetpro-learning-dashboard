@@ -10089,20 +10089,37 @@ var CHAPTER17_NCERT_PDF_URI = "https://drive.google.com/file/d/1J_gTeV_p55uvEUb5
 
 <!-- CUET Pro: notes-preview bootstrap (Study Kit opens one topic or one chapter with ?embed=1) -->
 <style>
-  /* embed mode: hide the dashboard navigation, and give the reader a centred column
-     with real gutters (no zeroed padding, which made text hug the left edge) */
-  html.embed-chapter .sidebar,
-  html.embed-chapter .crumb { display: none !important; }
-  html.embed-chapter .app-shell { display: block !important; height: auto !important; }
-  html.embed-chapter .main {
-    display: block !important; height: auto !important; overflow: visible !important; width: 100% !important;
-  }
-  html.embed-chapter .main-inner {
-    max-width: 1080px !important;
-    margin: 0 auto !important;
-    padding-left: clamp(20px, 5vw, 44px) !important;
-    padding-right: clamp(20px, 5vw, 44px) !important;
-  }
+/* embed mode: hide the dashboard chrome and make the DOCUMENT itself scroll.
+   The dashboards set body{overflow:hidden} + .app-shell{height:100vh}, which
+   clips content inside our fixed-height iframe — so force html/body/main to
+   auto height + auto overflow and let the parent iframe show a scrollbar. */
+html.embed-chapter,
+html.embed-chapter body {
+  height: auto !important;
+  overflow: auto !important;
+}
+html.embed-chapter .app-shell {
+  display: block !important;
+  height: auto !important;
+  overflow: visible !important;
+}
+html.embed-chapter .main {
+  display: block !important;
+  height: auto !important;
+  min-height: 0 !important;
+  overflow: visible !important;
+  flex: none !important;
+}
+html.embed-chapter .main-inner {
+  max-width: 1080px !important;
+  margin: 0 auto !important;
+  padding-left: clamp(20px, 5vw, 44px) !important;
+  padding-right: clamp(20px, 5vw, 44px) !important;
+  padding-bottom: 48px !important;
+}
+html.embed-chapter .sidebar,
+html.embed-chapter .crumb,
+html.embed-chapter .chapters-tab-head { display: none !important; }
 </style>
 <script>
 (function () {

@@ -15586,21 +15586,37 @@
 
 <!-- CUET Pro: chapter-preview bootstrap (Study Kit opens one topic or one chapter with ?embed=1) -->
 <style>
-  /* embed mode: hide the dashboard's own navigation, but KEEP its comfortable reading
-     padding and column width — zeroing those made the text hug the left edge. */
-  html.embed-chapter .sidebar,
-  html.embed-chapter .crumb,
-  html.embed-chapter .chapters-tab-head { display: none !important; }
-  html.embed-chapter .app-shell { display: block !important; }
-  html.embed-chapter .main,
-  html.embed-chapter .main-inner {
-    margin: 0 auto !important;
-    max-width: 1080px !important;
-    padding-left: clamp(20px, 5vw, 44px) !important;
-    padding-right: clamp(20px, 5vw, 44px) !important;
-  }
-  html.embed-chapter .main { padding-top: 26px !important; padding-bottom: 60px !important; }
-  html.embed-chapter .main-inner { padding-top: 0 !important; padding-bottom: 0 !important; }
+/* embed mode: hide the dashboard chrome and make the DOCUMENT itself scroll.
+   The dashboards set body{overflow:hidden} + .app-shell{height:100vh}, which
+   clips content inside our fixed-height iframe — so force html/body/main to
+   auto height + auto overflow and let the parent iframe show a scrollbar. */
+html.embed-chapter,
+html.embed-chapter body {
+  height: auto !important;
+  overflow: auto !important;
+}
+html.embed-chapter .app-shell {
+  display: block !important;
+  height: auto !important;
+  overflow: visible !important;
+}
+html.embed-chapter .main {
+  display: block !important;
+  height: auto !important;
+  min-height: 0 !important;
+  overflow: visible !important;
+  flex: none !important;
+}
+html.embed-chapter .main-inner {
+  max-width: 1080px !important;
+  margin: 0 auto !important;
+  padding-left: clamp(20px, 5vw, 44px) !important;
+  padding-right: clamp(20px, 5vw, 44px) !important;
+  padding-bottom: 48px !important;
+}
+html.embed-chapter .sidebar,
+html.embed-chapter .crumb,
+html.embed-chapter .chapters-tab-head { display: none !important; }
 </style>
 <script>
 (function () {
