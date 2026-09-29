@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react'
 import {
-  Swords, List, Layers, MessageCircle, TrendingUp, TrendingDown, AlertTriangle, Lightbulb,
+  Swords, List, Layers, MessageCircle, TrendingUp, Lightbulb,
   FileText, BarChart3, ListChecks, Files, Info, CheckCircle2, Users, Flame, Award, Zap,
-  Compass, Target, Timer, BookOpen, Trophy, Sigma, Map as MapIcon, Video, Sparkles,
+  Compass, Target, Timer, BookOpen, Trophy, Sigma, Map as MapIcon, Video, Sparkles, Grid3x3,
 } from 'lucide-react'
 import { boostRanking, weakTopicNames } from '../lib/analysisData'
 import './widgets.css'
@@ -44,9 +44,7 @@ function VocabTile({ onNavigate }) {
 function InsightsTile({ words, onNavigate }) {
   const goSwot = () => { try { localStorage.setItem('cp_analysis_tab', 'swot') } catch {} onNavigate('analysis') }
   return <IconGrid onNavigate={onNavigate} items={[
-    { icon: TrendingUp, label: 'Strengths', tone: 'green', go: goSwot },
-    { icon: TrendingDown, label: 'Weaknesses', tone: 'amber', go: goSwot },
-    { icon: AlertTriangle, label: 'Threats', tone: 'red', go: goSwot },
+    { icon: Grid3x3, label: 'SWOT', tone: 'purple', go: goSwot },
     { icon: Lightbulb, label: 'Fixes', tone: 'purple', go: goSwot },
     { icon: FileText, label: 'Syllabus PDF', tone: 'blue', go: () => alert('Deep-link → Syllabus PDF') },
     { icon: BarChart3, label: 'Cutoffs', tone: 'blue', nav: 'explorer' },
@@ -160,7 +158,7 @@ export default function DashboardTiles({ onNavigate }) {
 
   const tiles = [
     { id: 'vocab', title: 'Vocabulary & practice', icon: Layers, tone: 'green', count: 6, body: <VocabTile onNavigate={onNavigate} /> },
-    { id: 'insights', title: 'Insights & resources', icon: Lightbulb, tone: 'blue', count: 12, body: <InsightsTile words={words} onNavigate={onNavigate} /> },
+    { id: 'insights', title: 'Insights & resources', icon: Lightbulb, tone: 'blue', count: 10, body: <InsightsTile words={words} onNavigate={onNavigate} /> },
   ]
 
   return (
