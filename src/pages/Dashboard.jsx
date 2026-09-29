@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react'
 import {
   Flame, ArrowRight, BookOpen, ChevronDown, CalendarDays, Eye,
-  Trophy, PieChart, ArrowUpRight, Lightbulb, Zap, Target, Quote, Medal,
+  Trophy, PieChart, ArrowUpRight, Lightbulb, Zap, Target, Quote, Medal, Award, History,
 } from 'lucide-react'
 import { useProfile, dreamCollegeShort } from '../lib/profile'
 import { Modal } from '../components/shell/Shell.jsx'
-import DashboardTiles from './Widgets.jsx'
+import DashboardTiles, { ActivityTile, BadgesTile } from './Widgets.jsx'
 import './dashboard.css'
 
 /* same real data as before the redesign (unchanged) */
@@ -127,6 +127,8 @@ export default function Dashboard({ onNavigate }) {
   const [quizScore, setQuizScore] = useState(0)
   const [quizDone, setQuizDone] = useState(false)
   const [showManifest, setShowManifest] = useState(false)
+  const [showActivity, setShowActivity] = useState(false)
+  const [showBadges, setShowBadges] = useState(false)
   const [showStanding, setShowStanding] = useState(false)
   const [openRow, setOpenRow] = useState(null)
   const [tick, setTick] = useState(0)
@@ -182,12 +184,18 @@ export default function Dashboard({ onNavigate }) {
         </div>
         <div className="hero-meta">
           <div className="hero-chip streak"><Flame size={15} /><b>9-day streak</b></div>
+          <button className="hero-chip badges" onClick={() => setShowBadges(true)} title="Your badges">
+            <Award size={15} /><b>4</b>
+          </button>
           <button className="hero-chip manifest" onClick={() => setShowManifest(true)} title="View manifestation board">
             <Medal size={15} /><span><em>Manifesting</em><b>{collegeShort}</b></span><Eye size={14} />
           </button>
           <div className="hero-chip count" title="Live countdown to CUET 2027">
             <CalendarDays size={15} /><span><em>CUET 2027 in</em><b>{cd.days}d {cd.hours}h</b></span>
           </div>
+          <button className="hero-chip activity" onClick={() => setShowActivity(true)} title="Your recent activity">
+            <History size={15} /><b>Activity</b>
+          </button>
         </div>
       </section>
 
@@ -419,6 +427,14 @@ export default function Dashboard({ onNavigate }) {
 
       {/* 5. Tool tiles (4 grouped) */}
       <DashboardTiles onNavigate={onNavigate} />
+
+      {/* Activity + badges — moved up from the tiles into the hero as small controls */}
+      <Modal open={showActivity} onClose={() => setShowActivity(false)} title="Your recent activity">
+        <ActivityTile />
+      </Modal>
+      <Modal open={showBadges} onClose={() => setShowBadges(false)} title="Your badges">
+        <BadgesTile />
+      </Modal>
 
       {/* Manifestation modal */}
       <Modal open={showManifest} onClose={() => setShowManifest(false)}>

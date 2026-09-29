@@ -782,3 +782,11 @@ button.hero-chip:hover { border-color: var(--primary); }
 .pg-mood-hint { display: inline-flex; align-items: center; gap: 5px; }
 .pg-mood-dot { width: 6px; height: 6px; border-radius: 999px; background: var(--warning); animation: pg-mood-pulse 1.3s ease-in-out infinite; }
 @keyframes pg-mood-pulse { 0%,100% { opacity: .35; transform: scale(.8) } 50% { opacity: 1; transform: scale(1.15) } }
+
+/* ═══ hero: badges icon + light-blue activity chip (moved up from the bottom tiles) ═══ */
+.hero-chip.badges { background: transparent; border: 1px solid var(--border); color: var(--warning); padding: 8px 12px; }
+.hero-chip.badges b { color: var(--warning); }
+.hero-chip.badges:hover { background: var(--warning-soft); border-color: var(--warning); }
+.hero-chip.activity { background: var(--info-soft); border-color: transparent; color: var(--info); }
+.hero-chip.activity b { color: var(--info); }
+.hero-chip.activity:hover { border-color: var(--info); background: var(--info-soft); }

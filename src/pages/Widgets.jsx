@@ -58,7 +58,7 @@ function InsightsTile({ words, onNavigate }) {
   ]} />
 }
 
-function ActivityTile() {
+export function ActivityTile() {
   const [feed, setFeed] = useState([
     { id: 1, icon: CheckCircle2, tone: 'green', t: 'Mock Test #7 completed', when: '2h' },
     { id: 2, icon: Layers, tone: 'blue', t: '12 flashcards mastered', when: '4h' },
@@ -114,7 +114,7 @@ function ActivityTile() {
   )
 }
 
-function BadgesTile() {
+export function BadgesTile() {
   const badges = [
     { icon: Flame, label: '7-day streak', earned: true, tone: 'amber' },
     { icon: Award, label: 'Mock marathoner', earned: true, tone: 'green' },
@@ -153,25 +153,23 @@ function BadgesTile() {
 }
 
 export default function DashboardTiles({ onNavigate }) {
-  const [open, setOpen] = useState('vocab')
+  const [open, setOpen] = useState({ vocab: true, insights: true })
   const words = weakTopicNames('Commerce')
   const [topWords] = useState(() => boostRanking('Commerce').slice(0, 1))
 
   const tiles = [
     { id: 'vocab', title: 'Vocabulary & practice', icon: Layers, tone: 'green', count: 6, body: <VocabTile onNavigate={onNavigate} /> },
     { id: 'insights', title: 'Insights & resources', icon: Lightbulb, tone: 'blue', count: 12, body: <InsightsTile words={words} onNavigate={onNavigate} /> },
-    { id: 'activity', title: 'Your recent activity', icon: TrendingUp, tone: 'purple', count: 4, body: <ActivityTile /> },
-    { id: 'badges', title: 'Recent badges', icon: Award, tone: 'amber', count: 4, body: <BadgesTile /> },
   ]
 
   return (
     <div className="tiles">
       {tiles.map(t => {
         const I = t.icon
-        const isOpen = open === t.id
+        const isOpen = open[t.id]
         return (
           <section className={'tile ' + t.tone + (isOpen ? ' open' : '')} key={t.id}>
-            <button className="tile-head" onClick={() => setOpen(isOpen ? null : t.id)} aria-expanded={isOpen}>
+            <button className="tile-head" onClick={() => setOpen(o => ({ ...o, [t.id]: !o[t.id] }))} aria-expanded={isOpen}>
               <span className={'tile-ico ' + t.tone}><I size={16} /></span>
               <b>{t.title}</b>
               <span className={'tile-count ' + t.tone}>{t.count}</span>
