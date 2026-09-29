@@ -129,8 +129,15 @@ export default function Dashboard({ onNavigate }) {
   const [showManifest, setShowManifest] = useState(false)
   const [showStanding, setShowStanding] = useState(false)
   const [openRow, setOpenRow] = useState(null)
-  const [mood, setMood] = useState(0)
+  const [tick, setTick] = useState(0)
   const [burst, setBurst] = useState(0)
+  const mood = tick % MOODS.length
+
+  /* auto-rotate the mood sticker every 3.5s */
+  useEffect(() => {
+    const id = setInterval(() => setTick(t => t + 1), 3500)
+    return () => clearInterval(id)
+  }, [])
   /* Progress ⇄ Standing flip: one face mounted at a time, animated hinge flip.
      (No backface/visibility tricks = no way for text to mirror or the card to vanish.) */
   const [panel, setPanel] = useState(0)
@@ -284,11 +291,11 @@ export default function Dashboard({ onNavigate }) {
                   })()}
                 </div>
 
-                <button className="pg-mood" onClick={() => { setMood(m => (m + 1) % MOODS.length); setBurst(b => b + 1) }} title="Tap for a boost">
+                <button className="pg-mood" onClick={() => { setTick(t => t + 1); setBurst(b => b + 1) }} title="Tap for a boost">
                   <span key={burst} className="pg-mood-burst">{PARTY.map((p2, i2) => <i key={i2} style={{ '--i': i2 }}>{p2}</i>)}</span>
-                  <span className="pg-mood-emoji">{MOODS[mood].e}</span>
-                  <span className="pg-mood-t">{MOODS[mood].t}</span>
-                  <span className="pg-mood-hint">tap for a boost</span>
+                  <span key={'e' + mood} className="pg-mood-emoji">{MOODS[mood].e}</span>
+                  <span key={'t' + mood} className="pg-mood-t">{MOODS[mood].t}</span>
+                  <span className="pg-mood-hint"><i className="pg-mood-dot" />auto</span>
                 </button>
               </div>
 
