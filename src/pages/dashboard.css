@@ -733,3 +733,44 @@ button.hero-chip:hover { border-color: var(--primary); }
 
 /* stable card height across faces (no jump on flip) */
 .pg-face { min-height: 479px; }
+
+/* ═══════════ My Progress — interactive mood sticker ═══════════ */
+.pg-mood {
+  position: relative;
+  width: 100%;
+  margin-top: 6px;
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: linear-gradient(120deg, var(--warning-soft), var(--bg));
+  cursor: pointer;
+  overflow: hidden;
+  text-align: left;
+  transition: transform .18s, box-shadow .18s, border-color .18s;
+}
+.pg-mood:hover { transform: translateY(-2px); box-shadow: var(--shadow-sm); border-color: var(--warning); }
+.pg-mood:active { transform: translateY(0) scale(.99); }
+.pg-mood-emoji { font-size: 30px; line-height: 1; animation: pg-mood-float 2.6s ease-in-out infinite; }
+@keyframes pg-mood-float { 0%,100% { transform: translateY(0) } 50% { transform: translateY(-4px) } }
+.pg-mood-t { flex: 1; font: 600 12.5px var(--font-body); color: var(--text); }
+.pg-mood-hint {
+  font: 700 9px var(--font-body); letter-spacing: .05em; text-transform: uppercase;
+  color: var(--warning); background: var(--warning-soft);
+  padding: 3px 8px; border-radius: 999px; white-space: nowrap;
+}
+.pg-mood-burst { position: absolute; inset: 0; pointer-events: none; }
+.pg-mood-burst i {
+  position: absolute; left: 26px; top: 46%; font-size: 16px; font-style: normal; opacity: 0;
+  animation: pg-mood-pop .7s ease-out forwards;
+}
+.pg-mood-burst i:nth-child(1){ --tx:28px;  --ty:-46px }
+.pg-mood-burst i:nth-child(2){ --tx:58px;  --ty:-22px }
+.pg-mood-burst i:nth-child(3){ --tx:72px;  --ty:8px  }
+.pg-mood-burst i:nth-child(4){ --tx:56px;  --ty:34px }
+.pg-mood-burst i:nth-child(5){ --tx:26px;  --ty:48px }
+.pg-mood-burst i:nth-child(6){ --tx:0px;   --ty:34px }
+@keyframes pg-mood-pop {
+  0%   { opacity: 1; transform: translate(0,0) scale(.5); }
+  100% { opacity: 0; transform: translate(var(--tx), var(--ty)) scale(1.15) rotate(20deg); }
+}

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import {
   Flame, ArrowRight, BookOpen, ChevronDown, CalendarDays, Eye,
-  Trophy, Users, PieChart, ArrowUpRight, Lightbulb, Zap, Target, Quote, Medal,
+  Trophy, PieChart, ArrowUpRight, Lightbulb, Zap, Target, Quote, Medal,
 } from 'lucide-react'
 import { useProfile, dreamCollegeShort } from '../lib/profile'
 import { Modal } from '../components/shell/Shell.jsx'
@@ -101,6 +101,14 @@ function useLiveCountdown(examDate) {
   return cd
 }
 
+const MOODS = [
+  { e: '\u{1F525}', t: 'Ahead of plan — full-marks energy!' },
+  { e: '\u{1F9E0}', t: 'Consistency beats cramming. Reps win.' },
+  { e: '\u{1F3C6}', t: 'Future you is proud of this pace.' },
+  { e: '\u2615', t: 'One more section, one bigger jump.' },
+]
+const PARTY = ['\u2728', '\u{1F389}', '\u2B50', '\u{1F4AF}', '\u{1F680}', '\u{1F525}']
+
 export default function Dashboard({ onNavigate }) {
   const [profile] = useProfile()
   const college = profile.dreamCollege
@@ -120,8 +128,9 @@ export default function Dashboard({ onNavigate }) {
   const [quizDone, setQuizDone] = useState(false)
   const [showManifest, setShowManifest] = useState(false)
   const [showStanding, setShowStanding] = useState(false)
-  const [stView, setStView] = useState('all')
   const [openRow, setOpenRow] = useState(null)
+  const [mood, setMood] = useState(0)
+  const [burst, setBurst] = useState(0)
   /* Progress ⇄ Standing flip: one face mounted at a time, animated hinge flip.
      (No backface/visibility tricks = no way for text to mirror or the card to vanish.) */
   const [panel, setPanel] = useState(0)
@@ -137,7 +146,7 @@ export default function Dashboard({ onNavigate }) {
   }
 
   const weakest = [...SUBJECTS].sort((a, b) => a.pct - b.pct)[0]
-  const lb = LB[stView]
+  const lb = LB.all
   const sortedRows = [...lb.rows].sort((a, b) => b.pts - a.pts)
   const leaderPts = sortedRows[0]?.pts || 1
   const top5 = sortedRows.filter(r => !r.me).slice(0, 5)
@@ -274,6 +283,13 @@ export default function Dashboard({ onNavigate }) {
                     ))
                   })()}
                 </div>
+
+                <button className="pg-mood" onClick={() => { setMood(m => (m + 1) % MOODS.length); setBurst(b => b + 1) }} title="Tap for a boost">
+                  <span key={burst} className="pg-mood-burst">{PARTY.map((p2, i2) => <i key={i2} style={{ '--i': i2 }}>{p2}</i>)}</span>
+                  <span className="pg-mood-emoji">{MOODS[mood].e}</span>
+                  <span className="pg-mood-t">{MOODS[mood].t}</span>
+                  <span className="pg-mood-hint">tap for a boost</span>
+                </button>
               </div>
 
               {/* right — dynamic weak-link insight + the two weakest sections */}
@@ -337,11 +353,6 @@ export default function Dashboard({ onNavigate }) {
               <div className="pg-head-t"><b>My Standing</b><em>Ranked by contest &amp; daily-challenge points</em></div>
               <button className={'pg-seg' + (panel === 0 ? ' on' : '')} onClick={() => flipTo(0)} aria-pressed={panel === 0}><PieChart size={13} /> Progress</button>
               <button className={'pg-seg' + (panel === 1 ? ' on' : '')} onClick={() => flipTo(1)} aria-pressed={panel === 1}><Trophy size={13} /> Standing</button>
-            </div>
-
-            <div className="st-tabs">
-              <button className={'st-tab' + (stView === 'all' ? ' on' : '')} onClick={() => setStView('all')}>All CUET Pro</button>
-              <button className={'st-tab' + (stView === 'subj' ? ' on' : '')} onClick={() => setStView('subj')}>My Subject</button>
             </div>
 
             <div className="pg-2col">
@@ -417,10 +428,6 @@ export default function Dashboard({ onNavigate }) {
 
       {/* Full leaderboard — complete ranked list for the selected cohort */}
       <Modal open={showStanding} onClose={() => setShowStanding(false)} title="Full leaderboard">
-        <div className="st-tabs wide">
-          <button className={'st-tab' + (stView === 'all' ? ' on' : '')} onClick={() => setStView('all')}><Users size={13} /> All CUET Pro</button>
-          <button className={'st-tab' + (stView === 'subj' ? ' on' : '')} onClick={() => setStView('subj')}><BookOpen size={13} /> My Subject</button>
-        </div>
         <p className="ov-sub">{lb.cohort} · {lb.of.toLocaleString('en-IN')} students · your rank <b>#{lb.rank}</b></p>
         <div className="lb-list">
           <div className="lb-head">
