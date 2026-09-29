@@ -60,7 +60,16 @@ export default function Analysis({ onNavigate }) {
   const [profile] = useProfile()
   const dt = dreamTarget(profile)
   const [subject, setSubject] = useState('all')
-  const [tab, setTab] = useState('overview')
+  const [tab, setTab] = useState(() => {
+    try {
+      const pending = localStorage.getItem('cp_analysis_tab')
+      if (pending) {
+        localStorage.removeItem('cp_analysis_tab')
+        if (['overview', 'swot', 'mocks', 'boost'].includes(pending)) return pending
+      }
+    } catch { /* storage unavailable */ }
+    return 'overview'
+  })
 
   /* single source of truth: scope = selected pill, falling back to profile stream for 'all' */
   const scope = subject === 'all' ? profile.stream : subject

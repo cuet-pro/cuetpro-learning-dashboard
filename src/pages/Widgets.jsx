@@ -42,11 +42,12 @@ function VocabTile({ onNavigate }) {
 }
 
 function InsightsTile({ words, onNavigate }) {
+  const goSwot = () => { try { localStorage.setItem('cp_analysis_tab', 'swot') } catch {} onNavigate('analysis') }
   return <IconGrid onNavigate={onNavigate} items={[
-    { icon: TrendingUp, label: 'Strengths', tone: 'green', nav: 'analysis' },
-    { icon: TrendingDown, label: 'Weaknesses', tone: 'amber', nav: 'analysis' },
-    { icon: AlertTriangle, label: 'Threats', tone: 'red', nav: 'analysis' },
-    { icon: Lightbulb, label: 'Fixes', tone: 'purple', nav: 'analysis' },
+    { icon: TrendingUp, label: 'Strengths', tone: 'green', go: goSwot },
+    { icon: TrendingDown, label: 'Weaknesses', tone: 'amber', go: goSwot },
+    { icon: AlertTriangle, label: 'Threats', tone: 'red', go: goSwot },
+    { icon: Lightbulb, label: 'Fixes', tone: 'purple', go: goSwot },
     { icon: FileText, label: 'Syllabus PDF', tone: 'blue', go: () => alert('Deep-link → Syllabus PDF') },
     { icon: BarChart3, label: 'Cutoffs', tone: 'blue', nav: 'explorer' },
     { icon: ListChecks, label: 'Eligibility', tone: 'green', go: () => alert('Deep-link → Eligibility checker') },
