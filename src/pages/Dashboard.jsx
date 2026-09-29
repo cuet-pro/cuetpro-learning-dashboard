@@ -303,7 +303,6 @@ export default function Dashboard({ onNavigate }) {
                   <span key={burst} className="pg-mood-burst">{PARTY.map((p2, i2) => <i key={i2} style={{ '--i': i2 }}>{p2}</i>)}</span>
                   <span key={'e' + mood} className="pg-mood-emoji">{MOODS[mood].e}</span>
                   <span key={'t' + mood} className="pg-mood-t">{MOODS[mood].t}</span>
-                  <span className="pg-mood-hint"><i className="pg-mood-dot" />auto</span>
                 </button>
               </div>
 
