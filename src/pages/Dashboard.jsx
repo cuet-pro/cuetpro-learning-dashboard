@@ -427,6 +427,13 @@ export default function Dashboard({ onNavigate }) {
       {/* 5. Tool tiles (4 grouped) */}
       <DashboardTiles onNavigate={onNavigate} />
 
+      {/* 6. Bottom activity button */}
+      <button type="button" className="dash-activity" onClick={() => setShowActivity(true)}>
+        <span className="dash-activity-ico"><History size={16} /></span>
+        <span className="dash-activity-t"><b>Your recent activity</b><em>Mocks, flashcards, streaks & more</em></span>
+        <ArrowRight size={16} className="dash-activity-arrow" />
+      </button>
+
       {/* Activity + badges — moved up from the tiles into the hero as small controls */}
       <Modal open={showActivity} onClose={() => setShowActivity(false)} title="Your recent activity">
         <ActivityTile />
