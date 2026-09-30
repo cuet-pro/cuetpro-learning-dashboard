@@ -1,4 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useState } from 'react'
+import { createPortal } from 'react-dom'
 import {
   LayoutDashboard, GraduationCap, BarChart3, Compass, Settings, Coffee,
   Search, Sun, Moon, Bell, Menu, X, PanelLeftClose, PanelLeftOpen, ChevronDown,
@@ -205,7 +206,7 @@ export function Modal({ open, onClose, title, children, footer }) {
     return () => document.removeEventListener('keydown', h)
   }, [open, onClose])
   if (!open) return null
-  return (
+  return createPortal(
     <div className="modal-scrim" onClick={onClose}>
       <div className="modal" onClick={e => e.stopPropagation()} role="dialog" aria-modal="true">
         <button className="modal-x" onClick={onClose} aria-label="Close"><X size={16} /></button>
@@ -213,7 +214,8 @@ export function Modal({ open, onClose, title, children, footer }) {
         {children}
         {footer && <div className="modal-foot">{footer}</div>}
       </div>
-    </div>
+    </div>,
+    document.body
   )
 }
 
