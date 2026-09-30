@@ -58,12 +58,12 @@ function VocabTile({ onNavigate }) {
             ))}
           </div>
         ) : (
-          <div className="wl-grid">
+          <div className="wl-list">
             {VOCAB_CATEGORIES.map(c => (
-              <button className="wl-cat" key={c.id} onClick={() => setCat(c.id)}>
-                <span className="wl-cat-ico">{c.icon}</span>
+              <button type="button" className="wl-cat" key={c.id} onClick={() => setCat(c.id)}>
+                <span className="wl-cat-ico" style={{ background: c.color + '1a' }}>{c.icon}</span>
                 <span className="wl-cat-t"><b>{c.name}</b><em>{c.words.length} words</em></span>
-                <ChevronRight size={14} className="wl-cat-arrow" />
+                <ChevronRight size={15} className="wl-cat-arrow" />
               </button>
             ))}
           </div>
