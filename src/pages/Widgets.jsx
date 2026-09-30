@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react'
 import {
   Swords, List, Layers, MessageCircle, TrendingUp, Lightbulb,
-  FileText, BarChart3, ListChecks, Files, Info, CheckCircle2, Users, Flame, Award, Zap,
-  Compass, Target, Timer, BookOpen, Trophy, Sigma, Map as MapIcon, Video, Sparkles, Grid3x3, ArrowLeft, ChevronRight,
+  FileText, BarChart3, ListChecks, Files, CheckCircle2, Users, Flame, Award, Zap,
+  Compass, Target, Timer, Trophy, Video, Sparkles, Grid3x3, ArrowLeft, ChevronRight,
 } from 'lucide-react'
-import { boostRanking, weakTopicNames } from '../lib/analysisData'
+import { boostRanking } from '../lib/analysisData'
 import { VOCAB_CATEGORIES } from '../data/vocab'
 import { Modal } from '../components/shell/Shell.jsx'
 import './widgets.css'
@@ -108,8 +108,6 @@ function VocabTile({ onNavigate }) {
         { icon: List, label: 'Word list', tone: 'blue', go: () => setWlOpen(true) },
         { icon: Layers, label: 'Flashcards', tone: 'green', nav: 'studykit' },
         { icon: MessageCircle, label: 'Phrasal verbs', tone: 'purple', go: () => alert('Deep-link → Phrasal verbs') },
-        { icon: Timer, label: 'Quick quiz', tone: 'amber', nav: 'studykit' },
-        { icon: Zap, label: 'Focus mock', tone: 'green', nav: 'studykit' },
       ]} />
       <Modal open={wlOpen} onClose={close} title={active ? active.name : 'Word list'}>
         {active ? (
@@ -150,7 +148,7 @@ function VocabTile({ onNavigate }) {
   )
 }
 
-function InsightsTile({ words, onNavigate }) {
+function InsightsTile({ onNavigate }) {
   const goSwot = () => { try { localStorage.setItem('cp_analysis_tab', 'swot') } catch {} onNavigate('analysis') }
   return <IconGrid onNavigate={onNavigate} items={[
     { icon: Grid3x3, label: 'SWOT', tone: 'purple', go: goSwot },
@@ -159,10 +157,6 @@ function InsightsTile({ words, onNavigate }) {
     { icon: BarChart3, label: 'Cutoffs', tone: 'blue', nav: 'explorer' },
     { icon: ListChecks, label: 'Eligibility', tone: 'green', go: () => alert('Deep-link → Eligibility checker') },
     { icon: Files, label: 'Sample papers', tone: 'purple', go: () => alert('Deep-link → Sample papers') },
-    { icon: Info, label: 'Pattern guide', tone: 'amber', go: () => alert('Deep-link → Exam pattern guide') },
-    { icon: MapIcon, label: 'Explorer', tone: 'blue', nav: 'explorer' },
-    { icon: Sigma, label: 'Formulas', tone: 'purple', nav: 'studykit' },
-    { icon: BookOpen, label: 'Weak topics', tone: 'red', badge: String(words.length), nav: 'analysis' },
   ]} />
 }
 
@@ -262,12 +256,11 @@ export function BadgesTile() {
 
 export default function DashboardTiles({ onNavigate }) {
   const [open, setOpen] = useState({ vocab: true, insights: true })
-  const words = weakTopicNames('Commerce')
   const [topWords] = useState(() => boostRanking('Commerce').slice(0, 1))
 
   const tiles = [
-    { id: 'vocab', title: 'Vocabulary & practice', icon: Layers, tone: 'green', count: 6, body: <VocabTile onNavigate={onNavigate} /> },
-    { id: 'insights', title: 'Insights & resources', icon: Lightbulb, tone: 'blue', count: 10, body: <InsightsTile words={words} onNavigate={onNavigate} /> },
+    { id: 'vocab', title: 'Vocabulary & practice', icon: Layers, tone: 'green', count: 4, body: <VocabTile onNavigate={onNavigate} /> },
+    { id: 'insights', title: 'Insights & resources', icon: Lightbulb, tone: 'blue', count: 6, body: <InsightsTile onNavigate={onNavigate} /> },
   ]
 
   return (
