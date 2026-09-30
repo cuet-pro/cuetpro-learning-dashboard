@@ -135,3 +135,36 @@
   .wl-row { grid-template-columns: 1fr; gap: 2px; }
   .wl-row b { white-space: normal; }
 }
+
+/* ═══ Word list — rich cards (tags, level, syn/ant, search, groups) ═══ */
+.wl-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 12px; }
+.wl-top .wl-back { margin: 0; }
+.wl-search {
+  flex: 1; max-width: 240px; padding: 8px 12px; font: 500 13px var(--font-body);
+  color: var(--text); background: var(--bg); border: 1px solid var(--border);
+  border-radius: var(--r-sm); outline: none;
+}
+.wl-search:focus { border-color: var(--primary); }
+.wl-card {
+  display: grid; gap: 6px; padding: 12px 14px; background: var(--surface);
+  border: 1px solid var(--border); border-radius: var(--r-md);
+}
+.wl-card-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.wl-card-head b { font: 700 14px var(--font-body); color: var(--text); }
+.wl-tag { font: 700 10px var(--font-body); padding: 2px 6px; border-radius: 999px; letter-spacing: .03em; }
+.wl-tag.star { color: #b45309; background: #fef3c7; }
+.wl-tag.pyq { color: var(--info); background: var(--info-soft); }
+.wl-level { font: 600 10px var(--font-body); color: var(--text-muted); background: var(--bg); border: 1px solid var(--border); padding: 1px 7px; border-radius: 999px; text-transform: capitalize; }
+.wl-meaning { font: 500 13px var(--font-body); color: var(--text-muted); margin: 0; }
+.wl-line { display: grid; grid-template-columns: 44px 1fr; gap: 10px; align-items: baseline; }
+.wl-line em { font: 700 10.5px var(--font-body); font-style: normal; text-transform: uppercase; letter-spacing: .04em; border-radius: 6px; padding: 2px 0; text-align: center; }
+.wl-line span { font: 500 13px var(--font-body); color: var(--text); }
+.wl-syn { color: #15803d; background: #eafaf0; }
+.wl-ant { color: #b91c1c; background: #fdecec; }
+.wl-group { display: grid; gap: 8px; }
+.wl-group-h { font: 700 11px var(--font-body); letter-spacing: .08em; color: var(--info); text-transform: uppercase; margin: 10px 0 2px; }
+.wl-empty { font: 500 13px var(--font-body); color: var(--text-muted); text-align: center; padding: 18px 0; }
+@media (max-width: 520px) {
+  .wl-top { flex-direction: column; align-items: stretch; }
+  .wl-search { max-width: none; }
+}
