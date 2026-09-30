@@ -2,9 +2,11 @@ import { useEffect, useState } from 'react'
 import {
   Swords, List, Layers, MessageCircle, TrendingUp, Lightbulb,
   FileText, BarChart3, ListChecks, Files, Info, CheckCircle2, Users, Flame, Award, Zap,
-  Compass, Target, Timer, BookOpen, Trophy, Sigma, Map as MapIcon, Video, Sparkles, Grid3x3,
+  Compass, Target, Timer, BookOpen, Trophy, Sigma, Map as MapIcon, Video, Sparkles, Grid3x3, ArrowLeft, ChevronRight,
 } from 'lucide-react'
 import { boostRanking, weakTopicNames } from '../lib/analysisData'
+import { VOCAB_CATEGORIES } from '../data/vocab'
+import { Modal } from '../components/shell/Shell.jsx'
 import './widgets.css'
 
 /* tone: green = progress/success · blue = learning/resources · purple/amber = achievements · red/amber = attention */
@@ -31,14 +33,44 @@ function IconGrid({ items, onNavigate }) {
 }
 
 function VocabTile({ onNavigate }) {
-  return <IconGrid onNavigate={onNavigate} items={[
-    { icon: Swords, label: 'Word battle', tone: 'blue', go: () => alert('Deep-link → Word battle (Chill Zone)') },
-    { icon: List, label: 'Word list', tone: 'blue', go: () => alert('Deep-link → Word list') },
-    { icon: Layers, label: 'Flashcards', tone: 'green', nav: 'studykit' },
-    { icon: MessageCircle, label: 'Phrasal verbs', tone: 'purple', go: () => alert('Deep-link → Phrasal verbs') },
-    { icon: Timer, label: 'Quick quiz', tone: 'amber', nav: 'studykit' },
-    { icon: Zap, label: 'Focus mock', tone: 'green', nav: 'studykit' },
-  ]} />
+  const [wlOpen, setWlOpen] = useState(false)
+  const [cat, setCat] = useState(null)
+  const active = VOCAB_CATEGORIES.find(c => c.id === cat)
+  return (
+    <>
+      <IconGrid onNavigate={onNavigate} items={[
+        { icon: Swords, label: 'Word battle', tone: 'blue', go: () => alert('Deep-link → Word battle (Chill Zone)') },
+        { icon: List, label: 'Word list', tone: 'blue', go: () => setWlOpen(true) },
+        { icon: Layers, label: 'Flashcards', tone: 'green', nav: 'studykit' },
+        { icon: MessageCircle, label: 'Phrasal verbs', tone: 'purple', go: () => alert('Deep-link → Phrasal verbs') },
+        { icon: Timer, label: 'Quick quiz', tone: 'amber', nav: 'studykit' },
+        { icon: Zap, label: 'Focus mock', tone: 'green', nav: 'studykit' },
+      ]} />
+      <Modal open={wlOpen} onClose={() => { setWlOpen(false); setCat(null) }} title={active ? active.name : 'Word list'}>
+        {active ? (
+          <div className="wl-words">
+            <button className="wl-back" onClick={() => setCat(null)}><ArrowLeft size={14} /> All categories</button>
+            {active.words.map((w, i) => (
+              <div className="wl-row" key={i}>
+                <b>{w.word}</b>
+                <span>{w.meaning}</span>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="wl-grid">
+            {VOCAB_CATEGORIES.map(c => (
+              <button className="wl-cat" key={c.id} onClick={() => setCat(c.id)}>
+                <span className="wl-cat-ico">{c.icon}</span>
+                <span className="wl-cat-t"><b>{c.name}</b><em>{c.words.length} words</em></span>
+                <ChevronRight size={14} className="wl-cat-arrow" />
+              </button>
+            ))}
+          </div>
+        )}
+      </Modal>
+    </>
+  )
 }
 
 function InsightsTile({ words, onNavigate }) {
