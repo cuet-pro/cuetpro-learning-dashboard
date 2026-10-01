@@ -109,6 +109,24 @@ export default function MyProgressCard({
   const [centerMode, setCenterMode] = useState(0)
   const [ghost, setGhost] = useState(false)
   const [openChip, setOpenChip] = useState(null)
+  const faceRef = useRef(null)
+  const firstRun = useRef(true)
+
+  // avatar "pop" animation when the mood changes (Web Animations API — reliable remount-free)
+  useEffect(() => {
+    if (firstRun.current) { firstRun.current = false; return }
+    const el = faceRef.current
+    if (el && el.animate) {
+      el.animate(
+        [
+          { transform: 'scale(1) rotate(0deg)' },
+          { transform: 'scale(1.18) rotate(-6deg)', offset: 0.4 },
+          { transform: 'scale(1) rotate(0deg)' },
+        ],
+        { duration: 450, easing: 'ease' },
+      )
+    }
+  }, [mood])
 
   // count-up animation on load / actual change
   useEffect(() => {
@@ -208,7 +226,9 @@ export default function MyProgressCard({
         onTouchStart={() => setGhost(true)} onTouchEnd={() => setTimeout(() => setGhost(false), 500)}
         onClick={onNextSection}
         onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') onNextSection() }}>
-        <Face mood={mood} />
+        <span className="mood-face-wrap" ref={faceRef}>
+          <Face mood={mood} />
+        </span>
         <div className="mpc-nudge-body">
           <span className="mpc-tag">{m.tag}</span>
           <p className="mpc-nudge-msg">{ghost ? `Next section takes you to ${Math.min(100, actual + nextSectionGain)}%` : m.msg}</p>

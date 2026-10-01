@@ -94,7 +94,8 @@
 .mpc-nudge.amber { background: var(--amber-tint); }
 .mpc-nudge.red { background: var(--red-tint); }
 .mpc-nudge:focus-visible { outline: 2px solid var(--text); outline-offset: 2px; }
-.mood-face { width: 40px; height: 40px; flex-shrink: 0; animation: mpc-pop .45s ease; }
+.mood-face { width: 40px; height: 40px; flex-shrink: 0; }
+.mood-face-wrap { display: inline-flex; flex-shrink: 0; }
 @keyframes mpc-pop { 0% { transform: scale(1) rotate(0); } 40% { transform: scale(1.18) rotate(-6deg); } 100% { transform: scale(1) rotate(0); } }
 .mpc-nudge-body { flex: 1; display: flex; flex-direction: column; gap: 2px; }
 .mpc-tag { align-self: flex-start; font-size: 10px; font-weight: 500; border-radius: 999px; padding: 2px 8px; }
