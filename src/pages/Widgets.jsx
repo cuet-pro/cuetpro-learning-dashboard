@@ -32,14 +32,6 @@ function IconGrid({ items, onNavigate }) {
   )
 }
 
-const UNITS = { antonym: 'words', idiom: 'idioms', spelling: 'words', foreign: 'phrases', literary: 'devices', phrasal: 'verbs' }
-const Tags = ({ t = '' }) => (
-  <>
-    {t.includes('★') && <span className="wl-tag star">★</span>}
-    {t.includes('PYQ') && <span className="wl-tag pyq">PYQ</span>}
-  </>
-)
-
 function VocabTile({ onNavigate }) {
   const [wlOpen, setWlOpen] = useState(false)
   const [cat, setCat] = useState(null)
@@ -49,52 +41,19 @@ function VocabTile({ onNavigate }) {
   const open = (id) => { setCat(id); setQ('') }
   const close = () => { setWlOpen(false); setCat(null); setQ('') }
 
-  const match = (it) => {
-    if (!q) return true
-    const hay = [it.word, it.meaning, it.syn, it.ant, it.example, it.tip, it.wrong, it.test].join(' ').toLowerCase()
-    return hay.includes(q.toLowerCase())
-  }
+  const match = (it) => !q || (it.front + ' ' + it.back).toLowerCase().includes(q.toLowerCase())
 
   const card = (it, i) => {
-    if (active.kind === 'antonym') return (
-      <div className="wl-card" key={i}>
-        <div className="wl-card-head"><b>{it.word}</b><Tags t={it.t} /><span className="wl-level">{it.level}</span></div>
-        <p className="wl-meaning">{it.meaning}</p>
-        <div className="wl-line"><em className="wl-syn">Syn</em><span>{it.syn}</span></div>
-        <div className="wl-line"><em className="wl-ant">Ant</em><span>{it.ant}</span></div>
-      </div>
-    )
-    if (active.kind === 'idiom') return (
-      <div className="wl-card" key={i}>
-        <div className="wl-card-head"><b>{it.word}</b><Tags t={it.t} /></div>
-        <p className="wl-meaning">{it.meaning}</p>
-        <div className="wl-line"><em className="wl-syn">e.g.</em><span>{it.example}</span></div>
-      </div>
-    )
-    if (active.kind === 'spelling') return (
-      <div className="wl-card" key={i}>
-        <div className="wl-card-head"><b>{it.word}</b><Tags t={it.t} /></div>
-        <div className="wl-line"><em className="wl-ant">✗</em><span>{it.wrong}</span></div>
-        <div className="wl-line"><em className="wl-syn">Tip</em><span>{it.tip}</span></div>
-      </div>
-    )
-    if (active.kind === 'foreign') return (
-      <div className="wl-card" key={i}>
-        <div className="wl-card-head"><b>{it.word}</b>{it.pyq && <span className="wl-tag pyq">PYQ</span>}</div>
-        <p className="wl-meaning">{it.meaning}</p>
-      </div>
-    )
-    if (active.kind === 'literary') return (
-      <div className="wl-card" key={i}>
-        <div className="wl-card-head"><b>{it.word}</b></div>
-        <p className="wl-meaning">{it.test}</p>
-        <div className="wl-line"><em className="wl-syn">e.g.</em><span>{it.example}</span></div>
-      </div>
-    )
+    const sep = it.back.indexOf(' — ')
+    const ans = sep >= 0 ? it.back.slice(0, sep) : it.back
+    const note = sep >= 0 ? it.back.slice(sep + 3) : ''
+    const star = it.front.endsWith(' ★')
+    const front = star ? it.front.slice(0, -2) : it.front
     return (
       <div className="wl-card" key={i}>
-        <div className="wl-card-head"><b>{it.word}</b></div>
-        <p className="wl-meaning">{it.meaning}</p>
+        <div className="wl-card-head"><b>{front}</b>{star && <span className="wl-star">★</span>}{it.sub && <span className="wl-sub">{it.sub}</span>}</div>
+        <div className="wl-ans">{ans}</div>
+        {note && <div className="wl-note">{note}</div>}
       </div>
     )
   }
@@ -116,20 +75,7 @@ function VocabTile({ onNavigate }) {
               <button type="button" className="wl-back" onClick={() => { setCat(null); setQ('') }}><ArrowLeft size={14} /> All categories</button>
               <input className="wl-search" type="text" placeholder={'Search ' + active.name.toLowerCase() + '…'} value={q} onChange={e => setQ(e.target.value)} />
             </div>
-            {active.kind === 'phrasal' ? (
-              (() => {
-                const groups = {}
-                words.forEach(it => { (groups[it.base] = groups[it.base] || []).push(it) })
-                return Object.entries(groups).map(([base, list]) => (
-                  <div className="wl-group" key={base}>
-                    <h4 className="wl-group-h">{base === 'PATTERN' ? 'Particle patterns' : base}</h4>
-                    {list.map(card)}
-                  </div>
-                ))
-              })()
-            ) : (
-              words.map(card)
-            )}
+            {words.map(card)}
             {words.length === 0 && <p className="wl-empty">No matches — try a different search.</p>}
           </div>
         ) : (
@@ -137,7 +83,7 @@ function VocabTile({ onNavigate }) {
             {VOCAB_CATEGORIES.map(c => (
               <button type="button" className="wl-cat" key={c.id} onClick={() => open(c.id)}>
                 <span className="wl-cat-ico" style={{ background: c.color + '1a' }}>{c.icon}</span>
-                <span className="wl-cat-t"><b>{c.name}</b><em>{c.items.length} {UNITS[c.kind]}</em></span>
+                <span className="wl-cat-t"><b>{c.name}</b><em>{c.count} {c.unit}</em></span>
                 <ChevronRight size={15} className="wl-cat-arrow" />
               </button>
             ))}

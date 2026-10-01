@@ -168,3 +168,12 @@
   .wl-top { flex-direction: column; align-items: stretch; }
   .wl-search { max-width: none; }
 }
+
+/* ═══ Word list — flashcard format (front / back) ═══ */
+.wl-card { display: grid; gap: 3px; }
+.wl-card-head { display: flex; align-items: center; gap: 7px; flex-wrap: wrap; }
+.wl-card-head b { font: 500 14px var(--font-body); color: var(--text); }
+.wl-star { color: var(--warning, #F5A623); font-size: 12px; line-height: 1; }
+.wl-sub { font: 500 8.5px var(--font-body); text-transform: uppercase; letter-spacing: .05em; color: var(--primary, #146C4E); background: var(--primary-soft, #e7f4ef); padding: 2px 7px; border-radius: 999px; }
+.wl-ans { font: 500 12.5px var(--font-body); color: var(--text-muted, #5b6472); }
+.wl-note { font: 400 11.5px var(--font-body); color: var(--text-muted, #8a93a3); }
