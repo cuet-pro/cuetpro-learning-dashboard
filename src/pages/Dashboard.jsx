@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import {
   Flame, ArrowRight, BookOpen, ChevronDown, CalendarDays, Eye,
-  Trophy, PieChart, ArrowUpRight, Lightbulb, Zap, Target, Quote, Medal, Award, History,
+  Trophy, PieChart, ArrowUpRight, Lightbulb, Zap, Target, Quote, Medal, Award,
 } from 'lucide-react'
 import { useProfile, dreamCollegeShort } from '../lib/profile'
 import { Modal } from '../components/shell/Shell.jsx'
@@ -127,7 +127,6 @@ export default function Dashboard({ onNavigate }) {
   const [quizScore, setQuizScore] = useState(0)
   const [quizDone, setQuizDone] = useState(false)
   const [showManifest, setShowManifest] = useState(false)
-  const [showActivity, setShowActivity] = useState(false)
   const [showBadges, setShowBadges] = useState(false)
   const [showStanding, setShowStanding] = useState(false)
   const [openRow, setOpenRow] = useState(null)
@@ -193,9 +192,6 @@ export default function Dashboard({ onNavigate }) {
           <div className="hero-chip count" title="Live countdown to CUET 2027">
             <CalendarDays size={15} /><span><em>CUET 2027 in</em><b>{cd.days}d {cd.hours}h</b></span>
           </div>
-          <button className="hero-chip activity" onClick={() => setShowActivity(true)} title="Your recent activity">
-            <History size={15} /><b>Activity</b>
-          </button>
         </div>
       </section>
 
@@ -258,6 +254,12 @@ export default function Dashboard({ onNavigate }) {
             <button className="btn btn-blue" onClick={() => onNavigate('studykit')}>Start Reading · +{RC.pts} pts</button>
           </div>
         )}
+      </section>
+
+      {/* 3b. Your recent activity */}
+      <section className="pg-activity">
+        <h3 className="pg-activity-title">Your recent activity</h3>
+        <ActivityTile />
       </section>
 
       {/* 4. My Progress ⇄ My Standing — swipeable panel card */}
@@ -427,17 +429,7 @@ export default function Dashboard({ onNavigate }) {
       {/* 5. Tool tiles (4 grouped) */}
       <DashboardTiles onNavigate={onNavigate} />
 
-      {/* 6. Bottom activity button */}
-      <button type="button" className="dash-activity" onClick={() => setShowActivity(true)}>
-        <span className="dash-activity-ico"><History size={16} /></span>
-        <span className="dash-activity-t"><b>Your recent activity</b><em>Mocks, flashcards, streaks & more</em></span>
-        <ArrowRight size={16} className="dash-activity-arrow" />
-      </button>
-
-      {/* Activity + badges — moved up from the tiles into the hero as small controls */}
-      <Modal open={showActivity} onClose={() => setShowActivity(false)} title="Your recent activity">
-        <ActivityTile />
-      </Modal>
+      {/* Badges — moved up from the tiles into the hero as a small control */}
       <Modal open={showBadges} onClose={() => setShowBadges(false)} title="Your badges">
         <BadgesTile />
       </Modal>

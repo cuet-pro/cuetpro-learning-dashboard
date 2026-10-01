@@ -791,17 +791,7 @@ button.hero-chip:hover { border-color: var(--primary); }
 .hero-chip.activity b { color: var(--info); }
 .hero-chip.activity:hover { border-color: var(--info); background: var(--info-soft); }
 
-/* ═══ Bottom activity button ═══ */
-.dash-activity {
-  display: flex; align-items: center; gap: 12px; width: 100%;
-  padding: 13px 15px; margin-top: 14px;
-  background: var(--info-soft); border: 1px solid transparent; border-radius: var(--r-md);
-  cursor: pointer; text-align: left; font-family: var(--font-body);
-  transition: transform .16s, box-shadow .16s, border-color .16s;
-}
-.dash-activity:hover { transform: translateY(-2px); box-shadow: var(--shadow-sm); border-color: var(--info); }
-.dash-activity-ico { width: 34px; height: 34px; border-radius: 10px; display: grid; place-items: center; background: var(--info); color: #fff; flex-shrink: 0; }
-.dash-activity-t { flex: 1; display: grid; gap: 1px; }
-.dash-activity-t b { font-size: 13px; font-weight: 700; color: var(--info); }
-.dash-activity-t em { font-size: 11px; font-weight: 500; color: var(--text-muted); font-style: normal; }
-.dash-activity-arrow { color: var(--info); flex-shrink: 0; }
+
+/* ═══ Your recent activity (above My Progress) ═══ */
+.pg-activity { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-md); box-shadow: var(--shadow-sm); padding: 16px 16px 8px; margin-bottom: var(--sp-5); }
+.pg-activity-title { font-size: 14px; font-weight: 800; color: var(--text); margin: 0 0 12px; }
