@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import {
   Flame, ArrowRight, BookOpen, ChevronDown, CalendarDays, Eye,
-  Trophy, PieChart, ArrowUpRight, Lightbulb, Zap, Target, Quote, Medal, Award,
+  Trophy, PieChart, ArrowUpRight, Lightbulb, Zap, Target, Quote, Medal, Award, History,
 } from 'lucide-react'
 import { useProfile, dreamCollegeShort } from '../lib/profile'
 import { Modal } from '../components/shell/Shell.jsx'
@@ -128,6 +128,7 @@ export default function Dashboard({ onNavigate }) {
   const [quizDone, setQuizDone] = useState(false)
   const [showManifest, setShowManifest] = useState(false)
   const [showBadges, setShowBadges] = useState(false)
+  const [showActivity, setShowActivity] = useState(false)
   const [showStanding, setShowStanding] = useState(false)
   const [openRow, setOpenRow] = useState(null)
   const [tick, setTick] = useState(0)
@@ -257,10 +258,11 @@ export default function Dashboard({ onNavigate }) {
       </section>
 
       {/* 3b. Your recent activity */}
-      <section className="pg-activity">
-        <h3 className="pg-activity-title">Your recent activity</h3>
-        <ActivityTile />
-      </section>
+      <button type="button" className="dash-activity" onClick={() => setShowActivity(true)}>
+        <span className="dash-activity-ico"><History size={16} /></span>
+        <span className="dash-activity-t"><b>Your recent activity</b><em>Mocks, flashcards, streaks & more</em></span>
+        <ArrowRight size={16} className="dash-activity-arrow" />
+      </button>
 
       {/* 4. My Progress ⇄ My Standing — swipeable panel card */}
       <div className="pg-card">
@@ -432,6 +434,9 @@ export default function Dashboard({ onNavigate }) {
       {/* Badges — moved up from the tiles into the hero as a small control */}
       <Modal open={showBadges} onClose={() => setShowBadges(false)} title="Your badges">
         <BadgesTile />
+      </Modal>
+      <Modal open={showActivity} onClose={() => setShowActivity(false)} title="Your recent activity">
+        <ActivityTile />
       </Modal>
 
       {/* Manifestation modal */}
