@@ -74,7 +74,7 @@ function VocabTile({ onNavigate }) {
         { icon: Layers, label: 'Flashcards', tone: 'green', nav: 'studykit' },
         { icon: MessageCircle, label: 'Phrasal verbs', tone: 'purple', go: () => alert('Deep-link → Phrasal verbs') },
       ]} />
-      <Modal open={wlOpen} onClose={close} title={active ? active.name : 'Word list'}>
+      <Modal open={wlOpen} onClose={close} title={active ? active.name : 'Word list'} wide>
         {active ? (
           <div className="wl-words">
             <div className="wl-top">

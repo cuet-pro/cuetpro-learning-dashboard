@@ -198,7 +198,7 @@ export function ToastProvider({ children }) {
 }
 
 /* ── Modal ── */
-export function Modal({ open, onClose, title, children, footer }) {
+export function Modal({ open, onClose, title, children, footer, wide }) {
   useEffect(() => {
     if (!open) return
     const h = e => { if (e.key === 'Escape') onClose() }
@@ -208,7 +208,7 @@ export function Modal({ open, onClose, title, children, footer }) {
   if (!open) return null
   return createPortal(
     <div className="modal-scrim" onClick={onClose}>
-      <div className="modal" onClick={e => e.stopPropagation()} role="dialog" aria-modal="true">
+      <div className={'modal' + (wide ? ' wide' : '')} onClick={e => e.stopPropagation()} role="dialog" aria-modal="true">
         <button className="modal-x" onClick={onClose} aria-label="Close"><X size={16} /></button>
         {title && <h3>{title}</h3>}
         {children}
