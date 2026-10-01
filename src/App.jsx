@@ -5,6 +5,7 @@ import Analysis from './pages/Analysis.jsx'
 import ChillZone from './pages/ChillZone.jsx'
 import Explorer from './pages/Explorer.jsx'
 import Profile from './pages/Profile.jsx'
+import ProgressDemo from './pages/ProgressDemo.jsx'
 import AppShell, { ToastProvider } from './components/shell/Shell.jsx'
 import './tokens.css'
 import './shell.css'
@@ -16,6 +17,7 @@ const PAGES = {
   chill: ChillZone,
   explorer: Explorer,
   profile: Profile,
+  progressdemo: ProgressDemo,
 }
 
 export default function App() {

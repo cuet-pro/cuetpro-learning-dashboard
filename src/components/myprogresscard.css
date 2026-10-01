@@ -1,0 +1,114 @@
+/* My Progress card — self-contained, flat, dark-mode ready */
+.mpc {
+  --bg: #ffffff;
+  --text: #1a2130;
+  --muted: #8a93a3;
+  --border: #e6e9ee;
+  --track: #e9ecf1;
+  --tick: #343b48;
+  --green: #0F6E56;
+  --green-tint: #e7f4ef;
+  --amber: #BA7517;
+  --amber-tint: #fbf0de;
+  --red: #A32D2D;
+  --red-tint: #fae7e7;
+  --face: #FFD166;
+  --tint-text-green: #0d5a46;
+  --tint-text-amber: #8a5a12;
+  --tint-text-red: #8a2424;
+
+  width: min(360px, 100%);
+  background: var(--bg);
+  color: var(--text);
+  border: 0.5px solid var(--border);
+  border-radius: 12px;
+  padding: 16px 16px 14px;
+  box-sizing: border-box;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  font-weight: 400;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.mpc.dark {
+  --bg: #171b24;
+  --text: #e8ecf3;
+  --muted: #8b93a3;
+  --border: #2a3040;
+  --track: #2a3040;
+  --tick: #c3cad6;
+  --green-tint: #12261f;
+  --amber-tint: #2a2213;
+  --red-tint: #2a1717;
+  --tint-text-green: #7fd3b4;
+  --tint-text-amber: #e7b86a;
+  --tint-text-red: #e88f8f;
+}
+
+/* header */
+.mpc-head { display: flex; align-items: center; gap: 10px; }
+.mpc-head-ico { width: 32px; height: 32px; border-radius: 9px; display: grid; place-items: center; background: var(--green-tint); color: var(--green); flex-shrink: 0; }
+.mpc-head-t { display: flex; flex-direction: column; gap: 1px; }
+.mpc-head-t b { font-size: 15px; font-weight: 500; color: var(--text); }
+.mpc-head-t span { font-size: 12px; color: var(--muted); }
+
+/* ring */
+.mpc-ring-zone { display: flex; justify-content: center; }
+.mpc-ring { background: none; border: none; padding: 0; cursor: pointer; width: 200px; height: 200px; border-radius: 50%; }
+.mpc-ring-svg { width: 100%; height: 100%; display: block; }
+.mpc-track { fill: none; stroke: var(--track); stroke-width: 12; }
+.mpc-prog { fill: none; stroke-width: 12; stroke-linecap: round; transition: stroke .25s; }
+.mpc-ghost { fill: none; stroke-width: 12; stroke-linecap: round; opacity: .22; transition: opacity .2s; }
+.mpc-tick { stroke: var(--tick); stroke-width: 3; stroke-linecap: round; }
+.mpc-ring-num { font-size: 30px; font-weight: 500; fill: var(--text); }
+.mpc-ring-sub { font-size: 11.5px; fill: var(--muted); }
+
+/* pace line */
+.mpc-pace { font-size: 12.5px; color: var(--muted); margin: 0; text-align: center; }
+.mpc-pace b { color: var(--text); font-weight: 500; }
+.mpc-pace .up { color: var(--green); font-weight: 500; }
+.mpc-pace .down { color: var(--red); font-weight: 500; }
+
+/* status chips */
+.mpc-chips { display: flex; flex-wrap: wrap; gap: 7px; }
+.mpc-chip { border: 1px solid transparent; border-radius: 999px; padding: 6px 12px; font-size: 12px; font-weight: 500; color: var(--tint-text-green); cursor: pointer; transition: transform .15s, border-color .15s; font-family: inherit; }
+.mpc-chip b { font-weight: 500; }
+.mpc-chip.green { background: var(--green-tint); color: var(--tint-text-green); }
+.mpc-chip.amber { background: var(--amber-tint); color: var(--tint-text-amber); }
+.mpc-chip.red { background: var(--red-tint); color: var(--tint-text-red); }
+.mpc-chip:focus-visible { outline: 2px solid var(--text); outline-offset: 2px; }
+.mpc-chip.open { border-color: currentColor; }
+
+/* expanded list */
+.mpc-chip-list { display: flex; flex-direction: column; gap: 6px; padding: 2px 2px 0; }
+.mpc-chip-row { display: flex; align-items: center; gap: 8px; font-size: 13px; }
+.mpc-check { color: var(--green); font-weight: 500; width: 14px; }
+.mpc-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--amber); margin: 0 3px; }
+.mpc-chip-name { flex: 1; color: var(--text); }
+.mpc-catchup { border: none; background: none; color: var(--green); font-size: 12px; font-weight: 500; cursor: pointer; padding: 2px 4px; font-family: inherit; }
+.mpc-catchup:hover { text-decoration: underline; }
+
+/* nudge box */
+.mpc-nudge { display: flex; align-items: center; gap: 10px; border: 0.5px solid var(--border); border-radius: 10px; padding: 10px 12px; cursor: pointer; }
+.mpc-nudge.green { background: var(--green-tint); }
+.mpc-nudge.amber { background: var(--amber-tint); }
+.mpc-nudge.red { background: var(--red-tint); }
+.mpc-nudge:focus-visible { outline: 2px solid var(--text); outline-offset: 2px; }
+.mood-face { width: 40px; height: 40px; flex-shrink: 0; animation: mpc-pop .45s ease; }
+@keyframes mpc-pop { 0% { transform: scale(1) rotate(0); } 40% { transform: scale(1.18) rotate(-6deg); } 100% { transform: scale(1) rotate(0); } }
+.mpc-nudge-body { flex: 1; display: flex; flex-direction: column; gap: 2px; }
+.mpc-tag { align-self: flex-start; font-size: 10px; font-weight: 500; border-radius: 999px; padding: 2px 8px; }
+.mpc-nudge.green .mpc-tag { background: var(--green); color: #fff; }
+.mpc-nudge.amber .mpc-tag { background: var(--amber); color: #fff; }
+.mpc-nudge.red .mpc-tag { background: var(--red); color: #fff; }
+.mpc-nudge-msg { font-size: 12.5px; color: var(--text); margin: 0; }
+.mpc-nudge-arrow { border: none; background: none; color: var(--text); cursor: pointer; padding: 4px; flex-shrink: 0; opacity: .55; font-family: inherit; }
+.mpc-nudge-arrow:hover { opacity: 1; }
+
+/* responsive: ring scales down */
+@media (max-width: 380px) {
+  .mpc { padding: 14px 12px 12px; }
+  .mpc-ring { width: 160px; height: 160px; }
+  .mpc-ring-num { font-size: 24px; }
+  .mpc-ring-sub { font-size: 10.5px; }
+}
