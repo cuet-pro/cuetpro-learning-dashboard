@@ -177,3 +177,18 @@
 .wl-sub { font: 500 8.5px var(--font-body); text-transform: uppercase; letter-spacing: .05em; color: var(--primary, #146C4E); background: var(--primary-soft, #e7f4ef); padding: 2px 7px; border-radius: 999px; }
 .wl-ans { font: 500 12.5px var(--font-body); color: var(--text-muted, #5b6472); }
 .wl-note { font: 400 11.5px var(--font-body); color: var(--text-muted, #8a93a3); }
+
+/* ═══ Word bank table (Antonyms / Synonyms) ═══ */
+.wl-table-wrap { overflow-x: auto; margin-top: 8px; }
+.wl-table { width: 100%; border-collapse: collapse; font-size: 12px; min-width: 560px; }
+.wl-table thead th { text-align: left; padding: 8px 10px; font-size: 10px; text-transform: uppercase; letter-spacing: .05em; color: var(--text-muted, #8a93a3); border-bottom: 2px solid var(--border, #e6e9ee); white-space: nowrap; font-weight: 500; }
+.wl-table tbody tr { border-bottom: 1px solid var(--border, #e6e9ee); }
+.wl-table tbody tr:hover { background: var(--surface, #fff); }
+.wl-table td { padding: 9px 10px; vertical-align: top; }
+.wl-tword { font-weight: 500; color: var(--text, #1a2130); white-space: nowrap; }
+.wl-tmean { color: var(--text-muted, #8a93a3); min-width: 180px; }
+.wl-tsyn, .wl-tant { color: var(--text-muted, #8a93a3); font-size: 11px; }
+.wl-diff { display: inline-block; font-size: 10px; padding: 2px 8px; border-radius: 999px; border: 1px solid var(--border, #e6e9ee); color: var(--text-muted, #8a93a3); white-space: nowrap; }
+.wl-diff.easy { color: #0F6E56; border-color: #0F6E56; }
+.wl-diff.medium { color: #BA7517; border-color: #BA7517; }
+.wl-diff.hard { color: #A32D2D; border-color: #A32D2D; }

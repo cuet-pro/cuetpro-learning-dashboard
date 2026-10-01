@@ -41,7 +41,13 @@ function VocabTile({ onNavigate }) {
   const open = (id) => { setCat(id); setQ('') }
   const close = () => { setWlOpen(false); setCat(null); setQ('') }
 
-  const match = (it) => !q || (it.front + ' ' + it.back).toLowerCase().includes(q.toLowerCase())
+  const match = (it) => {
+    if (!q) return true
+    const hay = active.kind === 'bank'
+      ? [it.word, it.mean, (it.syn || []).join(' '), (it.ant || []).join(' ')].join(' ')
+      : (it.front + ' ' + it.back)
+    return hay.toLowerCase().includes(q.toLowerCase())
+  }
 
   const card = (it, i) => {
     const sep = it.back.indexOf(' — ')
@@ -75,7 +81,28 @@ function VocabTile({ onNavigate }) {
               <button type="button" className="wl-back" onClick={() => { setCat(null); setQ('') }}><ArrowLeft size={14} /> All categories</button>
               <input className="wl-search" type="text" placeholder={'Search ' + active.name.toLowerCase() + '…'} value={q} onChange={e => setQ(e.target.value)} />
             </div>
-            {words.map(card)}
+            {active.kind === 'bank' ? (
+              <div className="wl-table-wrap">
+                <table className="wl-table">
+                  <thead>
+                    <tr><th>Word</th><th>Meaning</th><th>Synonyms</th><th>Antonyms</th><th>Difficulty</th></tr>
+                  </thead>
+                  <tbody>
+                    {words.map((it, i) => (
+                      <tr key={it.id || i}>
+                        <td className="wl-tword">{it.word}{it.star && <span className="wl-star">★</span>}</td>
+                        <td className="wl-tmean">{it.mean}</td>
+                        <td className="wl-tsyn">{(it.syn || []).join(', ')}</td>
+                        <td className="wl-tant">{(it.ant || []).join(', ')}</td>
+                        <td><span className={'wl-diff ' + (it.diff || '').toLowerCase()}>{it.diff}</span></td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              words.map(card)
+            )}
             {words.length === 0 && <p className="wl-empty">No matches — try a different search.</p>}
           </div>
         ) : (
