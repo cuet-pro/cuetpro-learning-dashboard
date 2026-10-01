@@ -1,7 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import {
-  LayoutDashboard, GraduationCap, BarChart3, Compass, Settings, Coffee, Gauge,
+  LayoutDashboard, GraduationCap, BarChart3, Compass, Settings, Coffee,
   Search, Sun, Moon, Bell, Menu, X, PanelLeftClose, PanelLeftOpen, ChevronDown,
   User, Crown, HelpCircle, LogOut, CircleCheck, CircleAlert, Info,
 } from 'lucide-react'
@@ -15,7 +15,6 @@ const NAV = [
   { id: 'chill', label: 'Chill Zone', icon: Coffee },
   { id: 'explorer', label: 'DU Admissions Explorer', icon: Compass },
   { id: 'profile', label: 'Profile & Settings', icon: Settings },
-  { id: 'progressdemo', label: 'Progress demo', icon: Gauge },
 ]
 const PRIMARY_NAV = ['dashboard', 'studykit', 'analysis', 'profile', 'explorer']
 
