@@ -43,25 +43,8 @@ function VocabTile({ onNavigate }) {
 
   const match = (it) => {
     if (!q) return true
-    const hay = active.kind === 'bank'
-      ? [it.word, it.mean, (it.syn || []).join(' '), (it.ant || []).join(' ')].join(' ')
-      : (it.front + ' ' + it.back)
+    const hay = Object.values(it).map(v => Array.isArray(v) ? v.join(' ') : String(v)).join(' ')
     return hay.toLowerCase().includes(q.toLowerCase())
-  }
-
-  const card = (it, i) => {
-    const sep = it.back.indexOf(' — ')
-    const ans = sep >= 0 ? it.back.slice(0, sep) : it.back
-    const note = sep >= 0 ? it.back.slice(sep + 3) : ''
-    const star = it.front.endsWith(' ★')
-    const front = star ? it.front.slice(0, -2) : it.front
-    return (
-      <div className="wl-card" key={i}>
-        <div className="wl-card-head"><b>{front}</b>{star && <span className="wl-star">★</span>}{it.sub && <span className="wl-sub">{it.sub}</span>}</div>
-        <div className="wl-ans">{ans}</div>
-        {note && <div className="wl-note">{note}</div>}
-      </div>
-    )
   }
 
   const words = active ? active.items.filter(match) : []
@@ -81,28 +64,30 @@ function VocabTile({ onNavigate }) {
               <button type="button" className="wl-back" onClick={() => { setCat(null); setQ('') }}><ArrowLeft size={14} /> All categories</button>
               <input className="wl-search" type="text" placeholder={'Search ' + active.name.toLowerCase() + '…'} value={q} onChange={e => setQ(e.target.value)} />
             </div>
-            {active.kind === 'bank' ? (
-              <div className="wl-table-wrap">
-                <table className="wl-table">
-                  <thead>
-                    <tr><th>Word</th><th>Meaning</th><th>Synonyms</th><th>Antonyms</th><th>Difficulty</th></tr>
-                  </thead>
-                  <tbody>
-                    {words.map((it, i) => (
-                      <tr key={it.id || i}>
-                        <td className="wl-tword">{it.word}{it.star && <span className="wl-star">★</span>}</td>
-                        <td className="wl-tmean">{it.mean}</td>
-                        <td className="wl-tsyn">{(it.syn || []).join(', ')}</td>
-                        <td className="wl-tant">{(it.ant || []).join(', ')}</td>
-                        <td><span className={'wl-diff ' + (it.diff || '').toLowerCase()}>{it.diff}</span></td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            ) : (
-              words.map(card)
-            )}
+            <div className="wl-table-wrap">
+              <table className="wl-table">
+                <thead>
+                  <tr>{active.cols.map(c => <th key={c.h}>{c.h}</th>)}</tr>
+                </thead>
+                <tbody>
+                  {words.map((it, i) => (
+                    <tr key={it.id || i}>
+                      {active.cols.map(c => {
+                        let v = it[c.f]
+                        if (c.join) v = (v || []).join(', ')
+                        const cls = c.pill ? 'wl-pill-cell' : (c.f === 'word' || c.f === 'front' ? 'wl-tword' : '')
+                        return (
+                          <td key={c.h} className={cls}>
+                            {c.star && it.star ? <span className="wl-star">★</span> : null}
+                            {c.pill ? <span className={'wl-diff ' + String(v || '').toLowerCase()}>{v}</span> : v}
+                          </td>
+                        )
+                      })}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
             {words.length === 0 && <p className="wl-empty">No matches — try a different search.</p>}
           </div>
         ) : (
@@ -110,7 +95,7 @@ function VocabTile({ onNavigate }) {
             {VOCAB_CATEGORIES.map(c => (
               <button type="button" className="wl-cat" key={c.id} onClick={() => open(c.id)}>
                 <span className="wl-cat-ico" style={{ background: c.color + '1a' }}>{c.icon}</span>
-                <span className="wl-cat-t"><b>{c.name}</b><em>{c.count} {c.unit}</em></span>
+                <span className="wl-cat-t"><b>{c.name}</b><em>{c.items.length} {c.unit}</em></span>
                 <ChevronRight size={15} className="wl-cat-arrow" />
               </button>
             ))}
