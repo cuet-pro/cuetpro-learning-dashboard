@@ -204,7 +204,7 @@ export default function HeroBanner({ onRemind, onAddToCalendar, onOpenDemo, onNa
           <div className="hb-segs" role="tablist" aria-label="Slides">
             {slides.map((s, i) => (
               <button key={s.id} className="hb-seg" role="tab" aria-selected={i === index} aria-label={'Go to ' + s.label} onClick={e => { e.stopPropagation(); setIndex(i) }}>
-                <span className={'hb-seg-fill' + (i < index ? ' done' : '')} style={{ animationDuration: DURATION + 'ms', animationPlayState: (i === index && !isPaused) ? 'running' : (i === index ? 'paused' : undefined) }} onAnimationEnd={i === index ? onSegEnd : undefined} />
+                <span className={'hb-seg-fill' + (i < index ? ' done' : i === index ? ' active' : '')} style={{ animationDuration: DURATION + 'ms', animationPlayState: (i === index && isPaused) ? 'paused' : 'running' }} onAnimationEnd={i === index ? onSegEnd : undefined} />
               </button>
             ))}
           </div>

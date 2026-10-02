@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import {
   Flame, ArrowRight, BookOpen, ChevronDown, CalendarDays, Eye,
-  Trophy, PieChart, ArrowUpRight, Zap, Target, Quote, Medal, Award, History,
+  Trophy, PieChart, ArrowUpRight, Zap, Quote, Medal, Award, History,
 } from 'lucide-react'
 import { useProfile, dreamCollegeShort } from '../lib/profile'
 import HeroBanner from '../components/HeroBanner.jsx'
@@ -175,7 +175,6 @@ export default function Dashboard({ onNavigate }) {
     }, 200)
   }
 
-  const weakest = [...SUBJECTS].sort((a, b) => a.pct - b.pct)[0]
   const lb = LB.all
   const sortedRows = [...lb.rows].sort((a, b) => b.pts - a.pts)
   const leaderPts = sortedRows[0]?.pts || 1
@@ -194,15 +193,7 @@ export default function Dashboard({ onNavigate }) {
 
   return (
     <div className="page dash">
-      {/* 1. Rotating hero announcement banner */}
-      <HeroBanner onNavigate={href => {
-        if (href.startsWith('/study-kit') || href.startsWith('/quiz') || href.startsWith('/doubt-solver')) onNavigate('studykit')
-        else if (href.startsWith('/mocks')) onNavigate('analysis')
-        else if (href.startsWith('/du-explorer')) onNavigate('explorer')
-        else onNavigate('studykit')
-      }} />
-
-      {/* 2. Hero identity strip */}
+      {/* 1. Hero identity strip */}
       <section className="hero">
         <div className="hero-id">
           <div className="av-float"><div className="dash-avatar"><Avatar gender={profile.gender} blink={blink} /></div></div>
@@ -226,18 +217,13 @@ export default function Dashboard({ onNavigate }) {
       </section>
 
       {/* 2. Focus card (primary) */}
-      <section className="focus">
-        <div className="focus-body">
-          <span className="focus-kicker"><Target size={13} /> TODAY'S FOCUS</span>
-          <h2>Get <b>{weakest.n}</b> from {weakest.pct}% to 75%</h2>
-          <p>Weakest subject · revise the flagged topic, then take the subject quiz. Estimated <b>+18 marks</b> on your next mock.</p>
-          <div className="focus-bar"><i style={{ width: weakest.pct + '%' }} /></div>
-        </div>
-        <div className="focus-actions">
-          <button className="btn btn-outline" onClick={() => onNavigate('studykit')}>Revise topic <BookOpen size={14} /></button>
-          <button className="btn btn-primary" onClick={() => { setChTab('quiz'); document.getElementById('challenges')?.scrollIntoView({ behavior: 'smooth' }) }}>Take subject quiz <ArrowRight size={14} /></button>
-        </div>
-      </section>
+      {/* 2. Rotating announcement banner — replaces Today's focus */}
+      <HeroBanner onNavigate={href => {
+        if (href.startsWith('/study-kit') || href.startsWith('/quiz') || href.startsWith('/doubt-solver')) onNavigate('studykit')
+        else if (href.startsWith('/mocks')) onNavigate('analysis')
+        else if (href.startsWith('/du-explorer')) onNavigate('explorer')
+        else onNavigate('studykit')
+      }} />
 
       {/* 3. Daily challenges — tabbed */}
       <section className="cuet-card" id="challenges">
