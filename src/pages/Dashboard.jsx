@@ -4,6 +4,7 @@ import {
   Trophy, PieChart, ArrowUpRight, Zap, Target, Quote, Medal, Award, History,
 } from 'lucide-react'
 import { useProfile, dreamCollegeShort } from '../lib/profile'
+import HeroBanner from '../components/HeroBanner.jsx'
 import { Modal } from '../components/shell/Shell.jsx'
 import DashboardTiles, { ActivityTile, BadgesTile } from './Widgets.jsx'
 import './dashboard.css'
@@ -193,7 +194,15 @@ export default function Dashboard({ onNavigate }) {
 
   return (
     <div className="page dash">
-      {/* 1. Hero identity strip */}
+      {/* 1. Rotating hero announcement banner */}
+      <HeroBanner onNavigate={href => {
+        if (href.startsWith('/study-kit') || href.startsWith('/quiz') || href.startsWith('/doubt-solver')) onNavigate('studykit')
+        else if (href.startsWith('/mocks')) onNavigate('analysis')
+        else if (href.startsWith('/du-explorer')) onNavigate('explorer')
+        else onNavigate('studykit')
+      }} />
+
+      {/* 2. Hero identity strip */}
       <section className="hero">
         <div className="hero-id">
           <div className="av-float"><div className="dash-avatar"><Avatar gender={profile.gender} blink={blink} /></div></div>
