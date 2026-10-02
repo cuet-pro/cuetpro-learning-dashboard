@@ -13,18 +13,29 @@ import './widgets.css'
 function IconGrid({ items, onNavigate }) {
   return (
     <div className="icon-grid">
-      {items.map(it => {
+      {items.map((it, i) => {
         const I = it.icon
         return (
           <button
-            className={'icon-cell ' + it.tone}
+            className={'icon-cell ' + (it.tone || 'neutral')}
             key={it.label}
-            onClick={() => (it.go ? it.go() : it.nav && onNavigate ? onNavigate(it.nav) : null)}
+            style={{ animationDelay: (i * 0.08) + 's' }}
+            onClick={(e) => {
+              const wrap = e.currentTarget.querySelector('.ic-wrap')
+              if (wrap && wrap.animate) {
+                wrap.animate(
+                  [{ transform: 'scale(1)' }, { transform: 'scale(1.25)', offset: 0.45 }, { transform: 'scale(1)' }],
+                  { duration: 350, easing: 'ease' }
+                )
+              }
+              if (it.go) it.go(); else if (it.nav && onNavigate) onNavigate(it.nav)
+            }}
             disabled={!it.go && !it.nav}
           >
-            <span className={'ic-wrap ' + it.tone}><I size={18} /></span>
+            <span className={'ic-wrap ' + (it.tone || 'neutral')}><I size={18} /></span>
             <span className="ic-label">{it.label}</span>
-            {it.badge && <em className="icon-badge">{it.badge}</em>}
+            {it.stat && <span className="ic-stat">{it.stat}</span>}
+            {it.new && <span className="ic-new" aria-label="New content" />}
           </button>
         )
       })}
@@ -48,14 +59,15 @@ function VocabTile({ onNavigate }) {
   }
 
   const words = active ? active.items.filter(match) : []
+  const vocabCount = VOCAB_CATEGORIES.reduce((s, c) => s + c.items.length, 0)
 
   return (
     <>
       <IconGrid onNavigate={onNavigate} items={[
-        { icon: Swords, label: 'Word battle', tone: 'blue', go: () => alert('Deep-link → Word battle (Chill Zone)') },
-        { icon: List, label: 'Word list', tone: 'blue', go: () => setWlOpen(true) },
-        { icon: Layers, label: 'Flashcards', tone: 'green', nav: 'studykit' },
-        { icon: MessageCircle, label: 'Phrasal verbs', tone: 'purple', go: () => alert('Deep-link → Phrasal verbs') },
+        { icon: Swords, label: 'Word battle', tone: 'blue', stat: '5 rounds today', go: () => alert('Deep-link → Word battle (Chill Zone)') },
+        { icon: List, label: 'Word list', tone: 'blue', stat: vocabCount + ' words', go: () => setWlOpen(true) },
+        { icon: Layers, label: 'Flashcards', tone: 'green', stat: '230/500 mastered', nav: 'studykit' },
+        { icon: MessageCircle, label: 'Phrasal verbs', tone: 'purple', stat: '16 verbs · 3 new', new: true, go: () => alert('Deep-link → Phrasal verbs') },
       ]} />
       <Modal open={wlOpen} onClose={close} title={active ? active.name : 'Word list'} wide>
         {active ? (
@@ -109,12 +121,12 @@ function VocabTile({ onNavigate }) {
 function InsightsTile({ onNavigate }) {
   const goSwot = () => { try { localStorage.setItem('cp_analysis_tab', 'swot') } catch {} onNavigate('analysis') }
   return <IconGrid onNavigate={onNavigate} items={[
-    { icon: Grid3x3, label: 'SWOT', tone: 'purple', go: goSwot },
-    { icon: Lightbulb, label: 'Fixes', tone: 'purple', go: goSwot },
-    { icon: FileText, label: 'Syllabus PDF', tone: 'blue', go: () => alert('Deep-link → Syllabus PDF') },
-    { icon: BarChart3, label: 'Cutoffs', tone: 'blue', nav: 'explorer' },
-    { icon: ListChecks, label: 'Eligibility', tone: 'green', go: () => alert('Deep-link → Eligibility checker') },
-    { icon: Files, label: 'Sample papers', tone: 'purple', go: () => alert('Deep-link → Sample papers') },
+    { icon: Grid3x3, label: 'SWOT', tone: 'purple', stat: '4 quadrants', go: goSwot },
+    { icon: Lightbulb, label: 'Fixes', tone: 'purple', stat: '3 action items', go: goSwot },
+    { icon: FileText, label: 'Syllabus PDF', tone: 'blue', stat: '19 chapters', go: () => alert('Deep-link → Syllabus PDF') },
+    { icon: BarChart3, label: 'Cutoffs', tone: 'amber', stat: '2025-26 data', nav: 'explorer' },
+    { icon: ListChecks, label: 'Eligibility', tone: 'green', stat: 'check your course', go: () => alert('Deep-link → Eligibility checker') },
+    { icon: Files, label: 'Sample papers', tone: 'blue', stat: '12 papers', go: () => alert('Deep-link → Sample papers') },
   ]} />
 }
 
@@ -217,8 +229,8 @@ export default function DashboardTiles({ onNavigate }) {
   const [topWords] = useState(() => boostRanking('Commerce').slice(0, 1))
 
   const tiles = [
-    { id: 'vocab', title: 'Vocabulary & practice', icon: Layers, tone: 'green', count: 4, body: <VocabTile onNavigate={onNavigate} /> },
-    { id: 'insights', title: 'Insights & resources', icon: Lightbulb, tone: 'blue', count: 6, body: <InsightsTile onNavigate={onNavigate} /> },
+    { id: 'vocab', title: '📚 Vocabulary & practice', icon: Layers, tone: 'green', count: 4, body: <VocabTile onNavigate={onNavigate} /> },
+    { id: 'insights', title: '💡 Insights & resources', icon: Lightbulb, tone: 'blue', count: 6, body: <InsightsTile onNavigate={onNavigate} /> },
   ]
 
   return (
