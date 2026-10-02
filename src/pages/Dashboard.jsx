@@ -301,13 +301,12 @@ export default function Dashboard({ onNavigate }) {
               <button className={'pg-seg' + (panel === 1 ? ' on' : '')} onClick={() => flipTo(1)} aria-pressed={panel === 1}><Trophy size={13} /> Standing</button>
             </div>
 
-            <div className="pg-2col">
-              {/* left — syllabus completion ring + avatar riding the arc */}
+            <div className="pg-2col pg-2col-progress">
               <div className="pg-col pg-col-ring">
                 <button className="prog-ring-wrap" onClick={() => onNavigate('analysis')} title="Open Analysis">
                   <div className="ring" style={{ '--p': syllabusPct + '%' }}>
                     <div className={'ring-avatar' + (bounce ? ' bounce' : '')} style={{ transform: 'rotate(' + ringAngle + 'deg)' }}>
-                      <div className="ring-avatar-in" style={{ transform: 'translateY(-53px) rotate(' + (-ringAngle) + 'deg)' }}>
+                      <div className="ring-avatar-in" style={{ transform: 'translateY(-88px) rotate(' + (-ringAngle) + 'deg)' }}>
                         <Avatar gender={profile.gender} pose={ringTier} blink={blink} />
                       </div>
                     </div>

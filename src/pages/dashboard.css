@@ -359,20 +359,20 @@ button.hero-chip:hover { border-color: var(--primary); }
 .prog-head:hover .prog-head-arr { transform: translate(2px, -2px); color: var(--primary); }
 
 .prog-ring-wrap { border: none; background: none; cursor: pointer; padding: 14px 0 6px; display: flex; justify-content: center; }
-.ring { --p: 0%; position: relative; width: 118px; height: 118px; border-radius: 50%;
+.ring { --p: 0%; position: relative; width: 190px; height: 190px; border-radius: 50%;
   background: conic-gradient(var(--primary) var(--p), var(--bg) 0); display: grid; place-items: center; transition: transform .15s; }
 .prog-ring-wrap:hover .ring { transform: scale(1.04); }
-.ring::before { content: ''; position: absolute; inset: 12px; border-radius: 50%; background: var(--surface); }
+.ring::before { content: ''; position: absolute; inset: 14px; border-radius: 50%; background: var(--surface); }
 .ring-in { position: relative; text-align: center; }
-.ring-in b { font-family: var(--font-mono); font-size: 24px; color: var(--text); display: block; }
-.ring-in span { font-size: 9.5px; color: var(--text-muted); }
-.prog-exp { text-align: center; font-size: 11.5px; color: var(--text-muted); margin: 4px 0 12px; }
+.ring-in b { font-family: var(--font-mono); font-size: 27px; color: var(--text); display: block; }
+.ring-in span { font-size: 10.5px; color: var(--text-muted); }
+.prog-exp { text-align: center; font-size: 11.5px; color: var(--text-muted); margin: 8px 0 0; }
 .prog-exp .ok { color: var(--success); font-weight: 700; }
 
 .prog-subjects { display: flex; flex-direction: column; }
 .prow { border-top: 1px solid var(--border); }
 .prow-main { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(56px, 1fr) 40px 104px 16px; gap: 9px; align-items: center;
-  width: 100%; padding: 10px 2px; border: none; background: none; cursor: pointer; font-family: var(--font-body); text-align: left; transition: background .12s; border-radius: var(--r-sm); }
+  width: 100%; padding: 16px 2px; border: none; background: none; cursor: pointer; font-family: var(--font-body); text-align: left; transition: background .12s; border-radius: var(--r-sm); }
 .prow-main:hover { background: var(--bg); }
 .pname { font-size: 13px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .pbar { height: 6px; background: var(--bg); border-radius: 99px; overflow: hidden; }
@@ -622,9 +622,10 @@ button.hero-chip:hover { border-color: var(--primary); }
 .pg-top-chip { display: inline-flex; align-items: center; gap: 6px; margin-top: 4px; padding: 6px 11px; border-radius: var(--r-full);
   background: var(--accent-soft); color: var(--warning); font: 700 11px var(--font-body); }
 
-/* left column: status summary chips + slightly narrower rail column */
-.pg-2col { grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.6fr); }
-.pg-sum { display: flex; flex-wrap: wrap; gap: 7px; justify-content: center; margin-top: 4px; }
+/* Progress face: equal-height columns, ring centered left, subjects+capsules flow right */
+.pg-2col-progress { align-items: center; }
+.pg-2col-progress .pg-col-ring { height: auto; justify-content: center; }
+.pg-sum { display: flex; flex-wrap: wrap; gap: 7px; justify-content: center; margin-top: 14px; }
 .pg-sum-chip { display: inline-flex; align-items: center; gap: 5px; padding: 5px 10px; border-radius: var(--r-full);
   font: 600 11px var(--font-body); border: 1px solid var(--border); background: var(--surface); color: var(--text-secondary); }
 .pg-sum-chip b { font: 800 12px var(--font-mono); }
@@ -811,7 +812,7 @@ button.hero-chip:hover { border-color: var(--primary); }
 /* ═══ Ring avatar riding the arc ═══ */
 .ring-avatar { position: absolute; left: 50%; top: 50%; width: 0; height: 0; z-index: 3;
   transition: transform .6s cubic-bezier(.22,.61,.36,1); }
-.ring-avatar-in { position: absolute; left: -17px; top: -17px; width: 34px; height: 34px;
+.ring-avatar-in { position: absolute; left: -22px; top: -22px; width: 44px; height: 44px;
   transition: transform .6s cubic-bezier(.22,.61,.36,1); }
 .ring-avatar.bounce .dash-avatar-svg { animation: ring-bounce .42s cubic-bezier(.34,1.56,.64,1); }
 @keyframes ring-bounce { 0% { transform: scale(1) } 45% { transform: scale(1.2) } 100% { transform: scale(1) } }
