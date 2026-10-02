@@ -625,6 +625,10 @@ button.hero-chip:hover { border-color: var(--primary); }
 /* Progress face: equal-height columns, ring centered left, subjects+capsules flow right */
 .pg-2col-progress { align-items: center; }
 .pg-2col-progress .pg-col-ring { height: auto; justify-content: center; }
+/* Standing face: center the stats rail and the leaderboard list */
+.pg-2col-standing { align-items: center; }
+.pg-2col-standing .pg-brow { padding: 14px 6px; }
+.pg-2col-standing .pg-div { margin: 10px 0; }
 .pg-sum { display: flex; flex-wrap: wrap; gap: 7px; justify-content: center; margin-top: 14px; }
 .pg-sum-chip { display: inline-flex; align-items: center; gap: 5px; padding: 5px 10px; border-radius: var(--r-full);
   font: 600 11px var(--font-body); border: 1px solid var(--border); background: var(--surface); color: var(--text-secondary); }
@@ -655,12 +659,12 @@ button.hero-chip:hover { border-color: var(--primary); }
 .pg-face-back .pg-head { margin-bottom: var(--sp-3); }
 .pg-face-back .st-tabs { margin-bottom: var(--sp-3); }
 .pg-face-back .pg-2col { gap: var(--sp-4); }
-.pg-face-back .pg-stat { padding: 9px 11px; margin-bottom: 7px; }
+.pg-face-back .pg-stat { padding: 10px 12px; margin-bottom: 8px; }
 .pg-face-back .pg-stat-t b { font-size: 15px; }
 .pg-face-back .pg-top-chip { margin-top: 0; padding: 5px 10px; }
 .pg-face-back .pg-rank-bar { margin-top: 10px; gap: 5px; }
 .pg-face-back .board-title { margin-bottom: 6px; }
-.pg-face-back .pg-brow { padding: 6px; }
+.pg-face-back .pg-brow { padding: 8px 6px; }
 .pg-face-back .pg-div { margin: 4px 0; }
 .pg-face-back .pg-full { margin-top: auto; padding: 9px; }
 

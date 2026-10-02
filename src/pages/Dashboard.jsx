@@ -378,8 +378,7 @@ export default function Dashboard({ onNavigate }) {
               <button className={'pg-seg' + (panel === 1 ? ' on' : '')} onClick={() => flipTo(1)} aria-pressed={panel === 1}><Trophy size={13} /> Standing</button>
             </div>
 
-            <div className="pg-2col">
-              {/* left — rank + percentile */}
+            <div className="pg-2col pg-2col-standing">
               <div className="pg-col">
                 <div className="pg-stat">
                   <span className="pg-stat-ico tone-green"><Trophy size={15} /></span>
