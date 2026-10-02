@@ -807,3 +807,11 @@ button.hero-chip:hover { border-color: var(--primary); }
 .dash-activity-t b { font-size: 13px; font-weight: 700; color: var(--info); }
 .dash-activity-t em { font-size: 11px; font-weight: 500; color: var(--text-muted); font-style: normal; }
 .dash-activity-arrow { color: var(--info); flex-shrink: 0; }
+
+/* ═══ Ring avatar riding the arc ═══ */
+.ring-avatar { position: absolute; left: 50%; top: 50%; width: 0; height: 0; z-index: 3;
+  transition: transform .6s cubic-bezier(.22,.61,.36,1); }
+.ring-avatar-in { position: absolute; left: -17px; top: -17px; width: 34px; height: 34px;
+  transition: transform .6s cubic-bezier(.22,.61,.36,1); }
+.ring-avatar.bounce .dash-avatar-svg { animation: ring-bounce .42s cubic-bezier(.34,1.56,.64,1); }
+@keyframes ring-bounce { 0% { transform: scale(1) } 45% { transform: scale(1.2) } 100% { transform: scale(1) } }

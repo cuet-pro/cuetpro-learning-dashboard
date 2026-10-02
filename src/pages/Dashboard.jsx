@@ -1,7 +1,7 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import {
   Flame, ArrowRight, BookOpen, ChevronDown, CalendarDays, Eye,
-  Trophy, PieChart, ArrowUpRight, Lightbulb, Zap, Target, Quote, Medal, Award, History,
+  Trophy, PieChart, ArrowUpRight, Zap, Target, Quote, Medal, Award, History,
 } from 'lucide-react'
 import { useProfile, dreamCollegeShort } from '../lib/profile'
 import { Modal } from '../components/shell/Shell.jsx'
@@ -56,7 +56,7 @@ function daysLeft(dateStr) {
 }
 
 /* ── Avatar (blink + wave, gender variants) ── */
-function Avatar({ gender, blink }) {
+function Avatar({ gender, blink, pose = 1 }) {
   const eyeCls = 'av-eye' + (blink ? ' blink' : '')
   const eyes = (
     <>
@@ -64,6 +64,13 @@ function Avatar({ gender, blink }) {
       <g className={eyeCls}><ellipse cx="62" cy="47" rx="5" ry="5.6" fill="#fff" /><ellipse cx="62" cy="47" rx="2.4" ry="3.4" fill="#1a2436" /></g>
     </>
   )
+  const MOUTHS = [
+    'M42 59 Q50 60 58 59',                 // 0 starting / determined
+    'M42 56 Q50 62 58 56',                 // 1 focused / working (smile)
+    'M41 55 Q50 64 59 55',                 // 2 confident (bigger smile)
+    'M41 54 Q50 68 59 54 Q50 60 41 54 Z',  // 3 celebrating (open mouth)
+  ]
+  const mouth = MOUTHS[pose] || MOUTHS[1]
   return (
     <svg viewBox="0 0 100 100" className="dash-avatar-svg" aria-hidden="true">
       <defs>
@@ -83,13 +90,24 @@ function Avatar({ gender, blink }) {
         <path d="M50 16 Q76 14 72 38 Q70 34 66 30 L66 44 Q50 30 30 36 Q28 20 50 16 Z" fill="#1f2937" />
         <path d="M26 32 Q16 34 18 50 Q22 42 28 42 Z" fill="#1f2937" />
       </>)}
-      <g className="av-arm">
-        <path d="M84 82 Q104 68 98 42" stroke="#eab98f" strokeWidth="7" strokeLinecap="round" fill="none" />
-        <path d="M95.5 41 h6.5 a3.4 3.4 0 0 1 3.4 3.4 v5 a3.4 3.4 0 0 1 -3.4 3.4 h-6.5 a3.4 3.4 0 0 1 -3.4 -3.4 v-5 a3.4 3.4 0 0 1 3.4 -3.4 z" fill="#e9b98c" />
-        <path d="M98.5 41 v-3.4 a2 2 0 0 1 4 0 v3.4" fill="none" stroke="#e9b98c" strokeWidth="2.6" strokeLinecap="round" />
-      </g>
+      {pose >= 1 && (
+        <g className="av-arm">
+          <path d="M84 82 Q104 68 98 42" stroke="#eab98f" strokeWidth="7" strokeLinecap="round" fill="none" />
+          <path d="M95.5 41 h6.5 a3.4 3.4 0 0 1 3.4 3.4 v5 a3.4 3.4 0 0 1 -3.4 3.4 h-6.5 a3.4 3.4 0 0 1 -3.4 -3.4 v-5 a3.4 3.4 0 0 1 3.4 -3.4 z" fill="#e9b98c" />
+          <path d="M98.5 41 v-3.4 a2 2 0 0 1 4 0 v3.4" fill="none" stroke="#e9b98c" strokeWidth="2.6" strokeLinecap="round" />
+        </g>
+      )}
+      {pose === 3 && (
+        <g className="av-arm" transform="translate(100 0) scale(-1 1)">
+          <path d="M84 82 Q104 68 98 42" stroke="#eab98f" strokeWidth="7" strokeLinecap="round" fill="none" />
+          <path d="M95.5 41 h6.5 a3.4 3.4 0 0 1 3.4 3.4 v5 a3.4 3.4 0 0 1 -3.4 3.4 h-6.5 a3.4 3.4 0 0 1 -3.4 -3.4 v-5 a3.4 3.4 0 0 1 3.4 -3.4 z" fill="#e9b98c" />
+          <path d="M98.5 41 v-3.4 a2 2 0 0 1 4 0 v3.4" fill="none" stroke="#e9b98c" strokeWidth="2.6" strokeLinecap="round" />
+        </g>
+      )}
       {eyes}
-      <path d="M42 56 Q50 62 58 56" fill="none" stroke="#c48a68" strokeWidth="2.4" strokeLinecap="round" />
+      {pose === 3
+        ? <path d={mouth} fill="#5c3422" stroke="none" />
+        : <path d={mouth} fill="none" stroke="#c48a68" strokeWidth="2.4" strokeLinecap="round" />}
     </svg>
   )
 }
@@ -101,13 +119,7 @@ function useLiveCountdown(examDate) {
   return cd
 }
 
-const MOODS = [
-  { e: '\u{1F525}', t: 'Ahead of plan — full-marks energy!' },
-  { e: '\u{1F9E0}', t: 'Consistency beats cramming. Reps win.' },
-  { e: '\u{1F3C6}', t: 'Future you is proud of this pace.' },
-  { e: '\u2615', t: 'One more section, one bigger jump.' },
-]
-const PARTY = ['\u2728', '\u{1F389}', '\u2B50', '\u{1F4AF}', '\u{1F680}', '\u{1F525}']
+const SYLLABUS_PCT = 64   // overall syllabus completion % — drives the ring + avatar tier
 
 export default function Dashboard({ onNavigate }) {
   const [profile] = useProfile()
@@ -131,15 +143,23 @@ export default function Dashboard({ onNavigate }) {
   const [showActivity, setShowActivity] = useState(false)
   const [showStanding, setShowStanding] = useState(false)
   const [openRow, setOpenRow] = useState(null)
-  const [tick, setTick] = useState(0)
-  const [burst, setBurst] = useState(0)
-  const mood = tick % MOODS.length
+  const [syllabusPct] = useState(SYLLABUS_PCT)
+  const [bounce, setBounce] = useState(false)
+  const prevPctRef = useRef(SYLLABUS_PCT)
 
-  /* auto-rotate the mood sticker every 3.5s */
+  /* milestone bounce — fire once when the overall % crosses 50 / 75 / 90 */
   useEffect(() => {
-    const id = setInterval(() => setTick(t => t + 1), 3500)
-    return () => clearInterval(id)
-  }, [])
+    const prev = prevPctRef.current
+    prevPctRef.current = syllabusPct
+    if ([50, 75, 90].some(m => prev < m && syllabusPct >= m)) {
+      setBounce(true)
+      const t = setTimeout(() => setBounce(false), 420)
+      return () => clearTimeout(t)
+    }
+  }, [syllabusPct])
+
+  const ringTier = syllabusPct < 40 ? 0 : syllabusPct < 70 ? 1 : syllabusPct < 90 ? 2 : 3
+  const ringAngle = syllabusPct * 3.6   // degrees clockwise from 12 o'clock
   /* Progress ⇄ Standing flip: one face mounted at a time, animated hinge flip.
      (No backface/visibility tricks = no way for text to mirror or the card to vanish.) */
   const [panel, setPanel] = useState(0)
@@ -282,51 +302,23 @@ export default function Dashboard({ onNavigate }) {
             </div>
 
             <div className="pg-2col">
-              {/* left — syllabus completion ring */}
+              {/* left — syllabus completion ring + avatar riding the arc */}
               <div className="pg-col pg-col-ring">
                 <button className="prog-ring-wrap" onClick={() => onNavigate('analysis')} title="Open Analysis">
-                  <div className="ring" style={{ '--p': '64%' }}><div className="ring-in"><b>64%</b><span>Overall syllabus</span></div></div>
+                  <div className="ring" style={{ '--p': syllabusPct + '%' }}>
+                    <div className={'ring-avatar' + (bounce ? ' bounce' : '')} style={{ transform: 'rotate(' + ringAngle + 'deg)' }}>
+                      <div className="ring-avatar-in" style={{ transform: 'translateY(-53px) rotate(' + (-ringAngle) + 'deg)' }}>
+                        <Avatar gender={profile.gender} pose={ringTier} blink={blink} />
+                      </div>
+                    </div>
+                    <div className="ring-in"><b>{syllabusPct}%</b><span>Overall syllabus</span></div>
+                  </div>
                 </button>
                 <p className="prog-exp">Expected by now: 62% · <b className="ok">ahead +2%</b></p>
-
-                <div className="pg-sum">
-                  {(() => {
-                    const by = st => SUBJECTS.filter(s2 => s2.status === st).length
-                    const items = [
-                      { k: 'on track', n: by('On track'), tone: 'ok' },
-                      { k: 'needs attention', n: by('Needs attention'), tone: 'warn' },
-                      { k: 'behind', n: by('Behind'), tone: 'bad' },
-                    ].filter(i => i.n > 0)
-                    return items.map(i => (
-                      <span key={i.k} className={'pg-sum-chip ' + i.tone}><b>{i.n}</b> {i.k}</span>
-                    ))
-                  })()}
-                </div>
-
-                <button className="pg-mood" onClick={() => { setTick(t => t + 1); setBurst(b => b + 1) }} title="Tap for a boost">
-                  <span key={burst} className="pg-mood-burst">{PARTY.map((p2, i2) => <i key={i2} style={{ '--i': i2 }}>{p2}</i>)}</span>
-                  <span key={'e' + mood} className="pg-mood-emoji">{MOODS[mood].e}</span>
-                  <span key={'t' + mood} className="pg-mood-t">{MOODS[mood].t}</span>
-                </button>
               </div>
 
-              {/* right — dynamic weak-link insight + the two weakest sections */}
+              {/* right — subject-wise progress + summary capsules */}
               <div className="pg-col">
-                <div className="pg-insight">
-                  <span className="pg-insight-ico"><Lightbulb size={15} /></span>
-                  <div className="pg-insight-t">
-                    <b>{weakest.n} is your weakest link right now</b>
-                    <p>
-                      {weakest.pct}% accuracy. About {Math.max(1, Math.ceil((75 - weakest.pct) / 3))} focused fixes
-                      would take it to 75% and lift your overall percentile fastest.
-                    </p>
-                    <div className="pg-insight-actions">
-                      <button className="btn btn-primary-sm" onClick={() => onNavigate('studykit')}>Practice <BookOpen size={13} /></button>
-                      <button className="btn btn-outline-sm" onClick={() => onNavigate('analysis')}>Open Analysis</button>
-                    </div>
-                  </div>
-                </div>
-
                 <div className="prog-subjects">
                 {SUBJECTS.map(s2 => (
                 <div key={s2.n} className={'prow' + (openRow === s2.n ? ' open' : '')}>
@@ -350,6 +342,20 @@ export default function Dashboard({ onNavigate }) {
                 )}
                 </div>
                 ))}
+                </div>
+
+                <div className="pg-sum">
+                  {(() => {
+                    const by = st => SUBJECTS.filter(s2 => s2.status === st).length
+                    const items = [
+                      { k: 'on track', n: by('On track'), tone: 'ok' },
+                      { k: 'needs attention', n: by('Needs attention'), tone: 'warn' },
+                      { k: 'behind', n: by('Behind'), tone: 'bad' },
+                    ].filter(i => i.n > 0)
+                    return items.map(i => (
+                      <span key={i.k} className={'pg-sum-chip ' + i.tone}><b>{i.n}</b> {i.k}</span>
+                    ))
+                  })()}
                 </div>
               </div>
             {/* full section list keeps its expandable rows */}
