@@ -4,10 +4,8 @@ import './hero-banner.css'
 
 const DURATION = 10000
 const MAX_SLIDES = 4
-const MAX_IMPRESSIONS = 3
 const IDLE_RESTART = 5 * 60 * 1000
 const PREV_ZONE = 0.3
-const SEEN_KEY = 'cuet_hero_seen'
 
 const ICONS = { 'target-arrow': Target, 'trophy': Trophy, 'alarm': AlarmClock, 'sparkles': Sparkles, 'book': Book, 'arrow-right': ArrowRight, 'file-text': FileText, 'bell': Bell, 'player-play': Play, 'player-pause': Pause, 'calendar-plus': CalendarPlus, 'check': Check }
 
@@ -26,10 +24,6 @@ function demoSlides(now) {
     { id: 'ai-doubt', type: 'feature', label: 'New feature', tag: 'New', priority: 60, title: 'Meet AI doubt solver', body: 'Snap a question, get a step-by-step explanation in Hindi or English. Free for your first 20 doubts.', meta: { chips: ['Photo upload', 'Hindi + English', 'Step-by-step'] }, ctaSecondary: { label: 'Watch 30s demo', icon: 'player-play', action: 'demo' }, ctaPrimary: { label: 'Try it now', icon: 'arrow-right', href: '/doubt-solver' } },
   ]
 }
-
-/* seen tracking (localStorage, try/catch) */
-function readSeen() { try { return JSON.parse(localStorage.getItem(SEEN_KEY)) || {} } catch { return {} } }
-function writeSeen(v) { try { localStorage.setItem(SEEN_KEY, JSON.stringify(v)) } catch {} }
 
 /* rich text: <mark>amber</mark> and <b>bold</b> */
 function Rich({ html }) {
@@ -63,19 +57,12 @@ export default function HeroBanner({ onRemind, onAddToCalendar, onOpenDemo, onNa
   /* 1s clock for countdown + expiry */
   useEffect(() => { const t = setInterval(() => setNow(Date.now()), 1000); return () => clearInterval(t) }, [])
 
-  /* build + order queue (base slides computed once, filtered live) */
+  /* build + order queue (base slides computed once, filtered live by time window only) */
   const baseSlides = useMemo(() => demoSlides(Date.now()), [])
   const slides = useMemo(() => {
-    const seen = readSeen()
     let list = baseSlides.filter(s => {
       if (s.startsAt && now < s.startsAt) return false
       if (s.expiresAt && now > s.expiresAt) return false
-      return true
-    }).filter(s => {
-      if (s.type === 'focus') return true
-      const rec = seen[s.id]
-      if (s.type === 'mock' && registered) return true
-      if (rec && (rec.done || (rec.n || 0) >= MAX_IMPRESSIONS)) return false
       return true
     })
     list = list.sort((a, b) => {
@@ -87,20 +74,10 @@ export default function HeroBanner({ onRemind, onAddToCalendar, onOpenDemo, onNa
       return (b.priority || 0) - (a.priority || 0)
     })
     return list.slice(0, MAX_SLIDES)
-  }, [baseSlides, now, registered])
+  }, [baseSlides, now])
 
   const n = slides.length
   const slide = slides[index] || slides[0]
-
-  /* impression tracking when a NEW slide is shown (keyed by id, not the 1s clock) */
-  useEffect(() => {
-    if (!slide) return
-    const seen = readSeen()
-    const rec = seen[slide.id] || { n: 0, done: false }
-    rec.n = (rec.n || 0) + 1
-    seen[slide.id] = rec
-    writeSeen(seen)
-  }, [slide && slide.id])
 
   const isPaused = hoverPause || userPause || cycleDone || reduced
 
@@ -133,10 +110,8 @@ export default function HeroBanner({ onRemind, onAddToCalendar, onOpenDemo, onNa
     }
   }
 
-  function markDone(id) { const seen = readSeen(); seen[id] = { ...(seen[id] || {}), done: true }; writeSeen(seen) }
-
   function handleAction(action, id) {
-    if (action === 'register') { setRegistered(true); markDone(id) }
+    if (action === 'register') { setRegistered(true) }
     else if (action === 'remind') { setReminder("Reminder set. We'll notify you before the deadline."); onRemind && onRemind(id) }
     else if (action === 'calendar') onAddToCalendar && onAddToCalendar(id)
     else if (action === 'demo') onOpenDemo && onOpenDemo(id)
@@ -144,7 +119,7 @@ export default function HeroBanner({ onRemind, onAddToCalendar, onOpenDemo, onNa
   function handleCTA(cta, id) {
     if (!cta) return
     if (cta.action) handleAction(cta.action, id)
-    if (cta.href) { markDone(id); onNavigate ? onNavigate(cta.href) : (window.location.href = cta.href) }
+    if (cta.href) { onNavigate ? onNavigate(cta.href) : (window.location.href = cta.href) }
   }
 
   /* dynamic tag */
