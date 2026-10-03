@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { NotebookText, Layers, Dumbbell, Timer, FileQuestion, Archive, ArrowLeft, ArrowRight, PlayCircle, Video, Sigma, Zap, ChevronRight, ChevronDown, CheckSquare, Search, GraduationCap, FlaskConical, Settings } from 'lucide-react'
+import { NotebookText, Layers, Dumbbell, Timer, FileQuestion, Archive, ArrowLeft, ArrowRight, PlayCircle, Video, Sigma, Zap, ChevronRight, ChevronDown, CheckSquare, Search, GraduationCap, Highlighter, FlaskConical, Settings } from 'lucide-react'
 import { boostRanking, weakTopicNames, allSubSkills } from '../lib/analysisData'
 import { ECON_UNITS } from '../data/econNotes'
 import { GEO_UNITS } from '../data/geoNotes'
@@ -30,6 +30,7 @@ const LEARNING_TOOLS = [
   { id: 'exercises', tone: 'green', icon: Dumbbell, title: 'Exercises', desc: 'Topic-wise practice tied to specific topics.', cta: 'Start a 10-question set', progress: { done: 9, total: 14, label: 'sets done' } },
   { id: 'videos', tone: 'amber', icon: Video, title: 'Video lectures', desc: 'Short concept videos — 5-10 min each.', cta: 'Watch one 7-minute concept', progress: { done: 7, total: 12, label: 'watched' } },
   { id: 'cheats', tone: 'violet', icon: Sigma, title: 'Cheat Sheets', desc: 'Every formula and key definition, one page per subject.', cta: 'Revise all formulas in 10 minutes', progress: { done: 4, total: 6, label: 'viewed' } },
+  { id: 'ncert', tone: 'violet', icon: Highlighter, title: 'Marked NCERT', desc: 'NCERT textbook pages with exam-relevant lines highlighted, chapter by chapter.', cta: 'Open marked NCERT', progress: { done: 0, total: 18, label: 'chapters' } },
 ]
 const TESTING_TOOLS = [
   { id: 'quizzes', tone: 'blue', icon: Timer, title: '5-Minute Quick Quizzes', desc: 'Short, low-pressure self-checks — repeat anytime.', cta: 'Take today’s quick quiz', meta: { streak: '3-day streak', last: 'Last score 82%' } },
@@ -79,6 +80,7 @@ export default function StudyKit({ onNavigate }) {
 
   return (
     <div className="page">
+      {!selected && (<>
       <header className="page-head">
         <div>
           <h1>Study Kit</h1>
@@ -123,6 +125,7 @@ export default function StudyKit({ onNavigate }) {
         </div>
         <button className="btn btn-primary-sm" onClick={() => alert('Deep-link → focus mock session (from boost topics: ' + top3.slice(0, 3).map(t => t.name).join(', ') + ')')}>Generate focus mock</button>
       </section>
+      </>)}
 
       {/* Tools — Learning & Testing card grids (opens detail panel on tap) */}
       {selected ? (
@@ -139,6 +142,7 @@ export default function StudyKit({ onNavigate }) {
           </div>
           <div className="sk-detail-body">
             {selected === 'notes' && <NotesView stream={stream} subject={subject} record={record} />}
+            {selected === 'ncert' && <NcertView stream={stream} subject={subject} />}
             {selected === 'flashcards' && <FlashView record={record} />}
             {selected === 'quizzes' && <QuizView />}
             {selected === 'pyqs' && <PyqView subject={subject} stream={stream} weakOnly={weakOnly} setWeakOnly={setWeakOnly} />}
@@ -452,6 +456,31 @@ function NotesView({ stream, subject, record }) {
           ))}
         </div>
       ))}
+    </div>
+  )
+}
+
+function NcertView({ stream, subject }) {
+  const subs = NOTES_BY_STREAM[stream] || NOTES_BY_STREAM.Commerce
+  const list = subject === 'all' ? subs : subs.filter(n => n.s === subject)
+  if (list.length === 0) return <p className="muted-empty">Marked NCERT for {subject} is being prepared — check back soon.</p>
+  return (
+    <div className="sk-subgrid">
+      {list.map(n => (
+        <div className="sk-subcard" key={n.s}>
+          <div className="sk-subhead">
+            <b>{n.s}</b>
+            <span className="sk-prog">Marked NCERT</span>
+          </div>
+          {n.chapters.map(c => (
+            <div className="sk-chapter" key={c} style={{ cursor: 'default' }}>
+              <span className="sk-dot" style={{ background: 'var(--gray-200)' }} />
+              {c}
+            </div>
+          ))}
+        </div>
+      ))}
+      <p className="muted-empty">Marked NCERT PDFs are being prepared — each chapter's highlighted pages will appear here.</p>
     </div>
   )
 }
