@@ -15624,7 +15624,7 @@ html.embed-chapter .chapters-tab-head { display: none !important; }
   var topic = q.get('topic'), chapter = q.get('chapter');
   var view = q.get('view') || (topic ? 'topic' : 'chapter');
   var embed = q.get('embed') === '1';
-  if (embed) document.documentElement.classList.add('embed-chapter');
+  if (embed) { document.documentElement.classList.add('embed-chapter'); document.documentElement.setAttribute('data-theme', 'light'); }
 
   function pick() {
     /* a single topic of a chapter that has notes */

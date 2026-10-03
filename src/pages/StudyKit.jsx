@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react'
-import { NotebookText, Layers, Dumbbell, Timer, FileQuestion, Archive, ArrowLeft, ArrowRight, PlayCircle, Video, Sigma, Zap, ChevronRight, CheckSquare, Search, GraduationCap, FlaskConical, Settings, Maximize2, Minimize2 } from 'lucide-react'
+import { useEffect, useRef, useState } from 'react'
+import { NotebookText, Layers, Dumbbell, Timer, FileQuestion, Archive, ArrowLeft, ArrowRight, PlayCircle, Video, Sigma, Zap, ChevronRight, ChevronDown, CheckSquare, Search, GraduationCap, FlaskConical, Settings } from 'lucide-react'
 import { boostRanking, weakTopicNames, allSubSkills } from '../lib/analysisData'
 import { ECON_UNITS } from '../data/econNotes'
 import { GEO_UNITS } from '../data/geoNotes'
@@ -236,6 +236,7 @@ export default function StudyKit({ onNavigate }) {
    units (book/chapter groups) → chapters → topics, each topic opens on its own page */
 function NotesBreakdown({ units, base, label, record }) {
   const [open, setOpen] = useState(null)
+  const [expanded, setExpanded] = useState(null)
   const allChapters = units.reduce((n, u) => n + u.chapters.length, 0)
   const readyChapters = units.reduce((n, u) => n + u.chapters.filter(c => c.ready).length, 0)
   const topicCount = units.reduce((n, u) => n + u.chapters.reduce((m, c) => m + c.topics.length, 0), 0)
@@ -313,37 +314,43 @@ function NotesBreakdown({ units, base, label, record }) {
               <span>{ready.length} of {u.chapters.length} chapters written</span>
             </header>
 
-            {ready.map(c => (
-              <div className="econ-chapter" key={c.id}>
-                <header className="econ-chapter-head">
-                  <span className="econ-chapter-num">Ch {c.num}</span>
-                  <div className="econ-chapter-t">
-                    <b>{c.title}</b>
-                    <p>{c.desc}</p>
-                  </div>
-                  <span className="econ-chapter-meta">{c.topics.length} topics</span>
-                </header>
-                <div className="econ-topics">
-                  {c.topics.map(t => (
-                    <button className="econ-topic" key={t.id} onClick={() => setOpen({ chapter: c.id, topic: t.id })}>
-                      <span className="econ-topic-num">{t.num}</span>
-                      <span className="econ-topic-t">{t.title}</span>
-                      {t.frequency > 0 && (
-                        <span className="econ-freq" title="How often CUET has asked this">
-                          asked {t.frequency}×<i>{Object.keys(t.years || {}).join(' · ')}</i>
-                        </span>
-                      )}
-                      {!(t.frequency > 0) && t.tier && (
-                        <span className={'econ-tier t-' + t.tier} title="Importance">
-                          {t.tier === 'high' ? 'high weight' : t.tier === 'medium' ? 'medium weight' : 'low weight'}
-                        </span>
-                      )}
-                      <ChevronRight size={14} className="econ-topic-arrow" />
-                    </button>
-                  ))}
+            {ready.map(c => {
+              const isOpen = expanded === c.id
+              return (
+                <div className={'econ-chapter' + (isOpen ? ' open' : '')} key={c.id}>
+                  <button type="button" className="econ-chapter-head" aria-expanded={isOpen} onClick={() => setExpanded(isOpen ? null : c.id)}>
+                    <span className="econ-chapter-num">Ch {c.num}</span>
+                    <div className="econ-chapter-t">
+                      <b>{c.title}</b>
+                      {isOpen && <p>{c.desc}</p>}
+                    </div>
+                    <span className="econ-chapter-meta">{c.topics.length} topics</span>
+                    <ChevronDown size={16} className={'econ-chapter-chev' + (isOpen ? ' open' : '')} />
+                  </button>
+                  {isOpen && (
+                    <div className="econ-topics">
+                      {c.topics.map(t => (
+                        <button className="econ-topic" key={t.id} onClick={() => setOpen({ chapter: c.id, topic: t.id })}>
+                          <span className="econ-topic-num">{t.num}</span>
+                          <span className="econ-topic-t">{t.title}</span>
+                          {t.frequency > 0 && (
+                            <span className="econ-freq" title="How often CUET has asked this">
+                              asked {t.frequency}×<i>{Object.keys(t.years || {}).join(' · ')}</i>
+                            </span>
+                          )}
+                          {!(t.frequency > 0) && t.tier && (
+                            <span className={'econ-tier t-' + t.tier} title="Importance">
+                              {t.tier === 'high' ? 'high weight' : t.tier === 'medium' ? 'medium weight' : 'low weight'}
+                            </span>
+                          )}
+                          <ChevronRight size={14} className="econ-topic-arrow" />
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
-              </div>
-            ))}
+              )
+            })}
 
             {soon.length > 0 && (
               <div className="econ-soon">
@@ -370,31 +377,47 @@ function NotesBreakdown({ units, base, label, record }) {
 }
 
 function NoteDashboard({ src, title, subject, record }) {
-  const [full, setFull] = useState(false)
+  const ref = useRef(null)
+  const roRef = useRef(null)
 
-  useEffect(() => {
-    if (!full) return
-    const onKey = e => { if (e.key === 'Escape') setFull(false) }
-    document.addEventListener('keydown', onKey)
-    const prev = document.body.style.overflow
-    document.body.style.overflow = 'hidden'
-    return () => { document.removeEventListener('keydown', onKey); document.body.style.overflow = prev }
-  }, [full])
+  function syncHeight() {
+    const f = ref.current
+    if (!f || !f.contentDocument) return
+    const doc = f.contentDocument
+    const de = doc.documentElement, b = doc.body
+    const h = Math.max(de ? de.scrollHeight : 0, b ? b.scrollHeight : 0, de ? de.offsetHeight : 0)
+    if (h > 0) f.style.height = h + 'px'
+  }
+
+  useEffect(() => () => { if (roRef.current) { roRef.current.disconnect(); roRef.current = null } }, [])
+
+  function handleLoad() {
+    record({ title: subject + ' notes', subject, detail: 'notes', pct: 40 })
+    const f = ref.current
+    if (!f || !f.contentDocument) return
+    try {
+      if (window.ResizeObserver) {
+        if (roRef.current) roRef.current.disconnect()
+        const ro = new ResizeObserver(syncHeight)
+        roRef.current = ro
+        if (f.contentDocument.body) ro.observe(f.contentDocument.body)
+        if (f.contentDocument.documentElement) ro.observe(f.contentDocument.documentElement)
+      }
+    } catch {}
+    let tries = 0
+    const poll = () => { syncHeight(); if (tries++ < 16) setTimeout(poll, 300) }
+    poll()
+  }
 
   return (
-    <div className={'sk-note-wrap' + (full ? ' full' : '')}>
-      <div className="sk-note-bar">
-        <span className="sk-note-bar-t">{subject} notes</span>
-        <button className="sk-note-fs" onClick={() => setFull(f => !f)} title={full ? 'Minimize (Esc)' : 'Full screen'}>
-          {full ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
-          <span>{full ? 'Minimize' : 'Full screen'}</span>
-        </button>
-      </div>
+    <div className="sk-note-inline">
       <iframe
+        ref={ref}
         src={src}
         title={title}
-        className="sk-econ-frame"
-        onLoad={() => record({ title: subject + ' notes', subject, detail: full ? 'full screen' : 'dashboard', pct: 40 })}
+        className="sk-note-inline-frame"
+        onLoad={handleLoad}
+        scrolling="no"
       />
     </div>
   )

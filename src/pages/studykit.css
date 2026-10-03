@@ -206,22 +206,8 @@
 .sk-pillsline .subj-pill { flex-shrink: 0; white-space: nowrap; }
 
 /* ── Notes fullscreen expand (iframe stays mounted — no reload) ── */
-.sk-note-wrap { position: relative; display: flex; flex-direction: column; gap: 8px; }
-.sk-note-bar { display: flex; align-items: center; gap: 10px; }
-.sk-note-bar-t { font-size: 12px; font-weight: 700; color: var(--text-muted); }
-.sk-note-fs { margin-left: auto; display: inline-flex; align-items: center; gap: 6px; font-size: 11.5px; font-weight: 700;
-  color: var(--text-secondary); background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-full);
-  padding: 6px 12px; cursor: pointer; transition: all .13s; }
-.sk-note-fs:hover { border-color: var(--primary); color: var(--primary); background: var(--primary-soft); }
-.sk-note-wrap .sk-econ-frame { width: 100%; height: 520px; border: 1px solid var(--border); border-radius: var(--r-md); background: #fff; }
-
-/* fullscreen mode */
-.sk-note-wrap.full { position: fixed; inset: 0; width: 100vw; height: 100dvh; z-index: 900; background: var(--surface); padding: var(--sp-3) var(--sp-3) var(--sp-2); gap: 8px; }
-.sk-note-wrap.full .sk-note-bar { justify-content: flex-end; padding: 0 2px; }
-.sk-note-wrap.full .sk-note-bar > span { display: none; }
-.sk-note-wrap.full .sk-note-bar { padding: 0 2px; }
-.sk-note-wrap.full .sk-econ-frame { flex: 1; height: auto; border-radius: var(--r-sm); }
-.sk-note-wrap.full .sk-note-fs { background: var(--primary-soft); border-color: var(--primary); color: var(--primary); }
+.sk-note-inline { background: #fff; border: 1px solid var(--border); border-radius: var(--r-md); overflow: hidden; }
+.sk-note-inline-frame { display: block; width: 100%; min-height: 480px; border: 0; background: #fff; }
 
 /* ── PYQ: year filter + shift-wise papers ── */
 .pyq-years { display: flex; align-items: center; gap: 6px; flex-wrap: nowrap; overflow-x: auto; padding-bottom: 2px; scrollbar-width: none; }
@@ -346,14 +332,17 @@
 .econ-chapter { border: 1px solid var(--border); border-radius: var(--r-md); background: var(--surface); overflow: hidden;
   animation: sk-card-in .45s cubic-bezier(.22,.61,.36,1) both; transition: box-shadow .22s, border-color .22s; }
 .econ-chapter:hover { box-shadow: var(--shadow-md); border-color: var(--border-strong); }
-.econ-chapter-head { display: flex; align-items: center; gap: 12px; padding: 14px 16px;
-  background: linear-gradient(120deg, var(--primary-soft), var(--surface)); border-bottom: 1px solid var(--border); }
+.econ-chapter-head { display: flex; align-items: center; gap: 12px; padding: 14px 16px; width: 100%; text-align: left;
+  background: linear-gradient(120deg, var(--primary-soft), var(--surface)); border: 0; border-bottom: 1px solid var(--border); cursor: pointer; font: inherit; color: inherit; appearance: none; -webkit-appearance: none; }
 .econ-chapter-num { padding: 4px 9px; border-radius: 999px; background: var(--primary); color: #fff;
   font: 800 10.5px var(--font-body); letter-spacing: .05em; text-transform: uppercase; flex-shrink: 0; }
 .econ-chapter-t { flex: 1; min-width: 0; }
 .econ-chapter-t b { display: block; font: 700 13.5px var(--font-display); color: var(--text); }
 .econ-chapter-t p { font-size: 11.5px; color: var(--text-secondary); line-height: 1.5; margin-top: 2px; }
 .econ-chapter-meta { font: 700 11px var(--font-mono); color: var(--text-muted); flex-shrink: 0; }
+.econ-chapter-chev { flex-shrink: 0; color: var(--text-muted); transition: transform .2s ease; }
+.econ-chapter-chev.open { transform: rotate(180deg); }
+.econ-chapter:not(.open) .econ-chapter-head { border-bottom: 0; }
 
 .econ-topics { display: grid; }
 .econ-topic { display: grid; grid-template-columns: 26px minmax(0, 1fr) auto 18px; align-items: center; gap: 10px;
