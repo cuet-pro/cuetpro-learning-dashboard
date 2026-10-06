@@ -76,11 +76,14 @@ function BentoTile({ t, today, onGo }) {
       onClick={onGo}
       disabled={!t.go && !t.nav}
     >
-      <span className={'bt-icon tone-' + t.tone}><I size={22} /></span>
-      <span className="bt-label">{t.label}</span>
+      <span className={'bt-icon tone-' + t.tone}><I size={19} /></span>
+      <span className="bt-label">
+        {t.label}
+        {t.recommended && <span className="bt-rec"><Sparkles size={10} /> Recommended for you</span>}
+      </span>
       {t.ring != null ? (
         <div className="bt-ring-wrap">
-          <ProgressRing pct={t.ring} />
+          <ProgressRing pct={t.ring} size={34} stroke={3.5} />
           <span className="bt-stat">{t.ringMeta}</span>
         </div>
       ) : t.stat ? (
@@ -88,7 +91,6 @@ function BentoTile({ t, today, onGo }) {
       ) : (
         <span className="bt-stat">{t.statText}</span>
       )}
-      {t.recommended && <span className="bt-ribbon"><Sparkles size={11} /> Recommended for you</span>}
       {today && <span className="bt-today-tag">Today's focus</span>}
     </button>
   )
@@ -104,11 +106,16 @@ function FeaturedTile({ t, today, onGo }) {
       onClick={onGo}
       onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onGo() } }}
     >
-      <span className={'bt-icon featured tone-' + t.tone}><I size={28} /></span>
-      <span className="bt-label">{t.label}</span>
-      <span className="bt-stat"><CountUp value={t.stat.n} /> {t.stat.suffix}</span>
-      <button className="bt-cta" onClick={e => { e.stopPropagation(); onGo() }}>{t.cta} <ArrowRight size={14} /></button>
-      {today && <span className="bt-today-tag">Today's focus</span>}
+      <span className={'bt-icon featured tone-' + t.tone}><I size={22} /></span>
+      <span className="bt-main">
+        <span className="bt-label">{t.label}</span>
+        <span className="bt-sub">{t.sub}</span>
+      </span>
+      <span className="bt-side">
+        <span className="bt-live">{t.live}</span>
+        {today && <span className="bt-today-tag">Today's focus</span>}
+        <button className="bt-cta" onClick={e => { e.stopPropagation(); onGo() }}>{t.cta} <ArrowRight size={14} /></button>
+      </span>
     </div>
   )
 }
@@ -226,7 +233,7 @@ export default function DashboardTiles({ onNavigate }) {
     {
       key: 'play', label: 'Play',
       tiles: [
-        { id: 'word-battle', label: 'Word battle', tone: 'blue', icon: Swords, featured: true, stat: { n: 5, suffix: 'rounds today' }, cta: 'Find opponent', go: () => alert('Deep-link → Word battle (Chill Zone)') },
+        { id: 'word-battle', label: 'Word battle', tone: 'blue', icon: Swords, featured: true, sub: '5 rounds today · 1v1 vocabulary duel', live: '3 wins today', cta: 'Find opponent', go: () => alert('Deep-link → Word battle (Chill Zone)') },
       ],
     },
     {
