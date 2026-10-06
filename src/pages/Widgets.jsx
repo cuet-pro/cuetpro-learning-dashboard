@@ -2,42 +2,113 @@ import { useEffect, useState } from 'react'
 import {
   Swords, List, Layers, TrendingUp,
   FileText, BarChart3, ListChecks, Files, CheckCircle2, Users, Flame, Award, Zap,
-  Compass, Target, Timer, Trophy, Video, Sparkles, ArrowLeft, ChevronRight,
+  Compass, Target, Timer, Trophy, Video, Sparkles, ArrowLeft, ChevronRight, ArrowRight,
 } from 'lucide-react'
 import { VOCAB_CATEGORIES } from '../data/vocab'
 import { Modal } from '../components/shell/Shell.jsx'
 import './widgets.css'
 
-/* tone: green = progress/success · blue = learning/resources · purple/amber = achievements · red/amber = attention */
-function IconGrid({ items, onNavigate }) {
+/* ── motion helpers (respect prefers-reduced-motion) ── */
+function usePrefersReducedMotion() {
+  const [reduced, setReduced] = useState(() => window.matchMedia('(prefers-reduced-motion: reduce)').matches)
+  useEffect(() => {
+    const mq = window.matchMedia('(prefers-reduced-motion: reduce)')
+    const on = e => setReduced(e.matches)
+    mq.addEventListener('change', on)
+    return () => mq.removeEventListener('change', on)
+  }, [])
+  return reduced
+}
+
+function CountUp({ value }) {
+  const reduced = usePrefersReducedMotion()
+  const [n, setN] = useState(() => (reduced ? value : 0))
+  useEffect(() => {
+    if (reduced) return
+    let raf
+    const start = performance.now()
+    const dur = 900
+    const tick = t => {
+      const p = Math.min(1, (t - start) / dur)
+      const eased = 1 - Math.pow(1 - p, 3)
+      setN(Math.round(eased * value))
+      if (p < 1) raf = requestAnimationFrame(tick)
+    }
+    raf = requestAnimationFrame(tick)
+    return () => cancelAnimationFrame(raf)
+  }, [value, reduced])
+  return n.toLocaleString('en-IN')
+}
+
+function ProgressRing({ pct, size = 52, stroke = 5 }) {
+  const reduced = usePrefersReducedMotion()
+  const r = (size - stroke) / 2
+  const c = 2 * Math.PI * r
+  const target = c * (1 - pct / 100)
+  const [off, setOff] = useState(() => (reduced ? target : c))
+  useEffect(() => {
+    if (reduced) return
+    const raf = requestAnimationFrame(() => setOff(target))
+    return () => cancelAnimationFrame(raf)
+  }, [target, reduced])
   return (
-    <div className="icon-grid">
-      {items.map((it, i) => {
-        const I = it.icon
-        return (
-          <button
-            className={'icon-cell ' + (it.tone || 'neutral')}
-            key={it.label}
-            style={{ animationDelay: (i * 0.08) + 's' }}
-            onClick={(e) => {
-              const wrap = e.currentTarget.querySelector('.ic-wrap')
-              if (wrap && wrap.animate) {
-                wrap.animate(
-                  [{ transform: 'scale(1)' }, { transform: 'scale(1.25)', offset: 0.45 }, { transform: 'scale(1)' }],
-                  { duration: 350, easing: 'ease' }
-                )
-              }
-              if (it.go) it.go(); else if (it.nav && onNavigate) onNavigate(it.nav)
-            }}
-            disabled={!it.go && !it.nav}
-          >
-            <span className={'ic-wrap ' + (it.tone || 'neutral')}><I size={18} /></span>
-            <span className="ic-label">{it.label}</span>
-            {it.stat && <span className="ic-stat">{it.stat}</span>}
-            {it.new && <span className="ic-new" aria-label="New content" />}
-          </button>
-        )
-      })}
+    <div className="bt-ring-box" style={{ width: size, height: size }}>
+      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} role="img" aria-label={pct + '% mastered'}>
+        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="var(--border)" strokeWidth={stroke} />
+        <circle
+          cx={size / 2} cy={size / 2} r={r} fill="none" stroke="var(--success)" strokeWidth={stroke}
+          strokeLinecap="round" strokeDasharray={c} strokeDashoffset={off}
+          transform={`rotate(-90 ${size / 2} ${size / 2})`}
+          style={{ transition: reduced ? 'none' : 'stroke-dashoffset 1s cubic-bezier(.22,.61,.36,1)' }}
+        />
+      </svg>
+      <span className="bt-ring-pct"><CountUp value={pct} />%</span>
+    </div>
+  )
+}
+
+/* ── bento tile cells ── */
+function BentoTile({ t, today, onGo }) {
+  const I = t.icon
+  return (
+    <button
+      className={'bento-tile tone-' + t.tone + (today ? ' today' : '')}
+      onClick={onGo}
+      disabled={!t.go && !t.nav}
+    >
+      <span className={'bt-icon tone-' + t.tone}><I size={22} /></span>
+      <span className="bt-label">{t.label}</span>
+      {t.ring != null ? (
+        <div className="bt-ring-wrap">
+          <ProgressRing pct={t.ring} />
+          <span className="bt-stat">{t.ringMeta}</span>
+        </div>
+      ) : t.stat ? (
+        <span className="bt-stat"><CountUp value={t.stat.n} /> {t.stat.suffix}</span>
+      ) : (
+        <span className="bt-stat">{t.statText}</span>
+      )}
+      {t.recommended && <span className="bt-ribbon"><Sparkles size={11} /> Recommended for you</span>}
+      {today && <span className="bt-today-tag">Today's focus</span>}
+    </button>
+  )
+}
+
+function FeaturedTile({ t, today, onGo }) {
+  const I = t.icon
+  return (
+    <div
+      className={'bento-tile featured tone-' + t.tone + (today ? ' today' : '')}
+      role="button"
+      tabIndex={0}
+      onClick={onGo}
+      onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onGo() } }}
+    >
+      <span className={'bt-icon featured tone-' + t.tone}><I size={28} /></span>
+      <span className="bt-label">{t.label}</span>
+      <span className="bt-stat"><CountUp value={t.stat.n} /> {t.stat.suffix}</span>
+      <button className="bt-cta" onClick={e => { e.stopPropagation(); onGo() }}>{t.cta} <ArrowRight size={14} /></button>
+      {today && <span className="bt-today-tag">Today's focus</span>}
     </div>
   )
 }
@@ -150,26 +221,58 @@ export default function DashboardTiles({ onNavigate }) {
   const words = active ? active.items.filter(match) : []
   const vocabCount = VOCAB_CATEGORIES.reduce((s, c) => s + c.items.length, 0)
 
-  /* one clean box: vocab practice + learning resources together */
-  const items = [
-    { icon: Swords, label: 'Word battle', tone: 'blue', stat: '5 rounds today', go: () => alert('Deep-link → Word battle (Chill Zone)') },
-    { icon: List, label: 'Word list', tone: 'blue', stat: vocabCount + ' words', go: () => setWlOpen(true) },
-    { icon: Layers, label: 'Flashcards', tone: 'green', stat: '230/500 mastered', nav: 'studykit' },
-    { icon: FileText, label: 'Syllabus PDF', tone: 'blue', stat: '19 chapters', go: () => alert('Deep-link → Syllabus PDF') },
-    { icon: BarChart3, label: 'Cutoffs', tone: 'amber', stat: '2025-26 data', nav: 'explorer' },
-    { icon: ListChecks, label: 'Eligibility', tone: 'green', stat: 'check your course', go: () => alert('Deep-link → Eligibility checker') },
-    { icon: Files, label: 'Sample papers', tone: 'blue', stat: '12 papers', go: () => alert('Deep-link → Sample papers') },
+  /* grouped bento: Play / Learn / Plan (data + labels + handlers unchanged) */
+  const groups = [
+    {
+      key: 'play', label: 'Play',
+      tiles: [
+        { id: 'word-battle', label: 'Word battle', tone: 'blue', icon: Swords, featured: true, stat: { n: 5, suffix: 'rounds today' }, cta: 'Find opponent', go: () => alert('Deep-link → Word battle (Chill Zone)') },
+      ],
+    },
+    {
+      key: 'learn', label: 'Learn',
+      tiles: [
+        { id: 'word-list', label: 'Word list', tone: 'blue', icon: List, stat: { n: vocabCount, suffix: 'words' }, go: () => setWlOpen(true) },
+        { id: 'flashcards', label: 'Flashcards', tone: 'green', icon: Layers, ring: 46, ringMeta: '230/500 mastered', recommended: true, nav: 'studykit' },
+        { id: 'syllabus', label: 'Syllabus PDF', tone: 'blue', icon: FileText, stat: { n: 19, suffix: 'chapters' }, go: () => alert('Deep-link → Syllabus PDF') },
+      ],
+    },
+    {
+      key: 'plan', label: 'Plan',
+      tiles: [
+        { id: 'cutoffs', label: 'Cutoffs', tone: 'amber', icon: BarChart3, statText: '2025-26 data', nav: 'explorer' },
+        { id: 'eligibility', label: 'Eligibility', tone: 'green', icon: ListChecks, statText: 'check your course', go: () => alert('Deep-link → Eligibility checker') },
+        { id: 'sample-papers', label: 'Sample papers', tone: 'blue', icon: Files, stat: { n: 12, suffix: 'papers' }, go: () => alert('Deep-link → Sample papers') },
+      ],
+    },
   ]
+
+  const flat = groups.flatMap(g => g.tiles)
+  const todayId = flat[new Date().getDate() % flat.length].id
+
+  const handle = t => { if (t.go) t.go(); else if (t.nav && onNavigate) onNavigate(t.nav) }
 
   return (
     <section className="tile green open">
       <div className="tile-head">
         <span className="tile-ico green"><Layers size={16} /></span>
         <b>📚 Practice &amp; resources</b>
-        <span className="tile-count green">{items.length}</span>
+        <span className="tile-count green">{flat.length}</span>
       </div>
       <div className="tile-body">
-        <IconGrid onNavigate={onNavigate} items={items} />
+        {groups.map(g => (
+          <div className="bento-group" key={g.key}>
+            <span className="bento-group-label">{g.label}</span>
+            <div className="bento-grid">
+              {g.tiles.map(t => {
+                const today = t.id === todayId
+                return t.featured
+                  ? <FeaturedTile key={t.id} t={t} today={today} onGo={() => handle(t)} />
+                  : <BentoTile key={t.id} t={t} today={today} onGo={() => handle(t)} />
+              })}
+            </div>
+          </div>
+        ))}
       </div>
       <Modal open={wlOpen} onClose={() => { setWlOpen(false); setCat(null); setQ('') }} title={active ? active.name : 'Word list'} wide>
         {active ? (
