@@ -291,19 +291,20 @@ export default function DashboardTiles({ onNavigate }) {
             <div className="wl-table-wrap">
               <table className="wl-table">
                 <thead>
-                  <tr>{active.cols.map(c => <th key={c.h}>{c.h}</th>)}</tr>
+                  <tr><th className="wl-sno-h">S.No.</th>{active.cols.map(c => <th key={c.h}>{c.h}</th>)}</tr>
                 </thead>
                 <tbody>
                   {words.map((it, i) => (
                     <tr key={it.id || i}>
+                      <td className="wl-sno">{i + 1}</td>
                       {active.cols.map(c => {
                         let v = it[c.f]
                         if (c.join) v = (v || []).join(', ')
                         const cls = c.pill ? 'wl-pill-cell' : (c.f === 'word' || c.f === 'front' ? 'wl-tword' : '')
                         return (
                           <td key={c.h} className={cls}>
-                            {c.star && it.star ? <span className="wl-star">★</span> : null}
                             {c.pill ? <span className={'wl-diff ' + String(v || '').toLowerCase()}>{v}</span> : v}
+                            {c.star && it.pyq ? <span className="wl-pyq">PYQ</span> : null}
                           </td>
                         )
                       })}
