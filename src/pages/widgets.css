@@ -14,7 +14,7 @@
 .tile.amber.open { border-color: color-mix(in srgb, var(--warning) 40%, var(--border)); }
 
 .tile-head { display: flex; align-items: center; gap: 10px; width: 100%; text-align: left; background: none; border: none;
-  padding: 14px 20px; cursor: default; font-family: var(--font-body); }
+  padding: 12px 16px; cursor: default; font-family: var(--font-body); }
 .tile-head:hover { background: var(--bg); }
 .tile-head b { font-size: 13px; font-weight: 700; color: var(--text); }
 .tile-ico { width: 32px; height: 32px; border-radius: 9px; display: grid; place-items: center; flex-shrink: 0; }
@@ -30,7 +30,7 @@
 .tile-hint { font-size: 10.5px; color: var(--text-muted); background: var(--bg); border: 1px solid var(--border); border-radius: var(--r-full); padding: 3px 9px; }
 .tile-chev { color: var(--text-muted); font-size: 16px; line-height: 1; transition: transform .2s; }
 .tile-chev.up { transform: rotate(180deg); }
-.tile-body { padding: 20px; animation: tile-in .22s ease; flex: 1; }
+.tile-body { padding: 16px; animation: tile-in .22s ease; flex: 1; }
 @keyframes tile-in { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
 
 /* ── Icon grid (uniform cells) ── */
@@ -215,12 +215,12 @@
 
 /* ═══════════ Bento grid (Practice & resources) ═══════════ */
 .bento-group { display: grid; gap: 7px; }
-.bento-group + .bento-group { margin-top: 18px; }
+.bento-group + .bento-group { margin-top: 12px; }
 .bento-group-label {
   font-size: 10.5px; font-weight: 700; letter-spacing: .09em; text-transform: uppercase;
   color: var(--text-muted); padding-left: 2px;
 }
-.bento-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+.bento-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
 @media (max-width: 900px) { .bento-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 640px) {
   .bento-grid { grid-template-columns: 1fr; }
@@ -229,21 +229,25 @@
 
 .bento-tile {
   position: relative; display: flex; flex-direction: column; align-items: flex-start; justify-content: flex-start;
-  gap: 10px; min-height: 132px; padding: 16px; border: 1px solid var(--border); border-radius: 16px;
+  gap: 8px; min-height: 100px; padding: 12px; border: 1px solid var(--border); border-radius: 14px;
   background: var(--surface); cursor: pointer; text-align: left; font-family: var(--font-body);
   transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease;
 }
+.bento-tile.tone-green { background: linear-gradient(145deg, var(--success-soft), var(--surface)); }
+.bento-tile.tone-blue { background: linear-gradient(145deg, var(--info-soft), var(--surface)); }
+.bento-tile.tone-purple { background: linear-gradient(145deg, var(--violet-soft), var(--surface)); }
+.bento-tile.tone-amber { background: linear-gradient(145deg, var(--accent-soft), var(--surface)); }
 .bento-tile:hover { transform: translateY(-4px); box-shadow: var(--shadow-md); }
 .bento-tile:active { transform: scale(.97); transition: transform .12s ease; }
 .bento-tile:disabled { cursor: default; opacity: .65; }
-.bento-tile.featured { grid-column: span 2; min-height: 190px; padding: 20px; overflow: hidden; }
+.bento-tile.featured { grid-column: 1 / -1; min-height: 148px; padding: 16px; overflow: hidden; }
 .bento-tile.tone-blue:hover { border-color: var(--info); }
 .bento-tile.tone-green:hover { border-color: var(--success); }
 .bento-tile.tone-purple:hover { border-color: var(--violet); }
 .bento-tile.tone-amber:hover { border-color: var(--accent); }
 
-.bt-icon { width: 44px; height: 44px; border-radius: 12px; display: grid; place-items: center; flex-shrink: 0; transition: transform .2s ease; }
-.bt-icon.featured { width: 56px; height: 56px; border-radius: 14px; }
+.bt-icon { width: 36px; height: 36px; border-radius: 10px; display: grid; place-items: center; flex-shrink: 0; transition: transform .2s ease; }
+.bt-icon.featured { width: 44px; height: 44px; border-radius: 12px; }
 .bento-tile:hover .bt-icon { transform: scale(1.15); }
 .bento-tile:active .bt-icon { transform: scale(.85); }
 .bt-icon.green { background: var(--success-soft); color: var(--success); }
@@ -288,7 +292,7 @@
 /* "Today's focus" animated shimmer border (pure CSS) */
 .bento-tile.today { border-color: transparent; }
 .bento-tile.today::before {
-  content: ''; position: absolute; inset: 0; border-radius: 16px; padding: 2px;
+  content: ''; position: absolute; inset: 0; border-radius: 14px; padding: 2px;
   background: linear-gradient(120deg, #F5A623, #7C5CFF, #2F6FDB, #14C98F, #F5A623);
   background-size: 300% 300%;
   -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
@@ -298,7 +302,6 @@
   animation: bentoShimmer 5s linear infinite;
   pointer-events: none;
 }
-.bento-tile.featured.today::before { border-radius: 20px; }
 @keyframes bentoShimmer { 0% { background-position: 0% 50%; } 100% { background-position: 300% 50%; } }
 
 /* featured sheen sweep */
