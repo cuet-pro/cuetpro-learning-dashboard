@@ -14,7 +14,7 @@
 .tile.amber.open { border-color: color-mix(in srgb, var(--warning) 40%, var(--border)); }
 
 .tile-head { display: flex; align-items: center; gap: 10px; width: 100%; text-align: left; background: none; border: none;
-  padding: 13px 14px; cursor: pointer; font-family: var(--font-body); }
+  padding: 13px 14px; cursor: default; font-family: var(--font-body); }
 .tile-head:hover { background: var(--bg); }
 .tile-head b { font-size: 13px; font-weight: 700; color: var(--text); }
 .tile-ico { width: 32px; height: 32px; border-radius: 9px; display: grid; place-items: center; flex-shrink: 0; }

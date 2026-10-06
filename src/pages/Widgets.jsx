@@ -1,10 +1,9 @@
 import { useEffect, useState } from 'react'
 import {
-  Swords, List, Layers, MessageCircle, TrendingUp, Lightbulb,
+  Swords, List, Layers, TrendingUp,
   FileText, BarChart3, ListChecks, Files, CheckCircle2, Users, Flame, Award, Zap,
-  Compass, Target, Timer, Trophy, Video, Sparkles, Grid3x3, ArrowLeft, ChevronRight,
+  Compass, Target, Timer, Trophy, Video, Sparkles, ArrowLeft, ChevronRight,
 } from 'lucide-react'
-import { boostRanking } from '../lib/analysisData'
 import { VOCAB_CATEGORIES } from '../data/vocab'
 import { Modal } from '../components/shell/Shell.jsx'
 import './widgets.css'
@@ -41,93 +40,6 @@ function IconGrid({ items, onNavigate }) {
       })}
     </div>
   )
-}
-
-function VocabTile({ onNavigate }) {
-  const [wlOpen, setWlOpen] = useState(false)
-  const [cat, setCat] = useState(null)
-  const [q, setQ] = useState('')
-  const active = VOCAB_CATEGORIES.find(c => c.id === cat)
-
-  const open = (id) => { setCat(id); setQ('') }
-  const close = () => { setWlOpen(false); setCat(null); setQ('') }
-
-  const match = (it) => {
-    if (!q) return true
-    const hay = Object.values(it).map(v => Array.isArray(v) ? v.join(' ') : String(v)).join(' ')
-    return hay.toLowerCase().includes(q.toLowerCase())
-  }
-
-  const words = active ? active.items.filter(match) : []
-  const vocabCount = VOCAB_CATEGORIES.reduce((s, c) => s + c.items.length, 0)
-
-  return (
-    <>
-      <IconGrid onNavigate={onNavigate} items={[
-        { icon: Swords, label: 'Word battle', tone: 'blue', stat: '5 rounds today', go: () => alert('Deep-link → Word battle (Chill Zone)') },
-        { icon: List, label: 'Word list', tone: 'blue', stat: vocabCount + ' words', go: () => setWlOpen(true) },
-        { icon: Layers, label: 'Flashcards', tone: 'green', stat: '230/500 mastered', nav: 'studykit' },
-        { icon: MessageCircle, label: 'Phrasal verbs', tone: 'purple', stat: '16 verbs · 3 new', new: true, go: () => alert('Deep-link → Phrasal verbs') },
-      ]} />
-      <Modal open={wlOpen} onClose={close} title={active ? active.name : 'Word list'} wide>
-        {active ? (
-          <div className="wl-words">
-            <div className="wl-top">
-              <button type="button" className="wl-back" onClick={() => { setCat(null); setQ('') }}><ArrowLeft size={14} /> All categories</button>
-              <input className="wl-search" type="text" placeholder={'Search ' + active.name.toLowerCase() + '…'} value={q} onChange={e => setQ(e.target.value)} />
-            </div>
-            <div className="wl-table-wrap">
-              <table className="wl-table">
-                <thead>
-                  <tr>{active.cols.map(c => <th key={c.h}>{c.h}</th>)}</tr>
-                </thead>
-                <tbody>
-                  {words.map((it, i) => (
-                    <tr key={it.id || i}>
-                      {active.cols.map(c => {
-                        let v = it[c.f]
-                        if (c.join) v = (v || []).join(', ')
-                        const cls = c.pill ? 'wl-pill-cell' : (c.f === 'word' || c.f === 'front' ? 'wl-tword' : '')
-                        return (
-                          <td key={c.h} className={cls}>
-                            {c.star && it.star ? <span className="wl-star">★</span> : null}
-                            {c.pill ? <span className={'wl-diff ' + String(v || '').toLowerCase()}>{v}</span> : v}
-                          </td>
-                        )
-                      })}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-            {words.length === 0 && <p className="wl-empty">No matches — try a different search.</p>}
-          </div>
-        ) : (
-          <div className="wl-list">
-            {VOCAB_CATEGORIES.map(c => (
-              <button type="button" className="wl-cat" key={c.id} onClick={() => open(c.id)}>
-                <span className="wl-cat-ico" style={{ background: c.color + '1a' }}>{c.icon}</span>
-                <span className="wl-cat-t"><b>{c.name}</b><em>{c.items.length} {c.unit}</em></span>
-                <ChevronRight size={15} className="wl-cat-arrow" />
-              </button>
-            ))}
-          </div>
-        )}
-      </Modal>
-    </>
-  )
-}
-
-function InsightsTile({ onNavigate }) {
-  const goSwot = () => { try { localStorage.setItem('cp_analysis_tab', 'swot') } catch {} onNavigate('analysis') }
-  return <IconGrid onNavigate={onNavigate} items={[
-    { icon: Grid3x3, label: 'SWOT', tone: 'purple', stat: '4 quadrants', go: goSwot },
-    { icon: Lightbulb, label: 'Fixes', tone: 'purple', stat: '3 action items', go: goSwot },
-    { icon: FileText, label: 'Syllabus PDF', tone: 'blue', stat: '19 chapters', go: () => alert('Deep-link → Syllabus PDF') },
-    { icon: BarChart3, label: 'Cutoffs', tone: 'amber', stat: '2025-26 data', nav: 'explorer' },
-    { icon: ListChecks, label: 'Eligibility', tone: 'green', stat: 'check your course', go: () => alert('Deep-link → Eligibility checker') },
-    { icon: Files, label: 'Sample papers', tone: 'blue', stat: '12 papers', go: () => alert('Deep-link → Sample papers') },
-  ]} />
 }
 
 export function ActivityTile() {
@@ -225,32 +137,85 @@ export function BadgesTile() {
 }
 
 export default function DashboardTiles({ onNavigate }) {
-  const [open, setOpen] = useState({ vocab: true, insights: true })
-  const [topWords] = useState(() => boostRanking('Commerce').slice(0, 1))
+  const [wlOpen, setWlOpen] = useState(false)
+  const [cat, setCat] = useState(null)
+  const [q, setQ] = useState('')
+  const active = VOCAB_CATEGORIES.find(c => c.id === cat)
 
-  const tiles = [
-    { id: 'vocab', title: '📚 Vocabulary & practice', icon: Layers, tone: 'green', count: 4, body: <VocabTile onNavigate={onNavigate} /> },
-    { id: 'insights', title: '💡 Insights & resources', icon: Lightbulb, tone: 'blue', count: 6, body: <InsightsTile onNavigate={onNavigate} /> },
+  const match = (it) => {
+    if (!q) return true
+    const hay = Object.values(it).map(v => Array.isArray(v) ? v.join(' ') : String(v)).join(' ')
+    return hay.toLowerCase().includes(q.toLowerCase())
+  }
+  const words = active ? active.items.filter(match) : []
+  const vocabCount = VOCAB_CATEGORIES.reduce((s, c) => s + c.items.length, 0)
+
+  /* one clean box: vocab practice + learning resources together */
+  const items = [
+    { icon: Swords, label: 'Word battle', tone: 'blue', stat: '5 rounds today', go: () => alert('Deep-link → Word battle (Chill Zone)') },
+    { icon: List, label: 'Word list', tone: 'blue', stat: vocabCount + ' words', go: () => setWlOpen(true) },
+    { icon: Layers, label: 'Flashcards', tone: 'green', stat: '230/500 mastered', nav: 'studykit' },
+    { icon: FileText, label: 'Syllabus PDF', tone: 'blue', stat: '19 chapters', go: () => alert('Deep-link → Syllabus PDF') },
+    { icon: BarChart3, label: 'Cutoffs', tone: 'amber', stat: '2025-26 data', nav: 'explorer' },
+    { icon: ListChecks, label: 'Eligibility', tone: 'green', stat: 'check your course', go: () => alert('Deep-link → Eligibility checker') },
+    { icon: Files, label: 'Sample papers', tone: 'blue', stat: '12 papers', go: () => alert('Deep-link → Sample papers') },
   ]
 
   return (
-    <div className="tiles">
-      {tiles.map(t => {
-        const I = t.icon
-        const isOpen = open[t.id]
-        return (
-          <section className={'tile ' + t.tone + (isOpen ? ' open' : '')} key={t.id}>
-            <button className="tile-head" onClick={() => setOpen(o => ({ ...o, [t.id]: !o[t.id] }))} aria-expanded={isOpen}>
-              <span className={'tile-ico ' + t.tone}><I size={16} /></span>
-              <b>{t.title}</b>
-              <span className={'tile-count ' + t.tone}>{t.count}</span>
-              {t.id === 'vocab' && topWords[0] && <span className="tile-hint">top: {topWords[0].name}</span>}
-              <span className={'tile-chev' + (isOpen ? ' up' : '')}>⌄</span>
-            </button>
-            {isOpen && <div className="tile-body">{t.body}</div>}
-          </section>
-        )
-      })}
-    </div>
+    <section className="tile green open">
+      <div className="tile-head">
+        <span className="tile-ico green"><Layers size={16} /></span>
+        <b>📚 Practice &amp; resources</b>
+        <span className="tile-count green">{items.length}</span>
+      </div>
+      <div className="tile-body">
+        <IconGrid onNavigate={onNavigate} items={items} />
+      </div>
+      <Modal open={wlOpen} onClose={() => { setWlOpen(false); setCat(null); setQ('') }} title={active ? active.name : 'Word list'} wide>
+        {active ? (
+          <div className="wl-words">
+            <div className="wl-top">
+              <button type="button" className="wl-back" onClick={() => { setCat(null); setQ('') }}><ArrowLeft size={14} /> All categories</button>
+              <input className="wl-search" type="text" placeholder={'Search ' + active.name.toLowerCase() + '…'} value={q} onChange={e => setQ(e.target.value)} />
+            </div>
+            <div className="wl-table-wrap">
+              <table className="wl-table">
+                <thead>
+                  <tr>{active.cols.map(c => <th key={c.h}>{c.h}</th>)}</tr>
+                </thead>
+                <tbody>
+                  {words.map((it, i) => (
+                    <tr key={it.id || i}>
+                      {active.cols.map(c => {
+                        let v = it[c.f]
+                        if (c.join) v = (v || []).join(', ')
+                        const cls = c.pill ? 'wl-pill-cell' : (c.f === 'word' || c.f === 'front' ? 'wl-tword' : '')
+                        return (
+                          <td key={c.h} className={cls}>
+                            {c.star && it.star ? <span className="wl-star">★</span> : null}
+                            {c.pill ? <span className={'wl-diff ' + String(v || '').toLowerCase()}>{v}</span> : v}
+                          </td>
+                        )
+                      })}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            {words.length === 0 && <p className="wl-empty">No matches — try a different search.</p>}
+          </div>
+        ) : (
+          <div className="wl-list">
+            {VOCAB_CATEGORIES.map(c => (
+              <button type="button" className="wl-cat" key={c.id} onClick={() => { setCat(c.id); setQ('') }}>
+                <span className="wl-cat-ico" style={{ background: c.color + '1a' }}>{c.icon}</span>
+                <span className="wl-cat-t"><b>{c.name}</b><em>{c.items.length} {c.unit}</em></span>
+                <ChevronRight size={15} className="wl-cat-arrow" />
+              </button>
+            ))}
+          </div>
+        )}
+      </Modal>
+    </section>
   )
 }

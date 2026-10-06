@@ -272,13 +272,6 @@ export default function Dashboard({ onNavigate }) {
         )}
       </section>
 
-      {/* 3b. Your recent activity */}
-      <button type="button" className="dash-activity" onClick={() => setShowActivity(true)}>
-        <span className="dash-activity-ico"><History size={16} /></span>
-        <span className="dash-activity-t"><b>Your recent activity</b><em>Mocks, flashcards, streaks & more</em></span>
-        <ArrowRight size={16} className="dash-activity-arrow" />
-      </button>
-
       {/* 4. My Progress ⇄ My Standing — swipeable panel card */}
       <div className="pg-card">
         <div className="pg-stage">
@@ -427,8 +420,15 @@ export default function Dashboard({ onNavigate }) {
 
       </div>
 
-      {/* 5. Tool tiles (4 grouped) */}
+      {/* 5. Practice & resources box */}
       <DashboardTiles onNavigate={onNavigate} />
+
+      {/* Your recent activity */}
+      <button type="button" className="dash-activity" onClick={() => setShowActivity(true)}>
+        <span className="dash-activity-ico"><History size={16} /></span>
+        <span className="dash-activity-t"><b>Your recent activity</b><em>Mocks, flashcards, streaks & more</em></span>
+        <ArrowRight size={16} className="dash-activity-arrow" />
+      </button>
 
       {/* Badges — moved up from the tiles into the hero as a small control */}
       <Modal open={showBadges} onClose={() => setShowBadges(false)} title="Your badges">
