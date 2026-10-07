@@ -244,6 +244,7 @@ function NotesBreakdown({ units, base, label, record }) {
   const allChapters = units.reduce((n, u) => n + u.chapters.length, 0)
   const readyChapters = units.reduce((n, u) => n + u.chapters.filter(c => c.ready).length, 0)
   const topicCount = units.reduce((n, u) => n + u.chapters.reduce((m, c) => m + c.topics.length, 0), 0)
+  const hasTier = units.some(u => u.chapters.some(c => c.topics.some(t => t.tier)))
 
   const srcFor = (chapterId, topicId) => {
     const unit = units.find(u => u.chapters.some(c => c.id === chapterId))
@@ -259,6 +260,11 @@ function NotesBreakdown({ units, base, label, record }) {
     const all = units.flatMap(u => u.chapters)
     const ch = all.find(c => c.id === open.chapter)
     const tp = ch && open.topic ? ch.topics.find(t => t.id === open.topic) : null
+    const seq = []
+    units.forEach(u => u.chapters.filter(c => c.ready).forEach(c => c.topics.forEach(t => seq.push({ chapter: c.id, topic: t.id, num: c.num + '.' + t.num, title: t.title }))))
+    const curIdx = open.topic ? seq.findIndex(x => x.chapter === open.chapter && x.topic === open.topic) : -1
+    const prev = curIdx > 0 ? seq[curIdx - 1] : null
+    const next = curIdx >= 0 && curIdx < seq.length - 1 ? seq[curIdx + 1] : null
     return (
       <div className="econ-note-open">
         <div className="econ-crumb">
@@ -276,6 +282,22 @@ function NotesBreakdown({ units, base, label, record }) {
           subject={label}
           record={record}
         />
+        {open.topic && (prev || next) && (
+          <div className="econ-pager">
+            {prev && (
+              <button className="econ-pager-btn" onClick={() => setOpen({ chapter: prev.chapter, topic: prev.topic })}>
+                <ArrowLeft size={15} />
+                <span className="econ-pager-body"><em>Previous</em><b>{prev.num} · {prev.title}</b></span>
+              </button>
+            )}
+            {next && (
+              <button className="econ-pager-btn next" onClick={() => setOpen({ chapter: next.chapter, topic: next.topic })}>
+                <span className="econ-pager-body"><em>Next</em><b>{next.num} · {next.title}</b></span>
+                <ArrowRight size={15} />
+              </button>
+            )}
+          </div>
+        )}
       </div>
     )
   }
@@ -307,6 +329,16 @@ function NotesBreakdown({ units, base, label, record }) {
           </select>
         </label>
       </div>
+
+      {hasTier && (
+        <div className="econ-legend">
+          <span className="econ-legend-label">Exam weightage</span>
+          <span className="econ-legend-chip hl">High</span>
+          <span className="econ-legend-chip md">Medium</span>
+          <span className="econ-legend-chip lw">Low</span>
+          <span className="econ-legend-note">more questions asked from this topic in the exam</span>
+        </div>
+      )}
 
       {units.map((u, ui) => {
         const ready = u.chapters.filter(c => c.ready)
@@ -343,8 +375,8 @@ function NotesBreakdown({ units, base, label, record }) {
                             </span>
                           )}
                           {!(t.frequency > 0) && t.tier && (
-                            <span className={'econ-tier t-' + t.tier} title="Importance">
-                              {t.tier === 'high' ? 'high weight' : t.tier === 'medium' ? 'medium weight' : 'low weight'}
+                            <span className={'econ-tier t-' + t.tier} title="Exam weightage">
+                              {t.tier === 'high' ? 'High' : t.tier === 'medium' ? 'Medium' : 'Low'}
                             </span>
                           )}
                           <ChevronRight size={14} className="econ-topic-arrow" />
