@@ -241,11 +241,6 @@ export default function StudyKit({ onNavigate }) {
 function NotesBreakdown({ units, base, label, record }) {
   const [open, setOpen] = useState(null)
   const [expanded, setExpanded] = useState(null)
-  const allChapters = units.reduce((n, u) => n + u.chapters.length, 0)
-  const readyChapters = units.reduce((n, u) => n + u.chapters.filter(c => c.ready).length, 0)
-  const topicCount = units.reduce((n, u) => n + u.chapters.reduce((m, c) => m + c.topics.length, 0), 0)
-  const hasTier = units.some(u => u.chapters.some(c => c.topics.some(t => t.tier)))
-
   const srcFor = (chapterId, topicId) => {
     const unit = units.find(u => u.chapters.some(c => c.id === chapterId))
     const parts = []
@@ -285,7 +280,7 @@ function NotesBreakdown({ units, base, label, record }) {
         {open.topic && (prev || next) && (
           <div className="econ-pager">
             {prev && (
-              <button className="econ-pager-btn" onClick={() => setOpen({ chapter: prev.chapter, topic: prev.topic })}>
+              <button className="econ-pager-btn prev" onClick={() => setOpen({ chapter: prev.chapter, topic: prev.topic })}>
                 <ArrowLeft size={15} />
                 <span className="econ-pager-body"><em>Previous</em><b>{prev.num} · {prev.title}</b></span>
               </button>
@@ -307,9 +302,6 @@ function NotesBreakdown({ units, base, label, record }) {
       <div className="econ-bd-head">
         <div className="econ-bd-title">
           <b>{label} notes</b>
-          <span>
-            {allChapters} chapters · {readyChapters} written so far ({topicCount} topic pages, each opens on its own)
-          </span>
         </div>
         <label className="econ-jump">
           <select defaultValue="" onChange={e => {
@@ -329,16 +321,6 @@ function NotesBreakdown({ units, base, label, record }) {
           </select>
         </label>
       </div>
-
-      {hasTier && (
-        <div className="econ-legend">
-          <span className="econ-legend-label">Exam weightage</span>
-          <span className="econ-legend-chip hl">High</span>
-          <span className="econ-legend-chip md">Medium</span>
-          <span className="econ-legend-chip lw">Low</span>
-          <span className="econ-legend-note">more questions asked from this topic in the exam</span>
-        </div>
-      )}
 
       {units.map((u, ui) => {
         const ready = u.chapters.filter(c => c.ready)
