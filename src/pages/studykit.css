@@ -207,7 +207,7 @@
 
 /* ── Notes fullscreen expand (iframe stays mounted — no reload) ── */
 .sk-note-inline { background: #fff; border: 1px solid var(--border); border-radius: var(--r-md); overflow: hidden; }
-.sk-note-inline-frame { display: block; width: 100%; min-height: 480px; border: 0; background: #fff; }
+.sk-note-inline-frame { display: block; width: 100%; min-height: 240px; border: 0; background: #fff; }
 
 /* ── PYQ: compact status-coded list, grouped by year accordion ── */
 .pyq-years { display: flex; align-items: center; gap: 6px; flex-wrap: nowrap; overflow-x: auto; padding-bottom: 2px; scrollbar-width: none; }
@@ -411,10 +411,10 @@
 /* unit grouping + coming-soon chapters */
 .econ-unit { display: grid; gap: 12px; animation: sk-card-in .45s cubic-bezier(.22,.61,.36,1) both; }
 .econ-unit-head { display: flex; align-items: center; gap: 12px; padding: 14px 16px; border-radius: 12px;
-  background: linear-gradient(120deg, var(--primary-soft), var(--surface));
-  border: 1px solid color-mix(in srgb, var(--primary) 25%, var(--border)); }
-.econ-unit-head b { font: 800 16px var(--font-display); color: var(--primary); letter-spacing: .01em; }
-.econ-unit-head span { margin-left: auto; font: 600 11px var(--font-body); color: var(--text-muted); }
+  background: linear-gradient(120deg, #1D3557, #2A456E);
+  border: 1px solid #2A456E; }
+.econ-unit-head b { font: 800 16px var(--font-display); color: #fff; letter-spacing: .01em; }
+.econ-unit-head span { margin-left: auto; font: 600 11px var(--font-body); color: rgba(255,255,255,.72); }
 .econ-soon { display: grid; gap: 6px; padding: 10px; border: 1px dashed var(--border-strong); border-radius: var(--r-md); background: var(--bg); }
 .econ-soon-row { display: grid; grid-template-columns: 46px minmax(0, 1fr) auto; align-items: center; gap: 10px; padding: 5px 6px; border-radius: var(--r-sm); opacity: .85; transition: opacity .18s, background .18s; }
 .econ-soon-row:hover { opacity: 1; background: var(--surface); }
