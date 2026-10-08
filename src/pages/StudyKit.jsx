@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { NotebookText, Layers, Dumbbell, Timer, FileQuestion, Archive, ArrowLeft, ArrowRight, PlayCircle, Video, Sigma, Zap, ChevronRight, ChevronDown, CheckSquare, Search, GraduationCap, Highlighter, FlaskConical, Settings } from 'lucide-react'
+import { NotebookText, Layers, Dumbbell, Timer, FileQuestion, Archive, ArrowLeft, ArrowRight, PlayCircle, Video, Sigma, Zap, ChevronRight, ChevronDown, CheckSquare, Search, GraduationCap, Highlighter, FlaskConical, Settings, Sun, Moon } from 'lucide-react'
 import { boostRanking, weakTopicNames, allSubSkills } from '../lib/analysisData'
 import { ECON_UNITS } from '../data/econNotes'
 import { GEO_UNITS } from '../data/geoNotes'
@@ -557,7 +557,7 @@ function QuizView() {
   )
 }
 
-/* ── PYQ: subject-aware + year filter + shift-wise papers ── */
+/* ── PYQ: compact status-coded list, grouped by year accordion ── */
 const PYQ_YEARS = [2026, 2025, 2024, 2023, 2022]
 const PYQ_SCHEDULE = {
   2022: [['15 Jul', 1], ['15 Jul', 2], ['16 Jul', 1], ['16 Jul', 2]],
@@ -566,68 +566,106 @@ const PYQ_SCHEDULE = {
   2025: [['08 May', 1], ['08 May', 2], ['09 May', 1], ['09 May', 2]],
   2026: [['11 May', 1], ['11 May', 2], ['12 May', 1], ['12 May', 2]],
 }
-const PYQ_DONE = { 2022: 20, 2023: 35, 2024: 60, 2025: 0, 2026: 0 }
+/* per-paper attempt state — same shape as mock/attempt tracking elsewhere:
+   key absent = not attempted · {status:'progress'} = in progress · {status:'done',score} = completed */
+const PYQ_ATTEMPTS = {
+  '2026-0': { status: 'progress' },
+  '2024-0': { status: 'done', score: 82 },
+  '2024-1': { status: 'done', score: 74 },
+  '2023-0': { status: 'done', score: 68 },
+  '2022-0': { status: 'done', score: 71 },
+}
+const scoreTone = s => (s >= 75 ? 'good' : s >= 50 ? 'mid' : 'low')
+
+function PyqRow({ p, attempt, scope }) {
+  const ShiftIcon = p.shift === 1 ? Sun : Moon
+  return (
+    <div className="pyq-row">
+      <span className={'pyq-row-shift ' + (p.shift === 1 ? 'day' : 'eve')}><ShiftIcon size={15} /></span>
+      <span className="pyq-row-date">{p.date} · Shift {p.shift}</span>
+      <span className="pyq-row-qs">{p.qs} Qs</span>
+      <span className="pyq-row-action">
+        {!attempt ? (
+          <button className="btn btn-outline-sm" onClick={() => alert(`Deep-link → PYQ: ${scope} ${p.year} · ${p.date} Shift ${p.shift}`)}>Attempt</button>
+        ) : attempt.status === 'progress' ? (
+          <button className="pyq-resume" onClick={() => alert(`Deep-link → resume PYQ: ${scope} ${p.year} · ${p.date} Shift ${p.shift}`)}>Resume</button>
+        ) : (
+          <>
+            <span className={'pyq-score ' + scoreTone(attempt.score)}>{attempt.score}%</span>
+            <button className="pyq-review" onClick={() => alert(`Deep-link → review PYQ: ${scope} ${p.year} · ${p.date} Shift ${p.shift}`)}>Review</button>
+          </>
+        )}
+      </span>
+    </div>
+  )
+}
 
 function PyqView({ subject, stream, weakOnly, setWeakOnly }) {
   const scope = subject === 'all' ? stream : subject
-  const [year, setYear] = useState('all')
+  const [openYears, setOpenYears] = useState(() => new Set([2026]))
   const weak = weakTopicNames(scope)
 
-  /* sections come from the real sub-skill engine for this scope */
-  const allSections = allSubSkills(scope).map(s => s.name)
-  const sections = weakOnly && weak.length ? weak : allSections.slice(0, 4)
+  /* the paper always covers the same fixed topic set for this scope */
+  const fixedTopics = allSubSkills(scope).map(s => s.name).slice(0, 4)
 
   const shiftsFor = y => {
     const qs = scope === 'General Test' ? 50 : 45
-    return (PYQ_SCHEDULE[y] || []).map(([d, s]) => ({ date: d, shift: s, qs, id: `${y}-${d}-${s}` }))
+    return (PYQ_SCHEDULE[y] || []).map(([d, s], i) => ({ date: d, shift: s, qs, id: `${y}-${i}`, year: y }))
   }
-  const yearsToShow = year === 'all' ? PYQ_YEARS : [year]
+  const papers = PYQ_YEARS.flatMap(y => shiftsFor(y))
+  const attempted = papers.filter(p => PYQ_ATTEMPTS[p.id]?.status === 'done')
+  const avg = attempted.length ? Math.round(attempted.reduce((s, p) => s + PYQ_ATTEMPTS[p.id].score, 0) / attempted.length) : null
+
+  const meta = y => {
+    const ps = shiftsFor(y)
+    const done = ps.filter(p => PYQ_ATTEMPTS[p.id]?.status === 'done').length
+    const prog = ps.filter(p => PYQ_ATTEMPTS[p.id]?.status === 'progress').length
+    return { done, prog, pct: ps.length ? Math.round(done / ps.length * 100) : 0 }
+  }
+
+  const toggleYear = y => setOpenYears(s => {
+    const n = new Set(s)
+    if (n.has(y)) n.delete(y)
+    else n.add(y)
+    return n
+  })
 
   return (
     <div className="sk-pyq-flow">
-      <label className="sk-weak-only">
-        <input type="checkbox" checked={weakOnly} onChange={e => setWeakOnly(e.target.checked)} />
-        <CheckSquare size={13} /> Only show my weak topics
-        <span>{weakOnly ? `· ${weak.join(', ')}` : ''}</span>
-      </label>
+      <p className="pyq-topics-line"><span>Every paper covers:</span> {fixedTopics.join(' · ')}</p>
 
-      {/* year filter */}
-      <div className="pyq-years">
-        <span className="pyq-years-lbl">Year</span>
-        <button className={'pyq-year' + (year === 'all' ? ' on' : '')} onClick={() => setYear('all')}>All</button>
-        {PYQ_YEARS.map(y => (
-          <button key={y} className={'pyq-year' + (year === y ? ' on' : '')} onClick={() => setYear(y)}>{y}</button>
-        ))}
+      <div className="pyq-summary">
+        <span className="pyq-summary-num">{attempted.length}/{papers.length}</span>
+        <span className="pyq-summary-lbl">papers attempted</span>
+        {avg != null && <span className="pyq-summary-avg">· {avg}% avg score</span>}
+        <label className="sk-weak-only">
+          <input type="checkbox" checked={weakOnly} onChange={e => setWeakOnly(e.target.checked)} />
+          <CheckSquare size={13} /> Only show my weak topics
+          {weakOnly && <span>· {weak.join(', ')}</span>}
+        </label>
       </div>
 
-      {year !== 'all' && (
-        <div className="pyq-progress">
-          <div className="sk-card-bar"><i style={{ width: PYQ_DONE[year] + '%' }} /></div>
-          <span>{year} papers · {PYQ_DONE[year]}% attempted</span>
-        </div>
-      )}
-
-      {yearsToShow.map(y => (
-        <div className="pyq-yearblock" key={y}>
-          {year === 'all' && <div className="pyq-yearhead">{y}{PYQ_DONE[y] === 0 ? <em> · not started</em> : <em> · {PYQ_DONE[y]}% done</em>}</div>}
-          <div className="pyq-shifts">
-            {shiftsFor(y).map(sh => (
-              <div className="pyq-shift" key={sh.id}>
-                <div className="pyq-shift-top">
-                  <b>{sh.date} Shift {sh.shift}</b>
-                  <span className="pyq-shift-qs">{sh.qs} Qs</span>
-                  <button className="btn btn-outline-sm" onClick={() => alert(`Deep-link → PYQ: ${scope} ${y} · ${sh.date} Shift ${sh.shift}`)}>Attempt</button>
-                </div>
-                <div className="pyq-chips">
-                  {sections.map(s => <span className="pyq-chip" key={s}>{s}</span>)}
-                </div>
+      {PYQ_YEARS.map(y => {
+        const m = meta(y)
+        const open = openYears.has(y)
+        const badge = m.done === 0 && m.prog === 0 ? { t: 'Not started', c: 'empty' } : m.done > 0 ? { t: m.pct + '% done', c: 'done' } : { t: 'In progress', c: 'prog' }
+        return (
+          <div className={'pyq-yearblock' + (open ? ' open' : '')} key={y}>
+            <button type="button" className="pyq-yearhead" aria-expanded={open} onClick={() => toggleYear(y)}>
+              <span className="pyq-year">{y}</span>
+              <span className={'pyq-year-badge ' + badge.c}>{badge.t}</span>
+              <ChevronDown size={16} className="pyq-year-chev" />
+            </button>
+            {open && (
+              <div className="pyq-rows">
+                {shiftsFor(y).map(p => <PyqRow key={p.id} p={p} attempt={PYQ_ATTEMPTS[p.id]} scope={scope} />)}
+                {shiftsFor(y).length === 0 && <p className="muted-empty">No papers for this year yet.</p>}
               </div>
-            ))}
-            {shiftsFor(y).length === 0 && <p className="muted-empty">No papers for this year yet.</p>}
+            )}
           </div>
-        </div>
-      ))}
-      {weakOnly && sections.length === 0 && <p className="muted-empty">No weak topics for {scope}.</p>}
+        )
+      })}
+      {weakOnly && weak.length === 0 && <p className="muted-empty">No weak topics for {scope}.</p>}
     </div>
   )
 }
