@@ -210,8 +210,12 @@
 .sk-note-inline-frame { display: block; width: 100%; min-height: 480px; border: 0; background: #fff; }
 
 /* ── PYQ: compact status-coded list, grouped by year accordion ── */
-.pyq-topics-line { font-size: 12px; color: var(--text-secondary); margin: 0; }
-.pyq-topics-line span { font-weight: 700; color: var(--text-muted); }
+.pyq-years { display: flex; align-items: center; gap: 6px; flex-wrap: nowrap; overflow-x: auto; padding-bottom: 2px; scrollbar-width: none; }
+.pyq-years::-webkit-scrollbar { display: none; }
+.pyq-years-lbl { font-size: 11px; font-weight: 800; letter-spacing: .4px; text-transform: uppercase; color: var(--text-muted); flex-shrink: 0; margin-right: 2px; }
+.pyq-yearpill { flex-shrink: 0; font-size: 12px; font-weight: 700; color: var(--text-secondary); background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-full); padding: 6px 14px; cursor: pointer; transition: all .13s; font-family: var(--font-mono); }
+.pyq-yearpill:hover { border-color: var(--primary); color: var(--primary); }
+.pyq-yearpill.on { background: var(--primary); border-color: var(--primary); color: #fff; }
 
 .pyq-summary { display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
   padding: 12px 14px; border: 1px solid var(--border); border-radius: var(--r-md); background: var(--surface); }

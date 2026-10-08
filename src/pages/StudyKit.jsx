@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { NotebookText, Layers, Dumbbell, Timer, FileQuestion, Archive, ArrowLeft, ArrowRight, PlayCircle, Video, Sigma, Zap, ChevronRight, ChevronDown, CheckSquare, Search, GraduationCap, Highlighter, FlaskConical, Settings, Sun, Moon } from 'lucide-react'
-import { boostRanking, weakTopicNames, allSubSkills } from '../lib/analysisData'
+import { boostRanking, weakTopicNames } from '../lib/analysisData'
 import { ECON_UNITS } from '../data/econNotes'
 import { GEO_UNITS } from '../data/geoNotes'
 import { useProfile, STREAMS } from '../lib/profile'
@@ -602,11 +602,9 @@ function PyqRow({ p, attempt, scope }) {
 
 function PyqView({ subject, stream, weakOnly, setWeakOnly }) {
   const scope = subject === 'all' ? stream : subject
+  const [year, setYear] = useState('all')
   const [openYears, setOpenYears] = useState(() => new Set([2026]))
   const weak = weakTopicNames(scope)
-
-  /* the paper always covers the same fixed topic set for this scope */
-  const fixedTopics = allSubSkills(scope).map(s => s.name).slice(0, 4)
 
   const shiftsFor = y => {
     const qs = scope === 'General Test' ? 50 : 45
@@ -630,9 +628,18 @@ function PyqView({ subject, stream, weakOnly, setWeakOnly }) {
     return n
   })
 
+  const yearsToShow = year === 'all' ? PYQ_YEARS : [year]
+
   return (
     <div className="sk-pyq-flow">
-      <p className="pyq-topics-line"><span>Every paper covers:</span> {fixedTopics.join(' · ')}</p>
+      {/* year filter */}
+      <div className="pyq-years">
+        <span className="pyq-years-lbl">Year</span>
+        <button className={'pyq-yearpill' + (year === 'all' ? ' on' : '')} onClick={() => setYear('all')}>All</button>
+        {PYQ_YEARS.map(y => (
+          <button key={y} className={'pyq-yearpill' + (year === y ? ' on' : '')} onClick={() => setYear(y)}>{y}</button>
+        ))}
+      </div>
 
       <div className="pyq-summary">
         <span className="pyq-summary-num">{attempted.length}/{papers.length}</span>
@@ -645,13 +652,13 @@ function PyqView({ subject, stream, weakOnly, setWeakOnly }) {
         </label>
       </div>
 
-      {PYQ_YEARS.map(y => {
+      {yearsToShow.map(y => {
         const m = meta(y)
-        const open = openYears.has(y)
+        const open = year !== 'all' ? true : openYears.has(y)
         const badge = m.done === 0 && m.prog === 0 ? { t: 'Not started', c: 'empty' } : m.done > 0 ? { t: m.pct + '% done', c: 'done' } : { t: 'In progress', c: 'prog' }
         return (
           <div className={'pyq-yearblock' + (open ? ' open' : '')} key={y}>
-            <button type="button" className="pyq-yearhead" aria-expanded={open} onClick={() => toggleYear(y)}>
+            <button type="button" className="pyq-yearhead" aria-expanded={open} onClick={() => { if (year === 'all') toggleYear(y) }}>
               <span className="pyq-year">{y}</span>
               <span className={'pyq-year-badge ' + badge.c}>{badge.t}</span>
               <ChevronDown size={16} className="pyq-year-chev" />
