@@ -397,6 +397,8 @@ function NotesBreakdown({ units, base, label, record }) {
 function NoteDashboard({ src, title, subject, record }) {
   const ref = useRef(null)
   const roRef = useRef(null)
+  const rafRef = useRef(null)
+  const [ready, setReady] = useState(false)
 
   function syncHeight() {
     const f = ref.current
@@ -404,10 +406,14 @@ function NoteDashboard({ src, title, subject, record }) {
     const doc = f.contentDocument
     const de = doc.documentElement, b = doc.body
     const h = Math.max(de ? de.scrollHeight : 0, b ? b.scrollHeight : 0, de ? de.offsetHeight : 0)
-    if (h > 0) f.style.height = h + 'px'
+    if (h > 0) {
+      if (rafRef.current) cancelAnimationFrame(rafRef.current)
+      rafRef.current = requestAnimationFrame(() => { if (ref.current) ref.current.style.height = h + 'px' })
+    }
+    setReady(true)
   }
 
-  useEffect(() => () => { if (roRef.current) { roRef.current.disconnect(); roRef.current = null } }, [])
+  useEffect(() => () => { if (rafRef.current) cancelAnimationFrame(rafRef.current); if (roRef.current) { roRef.current.disconnect(); roRef.current = null } }, [])
 
   function handleLoad() {
     record({ title: subject + ' notes', subject, detail: 'notes', pct: 40 })
@@ -416,19 +422,25 @@ function NoteDashboard({ src, title, subject, record }) {
     try {
       if (window.ResizeObserver) {
         if (roRef.current) roRef.current.disconnect()
-        const ro = new ResizeObserver(syncHeight)
+        const ro = new ResizeObserver(() => syncHeight())
         roRef.current = ro
         if (f.contentDocument.body) ro.observe(f.contentDocument.body)
         if (f.contentDocument.documentElement) ro.observe(f.contentDocument.documentElement)
       }
     } catch {}
     let tries = 0
-    const poll = () => { syncHeight(); if (tries++ < 16) setTimeout(poll, 300) }
+    const poll = () => { syncHeight(); if (tries++ < 40) setTimeout(poll, 250) }
     poll()
   }
 
   return (
     <div className="sk-note-inline">
+      {!ready && (
+        <div className="sk-note-loading">
+          <span className="sk-note-loading-spin" />
+          <span>Loading notes…</span>
+        </div>
+      )}
       <iframe
         ref={ref}
         src={src}
@@ -436,6 +448,7 @@ function NoteDashboard({ src, title, subject, record }) {
         className="sk-note-inline-frame"
         onLoad={handleLoad}
         scrolling="no"
+        style={ready ? undefined : { position: 'absolute', visibility: 'hidden', width: '100%' }}
       />
     </div>
   )

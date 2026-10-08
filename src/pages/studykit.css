@@ -207,7 +207,11 @@
 
 /* ── Notes fullscreen expand (iframe stays mounted — no reload) ── */
 .sk-note-inline { background: #fff; border: 1px solid var(--border); border-radius: var(--r-md); overflow: hidden; }
-.sk-note-inline-frame { display: block; width: 100%; min-height: 240px; border: 0; background: #fff; }
+.sk-note-inline-frame { display: block; width: 100%; min-height: 0; border: 0; background: #fff; }
+.sk-note-loading { min-height: 480px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; color: var(--text-muted); font: 600 13px var(--font-body); }
+.sk-note-loading-spin { width: 26px; height: 26px; border-radius: 50%; border: 3px solid var(--primary-soft); border-top-color: var(--primary); animation: sk-note-spin .8s linear infinite; }
+@keyframes sk-note-spin { to { transform: rotate(360deg) } }
+@media (prefers-reduced-motion: reduce) { .sk-note-loading-spin { animation: none; } }
 
 /* ── PYQ: compact status-coded list, grouped by year accordion ── */
 .pyq-years { display: flex; align-items: center; gap: 6px; flex-wrap: nowrap; overflow-x: auto; padding-bottom: 2px; scrollbar-width: none; }
