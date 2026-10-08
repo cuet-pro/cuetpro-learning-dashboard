@@ -4,6 +4,7 @@ import { boostRanking, weakTopicNames } from '../lib/analysisData'
 import { ECON_UNITS } from '../data/econNotes'
 import { GEO_UNITS } from '../data/geoNotes'
 import { useProfile, STREAMS } from '../lib/profile'
+import { notesDeepLink, readNotesProgress, writeNotesProgress, lastReadSubject } from '../lib/notesProgress'
 import './studykit.css'
 
 const NOTES_BY_STREAM = {
@@ -42,8 +43,11 @@ const ALL_TOOLS = [...LEARNING_TOOLS, ...TESTING_TOOLS]
 export default function StudyKit({ onNavigate }) {
   const [profile] = useProfile()
   const stream = profile.stream
-  const [subject, setSubject] = useState('all')
-  const [selected, setSelected] = useState(null)
+  const [subject, setSubject] = useState(() => {
+    const dl = notesDeepLink()
+    return (dl && (STREAMS[profile.stream] || []).includes(dl.subject)) ? dl.subject : 'all'
+  })
+  const [selected, setSelected] = useState(() => (notesDeepLink() ? 'notes' : null))
   const [query, setQuery] = useState('')
   const [weakOnly, setWeakOnly] = useState(false)
   const [examMode, setExamMode] = useState(false)
@@ -77,6 +81,15 @@ export default function StudyKit({ onNavigate }) {
   const testingShown = q ? TESTING_TOOLS.filter(t => (t.title + ' ' + t.desc).toLowerCase().includes(q)) : TESTING_TOOLS
   const progFor = t => (t.id === 'notes' ? notesProgress : t.progress) || { done: 0, total: 0, label: '' }
   const tool = ALL_TOOLS.find(t => t.id === selected)
+
+  /* open a tool; for Notes with no subject chosen, jump to the last-read subject */
+  const openTool = t => {
+    if (t.id === 'notes' && subject === 'all') {
+      const s = lastReadSubject()
+      if (s && (STREAMS[stream] || []).includes(s)) setSubject(s)
+    }
+    setSelected(t.id)
+  }
 
   return (
     <div className="page">
@@ -112,7 +125,7 @@ export default function StudyKit({ onNavigate }) {
             <span>{lastActivity.detail}</span>
             <div className="cont-bar"><i style={{ width: lastActivity.pct + '%' }} /></div>
           </div>
-          <button className="btn btn-primary-sm" onClick={() => alert('Deep-link → resume: ' + lastActivity.title)}>Resume</button>
+          <button className="btn btn-primary-sm" onClick={() => { if (lastActivity && (lastActivity.subject === 'Economics' || lastActivity.subject === 'Geography')) { setSubject(lastActivity.subject); setSelected('notes') } else { alert('Deep-link → resume: ' + lastActivity.title) } }}>Resume</button>
         </section>
       )}
 
@@ -175,7 +188,7 @@ export default function StudyKit({ onNavigate }) {
                       key={t.id}
                       className={'sk-tcard tone-' + t.tone}
                       style={{ animationDelay: (idx * 45) + 'ms' }}
-                      onClick={() => { setSelected(t.id) }}
+                      onClick={() => { openTool(t) }}
                     >
                       <span className="sk-tcard-ico"><t.icon size={18} /></span>
                       <span className="sk-tcard-t">
@@ -236,11 +249,122 @@ export default function StudyKit({ onNavigate }) {
 }
 
 /* Notes dashboard (Economics / Geography) with fullscreen expand */
-/* Notes breakdown — one component, same format for every subject:
-   units (book/chapter groups) → chapters → topics, each topic opens on its own page */
+/* Notes breakdown — nested accordion: book → chapter → topic.
+   Open book/chapter/topic is reflected in the URL (?subject=&book=&ch=&topic=),
+   restored from per-subject reading progress (lib/notesProgress) and honours
+   the browser back button via popstate. */
+// numeric URL params (book index · chapter num · topic num) → entities
+function resolveNoteRef(units, book, ch, topic) {
+  const u = book ? units[Number(book) - 1] : null
+  const c = u && ch ? u.chapters.find(x => x.ready && x.num === Number(ch)) : null
+  const t = c && topic ? c.topics.find(x => x.num === Number(topic)) : null
+  return { unit: u, chapter: c, topic: t }
+}
+function noteBookIndex(units, key) {
+  return units.findIndex(u => u.key === key) + 1
+}
 function NotesBreakdown({ units, base, label, record }) {
-  const [open, setOpen] = useState(null)
-  const [expanded, setExpanded] = useState(null)
+  const [open, setOpen] = useState(null)   // topic viewer {chapter, topic}
+  const [jump, setJump] = useState('')      // controlled jump-select value
+  const chapterEls = useRef({})
+  const scrollRef = useRef(false)
+
+  // chapter id → { unit, chapter }
+  const chapterOf = cid => {
+    for (const u of units) { const c = u.chapters.find(x => x.id === cid); if (c) return { unit: u, chapter: c } }
+    return null
+  }
+
+  // accordion state: { book, chapter, topic, scroll } — resolved once:
+  // URL params → per-subject reading progress → default (single book open, else all collapsed)
+  const [acc, setAcc] = useState(() => {
+    const params = new URLSearchParams(window.location.search)
+    const url = resolveNoteRef(units, params.get('book'), params.get('ch'), params.get('topic'))
+    if (url.unit && url.chapter) return { book: url.unit.key, chapter: url.chapter.id, topic: url.topic ? url.topic.id : null, scroll: true }
+    const prog = readNotesProgress(label)
+    if (prog) {
+      const pu = units.find(u => u.key === prog.book)
+      const pc = pu && pu.chapters.find(c => c.id === prog.chapter)
+      if (pu && pc) return { book: pu.key, chapter: pc.id, topic: prog.topic || null, scroll: true }
+    }
+    if (units.length === 1) return { book: units[0].key, chapter: null, topic: null, scroll: false }
+    return { book: null, chapter: null, topic: null, scroll: false }
+  })
+  const openBook = acc.book
+  const openChapter = acc.chapter
+  const highlight = acc.topic
+
+  // URL → state (browser back / forward)
+  useEffect(() => {
+    const onPop = () => {
+      const p = new URLSearchParams(window.location.search)
+      const r = resolveNoteRef(units, p.get('book'), p.get('ch'), p.get('topic'))
+      if (r.unit && r.chapter) setAcc({ book: r.unit.key, chapter: r.chapter.id, topic: r.topic ? r.topic.id : null, scroll: false })
+      else if (r.unit) setAcc({ book: r.unit.key, chapter: null, topic: null, scroll: false })
+      else setAcc({ book: units.length === 1 ? units[0].key : null, chapter: null, topic: null, scroll: false })
+    }
+    window.addEventListener('popstate', onPop)
+    return () => window.removeEventListener('popstate', onPop)
+  }, [units])
+
+  // state → URL (reflect open book/chapter/topic; push history so back works)
+  const synced = useRef(false)
+  useEffect(() => {
+    const p = new URLSearchParams()
+    const u = openBook ? units.find(x => x.key === openBook) : null
+    const c = u && openChapter ? u.chapters.find(x => x.id === openChapter) : null
+    const t = c && highlight ? c.topics.find(x => x.id === highlight) : null
+    if (u) { p.set('subject', label); p.set('book', String(noteBookIndex(units, u.key))) }
+    if (c) p.set('ch', String(c.num))
+    if (t) p.set('topic', String(t.num))
+    const qs = p.toString()
+    const search = qs ? '?' + qs : ''
+    if (search === window.location.search) return   // already in sync (e.g. after popstate) — don't add a history entry
+    const url = search || window.location.pathname
+    if (synced.current) history.pushState(null, '', url)
+    else { history.replaceState(null, '', url); synced.current = true }
+  }, [openBook, openChapter, highlight, units, label])
+
+  // mark a restored chapter for scroll-into-view (runs once on mount)
+  useEffect(() => {
+    if (acc.chapter && acc.scroll) scrollRef.current = true
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  // consume scroll intent when the open chapter / highlighted topic changes
+  useEffect(() => {
+    if (scrollRef.current && openChapter) {
+      scrollRef.current = false
+      const el = chapterEls.current[openChapter]
+      if (el) {
+        const reduce = typeof window.matchMedia === 'function' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
+        el.scrollIntoView({ block: 'start', behavior: reduce ? 'auto' : 'smooth' })
+      }
+    }
+  }, [openChapter, highlight])
+
+  const toggleBook = key => {
+    setJump('')
+    setAcc(a => a.book === key
+      ? { book: null, chapter: null, topic: null, scroll: false }
+      : { book: key, chapter: null, topic: null, scroll: false })
+  }
+  const toggleChapter = id => {
+    setJump('')
+    const opening = acc.chapter !== id
+    const found = chapterOf(id)
+    setAcc(a => a.chapter === id
+      ? { ...a, chapter: null, topic: null }
+      : { ...a, chapter: id, topic: null })
+    if (opening && found) writeNotesProgress(label, { book: found.unit.key, chapter: id, topic: null })
+  }
+  const openTopic = (chapterId, topicId) => {
+    const found = chapterOf(chapterId)
+    if (found) writeNotesProgress(label, { book: found.unit.key, chapter: chapterId, topic: topicId })
+    setAcc(a => ({ ...a, chapter: chapterId, topic: topicId }))
+    setOpen({ chapter: chapterId, topic: topicId })
+  }
+
   const srcFor = (chapterId, topicId) => {
     const unit = units.find(u => u.chapters.some(c => c.id === chapterId))
     const parts = []
@@ -304,87 +428,97 @@ function NotesBreakdown({ units, base, label, record }) {
           <b>{label} notes</b>
         </div>
         <label className="econ-jump">
-          <select defaultValue="" onChange={e => {
+          <select value={jump} onChange={e => {
             const v = e.target.value
+            setJump(v)
             if (!v) return
-            const [c, t] = v.split('|')
-            setOpen({ chapter: c, topic: t || null })
+            const [cid, tid] = v.split('|')
+            const found = chapterOf(cid)
+            if (!found) return
+            scrollRef.current = true
+            setAcc({ book: found.unit.key, chapter: cid, topic: tid, scroll: false })
           }}>
             <option value="">Jump to a topic…</option>
-            {units.map(u => (
-              <optgroup key={u.key} label={(u.emoji ? u.emoji + ' ' : '') + u.name}>
-                {u.chapters.filter(c => c.ready).map(c => c.topics.map(t => (
+            {units.map(u => u.chapters.filter(c => c.ready).map(c => (
+              <optgroup key={c.id} label={(units.length > 1 ? (u.emoji ? u.emoji + ' ' : '') + u.name + ' · ' : '') + 'Ch ' + c.num + ' — ' + c.title}>
+                {c.topics.map(t => (
                   <option key={c.id + t.id} value={c.id + '|' + t.id}>{c.num}.{t.num} · {t.title}</option>
-                )))}
+                ))}
               </optgroup>
-            ))}
+            )))}
           </select>
         </label>
       </div>
 
       {units.map((u, ui) => {
+        const isBookOpen = openBook === u.key
         const ready = u.chapters.filter(c => c.ready)
         const soon = u.chapters.filter(c => !c.ready)
         return (
           <section className="econ-unit" key={u.key} style={{ animationDelay: (ui * 70) + 'ms' }}>
-            <header className="econ-unit-head">
+            <button type="button" className="econ-unit-head" aria-expanded={isBookOpen} onClick={() => toggleBook(u.key)}>
               <b>{(u.emoji ? u.emoji + ' ' : '') + u.name}</b>
               <span>{ready.length} of {u.chapters.length} chapters written</span>
-            </header>
+              <ChevronDown size={18} className={'econ-unit-chev' + (isBookOpen ? ' open' : '')} />
+            </button>
 
-            {ready.map(c => {
-              const isOpen = expanded === c.id
-              return (
-                <div className={'econ-chapter' + (isOpen ? ' open' : '')} key={c.id}>
-                  <button type="button" className="econ-chapter-head" aria-expanded={isOpen} onClick={() => setExpanded(isOpen ? null : c.id)}>
-                    <span className="econ-chapter-num">Ch {c.num}</span>
-                    <div className="econ-chapter-t">
-                      <b>{c.title}</b>
-                      {isOpen && <p>{c.desc}</p>}
+            {isBookOpen && (
+              <div className="econ-unit-body">
+                {ready.map(c => {
+                  const isOpen = openChapter === c.id
+                  return (
+                    <div className={'econ-chapter' + (isOpen ? ' open' : '')} key={c.id} ref={el => { chapterEls.current[c.id] = el }}>
+                      <button type="button" className="econ-chapter-head" aria-expanded={isOpen} onClick={() => toggleChapter(c.id)}>
+                        <span className="econ-chapter-num">Ch {c.num}</span>
+                        <div className="econ-chapter-t">
+                          <b>{c.title}</b>
+                          {isOpen && <p>{c.desc}</p>}
+                        </div>
+                        <span className="econ-chapter-meta">{c.topics.length} topics</span>
+                        <ChevronDown size={16} className={'econ-chapter-chev' + (isOpen ? ' open' : '')} />
+                      </button>
+                      {isOpen && (
+                        <div className="econ-topics">
+                          {c.topics.map(t => (
+                            <button className={'econ-topic' + (highlight === t.id ? ' hl' : '')} key={t.id} onClick={() => openTopic(c.id, t.id)}>
+                              <span className="econ-topic-num">{c.num}.{t.num}</span>
+                              <span className="econ-topic-t">{t.title}</span>
+                              {t.frequency > 0 && (
+                                <span className="econ-freq" title="How often CUET has asked this">
+                                  asked {t.frequency}×<i>{Object.keys(t.years || {}).join(' · ')}</i>
+                                </span>
+                              )}
+                              {!(t.frequency > 0) && t.tier && (
+                                <span className={'econ-tier t-' + t.tier} title="Exam weightage">
+                                  {t.tier === 'high' ? 'High' : t.tier === 'medium' ? 'Medium' : 'Low'}
+                                </span>
+                              )}
+                              <ChevronRight size={14} className="econ-topic-arrow" />
+                            </button>
+                          ))}
+                        </div>
+                      )}
                     </div>
-                    <span className="econ-chapter-meta">{c.topics.length} topics</span>
-                    <ChevronDown size={16} className={'econ-chapter-chev' + (isOpen ? ' open' : '')} />
-                  </button>
-                  {isOpen && (
-                    <div className="econ-topics">
-                      {c.topics.map(t => (
-                        <button className="econ-topic" key={t.id} onClick={() => setOpen({ chapter: c.id, topic: t.id })}>
-                          <span className="econ-topic-num">{t.num}</span>
-                          <span className="econ-topic-t">{t.title}</span>
-                          {t.frequency > 0 && (
-                            <span className="econ-freq" title="How often CUET has asked this">
-                              asked {t.frequency}×<i>{Object.keys(t.years || {}).join(' · ')}</i>
-                            </span>
-                          )}
-                          {!(t.frequency > 0) && t.tier && (
-                            <span className={'econ-tier t-' + t.tier} title="Exam weightage">
-                              {t.tier === 'high' ? 'High' : t.tier === 'medium' ? 'Medium' : 'Low'}
-                            </span>
-                          )}
-                          <ChevronRight size={14} className="econ-topic-arrow" />
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              )
-            })}
+                  )
+                })}
 
-            {soon.length > 0 && (
-              <div className="econ-soon">
-                {soon.map(c => (
-                  <button
-                    className="econ-soon-row"
-                    key={c.id}
-                    title={c.desc}
-                    onClick={() => setOpen({ chapter: c.id, topic: null })}
-                  >
-                    <span className="econ-soon-num">Ch {c.num}</span>
-                    <span className="econ-soon-t">{c.title}</span>
-                    <span className="econ-soon-chip">notes coming soon</span>
-                    <ChevronRight size={14} className="econ-topic-arrow" />
-                  </button>
-                ))}
+                {soon.length > 0 && (
+                  <div className="econ-soon">
+                    {soon.map(c => (
+                      <button
+                        className="econ-soon-row"
+                        key={c.id}
+                        title={c.desc}
+                        onClick={() => setOpen({ chapter: c.id, topic: null })}
+                      >
+                        <span className="econ-soon-num">Ch {c.num}</span>
+                        <span className="econ-soon-t">{c.title}</span>
+                        <span className="econ-soon-chip">notes coming soon</span>
+                        <ChevronRight size={14} className="econ-topic-arrow" />
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
           </section>
