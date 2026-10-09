@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { NotebookText, Layers, Dumbbell, Timer, FileQuestion, Archive, ArrowLeft, ArrowRight, PlayCircle, Video, Sigma, Zap, ChevronRight, ChevronDown, CheckSquare, Search, GraduationCap, Highlighter, FlaskConical, Settings, Sun, Moon } from 'lucide-react'
+import { NotebookText, Layers, Timer, FileQuestion, Archive, ArrowLeft, ArrowRight, PlayCircle, Video, Sigma, Zap, ChevronRight, ChevronDown, CheckSquare, Search, GraduationCap, Highlighter, FlaskConical, Settings, Sun, Moon } from 'lucide-react'
 import { boostRanking, weakTopicNames } from '../lib/analysisData'
 import { ECON_UNITS } from '../data/econNotes'
 import { GEO_UNITS } from '../data/geoNotes'
@@ -28,7 +28,6 @@ const NOTES_BY_STREAM = {
 const LEARNING_TOOLS = [
   { id: 'notes', tone: 'green', icon: NotebookText, title: 'Notes', desc: 'Concise NCERT-based notes, chapter by chapter.', cta: 'Pick up where you left off', progress: { done: 12, total: 18, label: 'chapters' } },
   { id: 'flashcards', tone: 'blue', icon: Layers, title: 'Flashcards', desc: 'Swipeable quick-revision cards, mark as learned.', cta: 'Flip 20 cards in 5 minutes', progress: { done: 56, total: 80, label: 'cards mastered' } },
-  { id: 'exercises', tone: 'green', icon: Dumbbell, title: 'Exercises', desc: 'Topic-wise practice tied to specific topics.', cta: 'Start a 10-question set', progress: { done: 9, total: 14, label: 'sets done' } },
   { id: 'videos', tone: 'amber', icon: Video, title: 'Video lectures', desc: 'Short concept videos — 5-10 min each.', cta: 'Watch one 7-minute concept', progress: { done: 7, total: 12, label: 'watched' } },
   { id: 'cheats', tone: 'violet', icon: Sigma, title: 'Cheat Sheets', desc: 'Every formula and key definition, one page per subject.', cta: 'Revise all formulas in 10 minutes', progress: { done: 4, total: 6, label: 'viewed' } },
   { id: 'ncert', tone: 'violet', icon: Highlighter, title: 'Marked NCERT', desc: 'NCERT textbook pages with exam-relevant lines highlighted, chapter by chapter.', cta: 'Open marked NCERT', progress: { done: 0, total: 18, label: 'chapters' } },
@@ -160,7 +159,7 @@ export default function StudyKit({ onNavigate }) {
             {selected === 'quizzes' && <QuizView />}
             {selected === 'pyqs' && <PyqView subject={subject} stream={stream} weakOnly={weakOnly} setWeakOnly={setWeakOnly} />}
             {selected === 'mocks' && <MockView examMode={examMode} setExamMode={setExamMode} />}
-            {(selected === 'exercises' || selected === 'videos' || selected === 'cheats') && (
+            {(selected === 'videos' || selected === 'cheats') && (
               <div className="sk-placeholder">
                 <PlayCircle size={30} />
                 <p>Working content for this tool ships in the next iteration — design is ready, content pipeline is in progress.</p>
