@@ -24,10 +24,10 @@ const HIGH_WEIGHT = 5 /* exam-weight threshold for urgent (Threat/Opportunity) *
 const pct = v => Math.round(v)
 const pct1 = v => v.toFixed(1)
 
-/* Marks model — CUET UG: 4 sections × 50 questions, +5 correct, −1 wrong, 0 skipped
-   → 1000 is the maximum. Same 0-1000 scale the DU cutoffs use, so the two line up. */
-const TOTAL_MARKS = 1000
-const marksOf = pct => Math.round(pct * 10)          // percentile ⇄ score on the cutoff scale
+/* Marks model — one CUET mock = 250 marks (50 questions × +5, −1 wrong, 0 skipped).
+   The DU cutoff (target line) is scaled from its 1000-point total to this same 250 scale. */
+const TOTAL_MARKS = 250
+const marksOf = pct => Math.round(pct * 2.5)         // score % ⇄ marks out of 250
 const scoreTone = n => (n >= 0 ? 'up' : 'down')
 
 /* the dream college's hardest programme = today's target line (real cutoff data) */
@@ -42,7 +42,7 @@ function dreamTarget(profile) {
   })
   if (!match.length) return null
   const best = match.sort((a, b) => (topCutoff(b) || 0) - (topCutoff(a) || 0))[0]
-  return { score: Math.round(topCutoff(best)), college: best.collegeName, program: best.programName }
+  return { score: Math.round(topCutoff(best) / 4), college: best.collegeName, program: best.programName }
 }
 
 const TABS = [
@@ -127,7 +127,7 @@ function OverviewTab({ subject, target, dt, onNavigate }) {
   const latest = hasMocks ? attempts[nAttempts - 1].pct : 0
   const avgPct = hasMocks ? attempts.reduce((sum, m) => sum + m.pct, 0) / nAttempts : 0
   const bestPct = hasMocks ? Math.max(...attempts.map(m => m.pct)) : 0
-  /* totals scale with the student: 3 mocks → out of 3 × 1000, not a fixed 1000 */
+  /* totals scale with the student: 3 mocks → out of 3 × 250, not a fixed 250 */
   const totalMax = nAttempts * TOTAL_MARKS
   const totalMarks = attempts.reduce((sum, m) => sum + marksOf(m.pct), 0)
   const fmtNum = n => n.toLocaleString('en-IN')
@@ -361,19 +361,12 @@ function OverviewTab({ subject, target, dt, onNavigate }) {
       {/* "?" — how the score is built, and why marks dip */}
       <Modal open={showScoring} onClose={() => setShowScoring(false)} title="How this score works">
         <div className="sq-wrap">
-          <div className="sq-row"><span className="sq-mark ok">+5</span><div><b>Correct answer</b><p>Every right answer is worth 5 marks.</p></div></div>
-          <div className="sq-row"><span className="sq-mark bad">−1</span><div><b>Wrong answer — the penalty</b><p>CUET deducts 1 mark for every wrong answer. This is the single biggest reason marks dip between mocks: 10 casual guesses can wipe out 50 marks even after you got them “almost right”.</p></div></div>
-          <div className="sq-row"><span className="sq-mark skip">0</span><div><b>Skipped</b><p>Left blank costs nothing. If you are below 70% sure, skipping beats guessing — that is the one-mock penalty to avoid.</p></div></div>
-          <div className="sq-row"><span className="sq-mark tot">×N</span><div><b>The total follows your mocks</b><p>Whatever you have taken is what we add up: <b>3 mocks → 3 × 1000 = 3,000</b> (so 1,767/3,000), 6 mocks → 6,000. The average per mock is the number to compare against your target, because the target is a single-mock cutoff.</p></div></div>
-          <div className="sq-row"><span className="sq-mark tot">1000</span><div><b>One mock&apos;s max</b><p>4 sections × 50 questions × 5 marks. The graph plots each mock on this same 0–1000 scale, so it lines up exactly with DU cutoffs.</p></div></div>
-          <div className="sq-sub">How many mocks do I need for this graph to be useful?</div>
-          <div className="sq-row"><span className="sq-mark one">1</span><div><b>One mock</b><p>A single dot. There is nothing to compare yet, so the line, the delta and the average stay hidden — we say so instead of drawing a flat fake trend.</p></div></div>
-          <div className="sq-row"><span className="sq-mark two">2–3</span><div><b>Two or three mocks</b><p>The line appears and you get your first delta (▲ / ▼ vs the previous mock). The average is the average of the mocks you actually took — untouched slots are never counted.</p></div></div>
-          <div className="sq-row"><span className="sq-mark four">4+</span><div><b>Four or more</b><p>That is when the trend, the average line and the target gap become trustworthy — one bad day no longer tells the story.</p></div></div>
-          <div className="sq-row"><span className="sq-mark zero">0</span><div><b>No mocks yet?</b><p>Then there is nothing to plot. Your first mock test creates the first point on this graph — before that we simply say so instead of showing an empty line.</p></div></div>
+          <div className="sq-row"><span className="sq-mark ok">+5</span><div><b>Correct</b><p>Adds 5 marks.</p></div></div>
+          <div className="sq-row"><span className="sq-mark bad">−1</span><div><b>Wrong</b><p>Minus 1 mark.</p></div></div>
+          <div className="sq-row"><span className="sq-mark skip">0</span><div><b>Skipped</b><p>No change.</p></div></div>
           <div className="sq-note">
-            <b>The dashed line is your target.</b>
-            <p>It is the last declared cutoff of your dream college&apos;s hardest course{dt ? ' — ' + dt.college + ' · ' + dt.program + ' at ' + dt.score + '/' + TOTAL_MARKS : ''}. Cross it and that course is realistically open to you.</p>
+            <b>One mock is out of 250 marks.</b>
+            <p>The dashed line is your dream college&apos;s cutoff{dt ? ' — ' + dt.college + ' at ' + dt.score + '/' + TOTAL_MARKS : ''}. Cross it and that course is open to you.</p>
           </div>
         </div>
       </Modal>
@@ -558,7 +551,7 @@ function TrendChart({ mocks, metric = 'marks', target, targetScore, targetLabel,
   const [hover, setHover] = useState(null)
   const W = 560, H = 214, PAD = 30
 
-  /* value in the active unit: marks out of 1000, or percentile */
+  /* value in the active unit: marks out of 250, or percentile */
   const val = p => (metric === 'marks' ? marksOf(p.pct) : p.pct)
   const vals = mocks.map(val)
   const tgt = metric === 'marks' ? targetScore : target
