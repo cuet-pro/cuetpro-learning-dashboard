@@ -3,7 +3,6 @@ import { Home, Grid3x3, Zap, TrendingUp, ChevronRight, Target, BookOpen, Info, F
 import { status, allSubSkills, boostRanking, boostReason, subjectsFor } from '../lib/analysisData'
 import { offerings, topCutoff } from '../data/duData'
 import { MATH_PAPER } from '../data/mockPaperMath'
-import { logoFor } from '../data/collegeLogos'
 import { useProfile } from '../lib/profile'
 import { Modal } from '../components/shell/Shell'
 import './analysis.css'
@@ -30,7 +29,10 @@ const TOTAL_MARKS = 250
 const marksOf = pct => Math.round(pct * 2.5)         // score % ⇄ marks out of 250
 const scoreTone = n => (n >= 0 ? 'up' : 'down')
 
-/* the dream college's hardest programme = today's target line (real cutoff data) */
+/* the dream college's hardest programme = today's target benchmark (real cutoff data).
+   Kept as a full benchmark object so score + max + year + source stay the source of truth;
+   the mock trend (out of 250) and this combined-merit benchmark (out of 1000) are shown
+   separately and never silently rescaled. */
 function dreamTarget(profile) {
   const key = (profile?.dreamCollege || '').split('(')[0].trim().toLowerCase()
   if (!key) return null
@@ -42,7 +44,26 @@ function dreamTarget(profile) {
   })
   if (!match.length) return null
   const best = match.sort((a, b) => (topCutoff(b) || 0) - (topCutoff(a) || 0))[0]
-  return { score: Math.round(topCutoff(best) / 4), college: best.collegeName, program: best.programName }
+  return {
+    college: best.collegeName,
+    program: best.programName,
+    collegeId: best.collegeId,
+    programId: best.programId,
+    category: 'UR',
+    year: 2026,
+    score: topCutoff(best),      // original benchmark score — keep as the source of truth
+    maxScore: 1000,              // CUET combined-merit total (4 papers × 250)
+    sourceType: 'historical',    // illustrative sample data — NOT verified official cutoffs
+  }
+}
+
+/* Combined CUET merit score = sum of the eligible subject scores for the selected
+   programme. The current mock data only stores single-paper 250-mark percentages, so a
+   projected merit score is NOT yet computable — returns null until subject-wise scores
+   and programme eligibility rules are wired in. Centralised so nothing else fabricates
+   a merit score. */
+function projectedMerit(/* subjectWiseMocks, programme */) {
+  return null
 }
 
 const TABS = [
@@ -118,6 +139,7 @@ function OverviewTab({ subject, target, dt, onNavigate }) {
   const [flipped, setFlipped] = useState(false)
   const [metric, setMetric] = useState('marks')      // 'marks' | 'pct'
   const [showScoring, setShowScoring] = useState(false)
+  const merit = projectedMerit()   // combined CUET merit — null until subject-wise data exists
   const mocks = (isAll ? OVERALL.trend : subs[0].trend).map((v, i) => ({ mock: 'M' + (i + 2), pct: v }))
   /* only mocks the student actually took count — an untouched M6 never drags the average down */
   const attempts = mocks.filter(m => m.pct > 0)
@@ -186,12 +208,12 @@ function OverviewTab({ subject, target, dt, onNavigate }) {
                   {hasMocks
                     ? nAttempts + (nAttempts === 1 ? ' mock' : ' mocks') + ' · ' + fmtNum(totalMarks) + '/' + fmtNum(totalMax) + ' total · avg ' + marksOf(avgPct) + ' per mock'
                     : 'Your score out of ' + TOTAL_MARKS + ' per mock'}
-                  {dt ? ' — target ' + shortName(dt.college) + ' \u00b7 ' + dt.program + ' at ' + dt.score : ''}
+                  {dt ? ' — dream target ' + shortName(dt.college) + ' \u00b7 ' + dt.program + ' · ' + Math.round(dt.score) + '/' + dt.maxScore : ''}
                 </p>
               </div>
               <div className="an-face-tools">
                 <button className={'an-seg' + (metric === 'marks' ? ' on' : '')} onClick={() => setMetric('marks')}><Zap size={12} /> Marks</button>
-                <button className={'an-seg' + (metric === 'pct' ? ' on' : '')} onClick={() => setMetric('pct')}><TrendingUp size={12} /> Percentile</button>
+                <button className={'an-seg' + (metric === 'pct' ? ' on' : '')} onClick={() => setMetric('pct')}><TrendingUp size={12} /> Score %</button>
                 <button className="an-flip-btn" onClick={() => setShowScoring(true)} title="How is this score calculated?" aria-label="How is this score calculated?">?</button>
                 <button className="an-flip-btn" onClick={() => setFlipped(true)} title="See section-wise accuracy" aria-label="See section-wise accuracy">
                   <RefreshCw size={13} />
@@ -217,28 +239,27 @@ function OverviewTab({ subject, target, dt, onNavigate }) {
 
             {hasMocks && (
               <div className="an-stats">
-                <div className="an-stat"><span className="an-stat-k">Mocks taken</span><b className="mono">{nAttempts}<i>/6</i></b></div>
+                <div className="an-stat"><span className="an-stat-k">Mocks taken</span><b className="mono">{nAttempts}<i>/{mocks.length}</i></b></div>
                 <div className="an-stat wide"><span className="an-stat-k">Total across {nAttempts} {nAttempts === 1 ? 'mock' : 'mocks'}</span><b className="mono">{fmtNum(totalMarks)}<i>/{fmtNum(totalMax)}</i></b></div>
                 <div className="an-stat"><span className="an-stat-k">Average per mock</span><b className="mono">{marksOf(avgPct)}<i>/{TOTAL_MARKS}</i></b></div>
                 <div className="an-stat"><span className="an-stat-k">Best mock</span><b className="mono ok">{marksOf(bestPct)}</b></div>
                 <div className="an-stat"><span className="an-stat-k">Latest mock</span><b className="mono">{marksOf(latest)}</b></div>
-                {dt && <div className={'an-stat' + (marksOf(latest) >= dt.score ? ' good' : '')}><span className="an-stat-k">Gap to target</span><b className="mono">{marksOf(latest) >= dt.score ? 'crossed' : '+' + (dt.score - marksOf(latest))}</b></div>}
+                {dt && <div className="an-stat"><span className="an-stat-k">Gap to target</span><b className="mono">—</b></div>}
               </div>
             )}
 
             {trendNote && (
               <p className="an-trend-note"><Info size={13} /> {trendNote}</p>
             )}
+            {dt && !merit && (
+              <p className="an-trend-note"><Info size={13} /> Combined CUET merit score not available yet — your mocks are individual 250-mark papers. Dream target ({shortName(dt.college)} · {Math.round(dt.score)}/{dt.maxScore} · {dt.year}) is shown separately.</p>
+            )}
 
             {hasMocks && (
             <TrendChart
               mocks={attempts}
               metric={metric}
-              target={target}
-              targetScore={dt ? dt.score : null}
-              targetLabel={dt ? shortName(dt.college) + ' \u00b7 ' + dt.program : null}
               avgPct={nAttempts >= 2 ? avgPct : null}
-              showColleges
               activeIndex={sel}
               onPick={setSel}
             />
@@ -254,7 +275,7 @@ function OverviewTab({ subject, target, dt, onNavigate }) {
                 aria-label="Select mock attempt"
               />
               <span className="an-slider-val mono">
-                {metric === 'marks' ? marksOf(attempts[selIdx].pct) + '/' + TOTAL_MARKS : pct1(attempts[selIdx].pct) + '%ile'}
+                {metric === 'marks' ? marksOf(attempts[selIdx].pct) + '/' + TOTAL_MARKS : pct1(attempts[selIdx].pct) + '%'}
               </span>
             </div>
 
@@ -265,7 +286,7 @@ function OverviewTab({ subject, target, dt, onNavigate }) {
             <div className="an-attempt-head an-attempt-head-front">
               <span className="an-attempt-badge">{attempts[selIdx].mock}</span>
               <b className="mono">{marksOf(attempts[selIdx].pct)}<i>/{TOTAL_MARKS}</i></b>
-              <span className="an-att-sub">marks · {pct1(attempts[selIdx].pct)} percentile{nAttempts === 1 ? ' · first attempt' : ''}</span>
+              <span className="an-att-sub">marks · {pct1(attempts[selIdx].pct)} score %{nAttempts === 1 ? ' · first attempt' : ''}</span>
               {(() => {
                 const prev = selIdx > 0 ? marksOf(attempts[selIdx - 1].pct) : null
                 const now = marksOf(attempts[selIdx].pct)
@@ -274,11 +295,9 @@ function OverviewTab({ subject, target, dt, onNavigate }) {
                 return <span className={'an-delta ' + scoreTone(d)}>{d >= 0 ? '▲ +' + d : '▼ ' + d} marks vs {attempts[selIdx - 1].mock}</span>
               })()}
               {dt && (
-                <span className={'an-college-chip' + (marksOf(attempts[selIdx].pct) >= dt.score ? ' on' : '')}>
+                <span className="an-college-chip">
                   <Target size={12} />
-                  {marksOf(attempts[selIdx].pct) >= dt.score
-                    ? shortName(dt.college) + ' target crossed'
-                    : 'needs +' + (dt.score - marksOf(attempts[selIdx].pct)) + ' marks for ' + shortName(dt.college)}
+                  Dream target: {shortName(dt.college)} · {Math.round(dt.score)}/{dt.maxScore}
                 </span>
               )}
             </div>
@@ -366,7 +385,7 @@ function OverviewTab({ subject, target, dt, onNavigate }) {
           <div className="sq-row"><span className="sq-mark skip">0</span><div><b>Skipped</b><p>No change.</p></div></div>
           <div className="sq-note">
             <b>One mock is out of 250 marks.</b>
-            <p>The dashed line is your dream college&apos;s cutoff{dt ? ' — ' + dt.college + ' at ' + dt.score + '/' + TOTAL_MARKS : ''}. Cross it and that course is open to you.</p>
+            <p>Your dream college target is shown separately on its own scale{dt ? ' — ' + dt.college + ' · ' + Math.round(dt.score) + '/' + dt.maxScore : ''}. A combined CUET merit score is not available yet.</p>
           </div>
         </div>
       </Modal>
@@ -515,16 +534,6 @@ function MistakeSkills({ mistakes, scope }) {
 }
 
 /* ═══════════ 4. Trend ═══════════ */
-/* ═══════════ Percentile → DU college (real cutoff data) ═══════════ */
-const COLLEGE_PCT = (() => {
-  const byName = new Map()
-  offerings.forEach(o => {
-    const pct = (topCutoff(o) || 0) / 10          // CUET score /1000 ≈ percentile
-    if (pct > 0 && (!byName.has(o.collegeName) || byName.get(o.collegeName) < pct)) byName.set(o.collegeName, pct)
-  })
-  return [...byName.entries()].map(([name, pct]) => ({ name, pct })).sort((a, b) => b.pct - a.pct)
-})()
-
 function shortName(name) {
   if (/Shri Ram College of Commerce/i.test(name)) return 'SRCC'
   let n = name.replace(/^Department of\s+/i, '').replace(/\s*\(.*\)\s*/g, ' ').trim()
@@ -536,26 +545,17 @@ function shortName(name) {
 }
 
 
-/* nearest college by percentile, with whether the student already reaches it */
-function collegeAt(p) {
-  if (!COLLEGE_PCT.length) return null
-  const nearest = COLLEGE_PCT.reduce((best, c) => Math.abs(c.pct - p) < Math.abs(best.pct - p) ? c : best, COLLEGE_PCT[0])
-  return { ...nearest, reached: nearest.pct <= p + 0.5, label: shortName(nearest.name), gap: Math.max(0, nearest.pct - p) }
-}
-
-
 /* section-wise accuracy for a given mock (deterministic, derived from real subject accuracies) */
 
 /* question-wise log for a mock paper (deterministic; topics come from the real sub-skill engine) */
-function TrendChart({ mocks, metric = 'marks', target, targetScore, targetLabel, avgPct, showColleges, activeIndex, onPick }) {
+function TrendChart({ mocks, metric = 'marks', avgPct, activeIndex, onPick }) {
   const [hover, setHover] = useState(null)
   const W = 560, H = 214, PAD = 30
 
-  /* value in the active unit: marks out of 250, or percentile */
+  /* value in the active unit: marks out of 250, or score % */
   const val = p => (metric === 'marks' ? marksOf(p.pct) : p.pct)
   const vals = mocks.map(val)
-  const tgt = metric === 'marks' ? targetScore : target
-  const span = [...vals, ...(tgt ? [tgt] : [])]
+  const span = [...vals]
   const lo = Math.min(...span), hi = Math.max(...span)
   const pad = Math.max(metric === 'marks' ? 25 : 1.5, (hi - lo) * 0.22)
   const loD = Math.max(0, lo - pad), hiD = hi + pad
@@ -569,10 +569,7 @@ function TrendChart({ mocks, metric = 'marks', target, targetScore, targetLabel,
   const gridVals = Array.from({ length: gridCount }, (_, k) => loD + ((hiD - loD) * k) / (gridCount - 1))
   const fmt = v => (metric === 'marks' ? Math.round(v) : Math.round(v) + '%')
 
-  const pts = mocks.map((p, i) => {
-    const c = showColleges ? collegeAt(p.pct) : null
-    return { ...p, i, v: val(p), c, logo: c ? logoFor(c.name) : null }
-  })
+  const pts = mocks.map((p, i) => ({ ...p, i, v: val(p) }))
   const above = []
   pts.forEach((p, i) => {
     const prev = pts[i - 1]
@@ -589,16 +586,6 @@ function TrendChart({ mocks, metric = 'marks', target, targetScore, targetLabel,
             <text x={PAD - 5} y={y(g) + 3} textAnchor="end" fontSize="8.5" className="trend-axis">{fmt(g)}</text>
           </g>
         ))}
-
-        {/* dream-college target line */}
-        {tgt ? (
-          <g>
-            <line x1={PAD} x2={W - PAD} y1={y(tgt)} y2={y(tgt)} stroke="var(--warning)" strokeWidth="1.6" strokeDasharray="7 5" />
-            <text x={W - PAD} y={y(tgt) - 6} textAnchor="end" fontSize="9.5" fontWeight="700" fill="var(--warning)">
-              {targetLabel ? targetLabel + ' · ' : ''}{fmt(tgt)}
-            </text>
-          </g>
-        ) : null}
 
         <defs>
           <linearGradient id="trendArea" x1="0" y1="0" x2="0" y2="1">
@@ -621,7 +608,6 @@ function TrendChart({ mocks, metric = 'marks', target, targetScore, targetLabel,
           const active = activeIndex === i
           const cx = single ? W / 2 : x(i), cy = y(p.v)
           const up = above[i]
-          const ly = up ? cy - 30 : cy + 20
           const prevP = pts[i - 1]
           const drop = prevP && p.v < prevP.v
           return (
@@ -635,12 +621,6 @@ function TrendChart({ mocks, metric = 'marks', target, targetScore, targetLabel,
               <circle className={active ? 'trend-dot on' : 'trend-dot'} cx={cx} cy={cy} r={active ? 5.5 : 3.6} />
               {active && <circle cx={cx} cy={cy} r="9" className="trend-ring" />}
               <text x={cx} y={up ? cy - 11 : cy + 16} textAnchor="middle" fontSize="9.5" fontWeight="700" className="trend-val">{fmt(p.v)}</text>
-              {p.logo && (
-                <>
-                  <circle className="trend-logo-halo" cx={cx} cy={ly} r="14" />
-                  <image className="trend-logo" href={p.logo} x={cx - 10.5} y={ly - 10.5} width="21" height="21" preserveAspectRatio="xMidYMid meet" />
-                </>
-              )}
               <text x={cx} y={H - 9} textAnchor="middle" fontSize="9.5" className="trend-mock">{p.mock}</text>
             </g>
           )
@@ -653,15 +633,7 @@ function TrendChart({ mocks, metric = 'marks', target, targetScore, targetLabel,
           style={{ left: (pts[hover].i / (mocks.length - 1)) * 100 + '%', '--tip-shift': pts[hover].i > mocks.length / 2 ? '-100%' : '0%' }}
         >
           <span className="trend-tip-score mono">{marksOf(pts[hover].pct)}<i>/{TOTAL_MARKS}</i> marks</span>
-          <span className="trend-tip-sub">{pct1(pts[hover].pct)} percentile{pts[hover].i > 0 ? (() => { const d = marksOf(pts[hover].pct) - marksOf(pts[hover - 1].pct); return ' · ' + (d >= 0 ? '+' + d : d) + ' vs ' + pts[hover - 1].mock })() : ''}</span>
-          {pts[hover].c && (
-            <>
-              <b className="trend-tip-college">{pts[hover].c.name}</b>
-              <span className={'trend-tip-status ' + (pts[hover].c.reached ? 'reach' : pts[hover].c.gap <= 5 ? 'target' : 'dream')}>
-                {pts[hover].c.reached ? 'Reach — you can get in' : pts[hover].c.gap <= 5 ? 'Target — ' + pct1(pts[hover].c.gap) + '%ile away' : 'Dream — ' + pct1(pts[hover].c.gap) + '%ile away'}
-              </span>
-            </>
-          )}
+          <span className="trend-tip-sub">{pct1(pts[hover].pct)} score %{pts[hover].i > 0 ? (() => { const d = marksOf(pts[hover].pct) - marksOf(pts[hover - 1].pct); return ' · ' + (d >= 0 ? '+' + d : d) + ' vs ' + pts[hover - 1].mock })() : ''}</span>
         </div>
       )}
     </div>
