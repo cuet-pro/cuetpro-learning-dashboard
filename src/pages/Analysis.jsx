@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Home, Grid3x3, Zap, TrendingUp, ChevronRight, Target, BookOpen, Info, FileQuestion, RefreshCw, Bookmark, ChevronLeft, ArrowLeft } from 'lucide-react'
+import { Home, Grid3x3, Zap, TrendingUp, ChevronRight, ChevronDown, Target, BookOpen, Info, FileQuestion, RefreshCw, Bookmark, ChevronLeft, ArrowLeft } from 'lucide-react'
 import { status, allSubSkills, boostRanking, boostReason, subjectsFor } from '../lib/analysisData'
 import { offerings, topCutoff } from '../data/duData'
 import { MATH_PAPER } from '../data/mockPaperMath'
@@ -831,6 +831,7 @@ function PaperAnalyser({ paperKey, onBack, onNavigate }) {
   const [idx, setIdx] = useState(0)
   const [showSol, setShowSol] = useState(false)
   const [marks, setMarks] = useState({})
+  const [filtersOpen, setFiltersOpen] = useState(false)
 
   const sections = ['All', ...new Set(base.map(q => q.section))]
   const topics = ['All', ...new Set(base.filter(q => sec === 'All' || q.section === sec).map(q => q.topic))]
@@ -848,6 +849,16 @@ function PaperAnalyser({ paperKey, onBack, onNavigate }) {
     skipped: base.filter(q => q.status === 'skipped').length,
   }
   const score = cnt.correct * 5 - cnt.wrong
+
+  /* stacked bar segment width + collapsed-filter summary text */
+  const segW = n => (base.length ? (n / base.length * 100).toFixed(2) + '%' : '0%')
+  const summary = [
+    sec === 'All' ? 'All sections' : sec,
+    topicF === 'All' ? 'All topics' : topicF,
+    diff === 'All' ? 'All difficulty' : diff,
+    st === 'All' ? 'All attempts' : { correct: 'Correct only', wrong: 'Wrong only', skipped: 'Skipped only' }[st],
+    ...(onlyBm ? ['Bookmarked'] : []),
+  ].join(' · ')
 
   useEffect(() => { setIdx(0); setShowSol(false) }, [sec, topicF, diff, st, onlyBm])
   useEffect(() => {
@@ -874,35 +885,57 @@ function PaperAnalyser({ paperKey, onBack, onNavigate }) {
         <button className="an-view-more" onClick={onBack}><ArrowLeft size={13} /> All papers</button>
       </div>
 
-      {/* filters */}
-      <div className="pa-filters">
-        <div className="pa-frow">
-          <span className="pa-flabel">Section</span>
-          <div className="pa-chips">{sections.map(s => (
-            <button key={s} className={'pa-chip' + (sec === s ? ' on' : '')} onClick={() => { setSec(s); setTopicF('All') }}>{s}</button>
-          ))}</div>
+      {/* visual score bar */}
+      <div className="pa-scorebar">
+        <div className="pa-scorebar-track" role="img" aria-label={`${cnt.correct} correct, ${cnt.wrong} wrong, ${cnt.skipped} skipped out of ${base.length}`}>
+          <span className="pa-sb-seg correct" style={{ width: segW(cnt.correct) }} />
+          <span className="pa-sb-seg wrong" style={{ width: segW(cnt.wrong) }} />
+          <span className="pa-sb-seg skipped" style={{ width: segW(cnt.skipped) }} />
         </div>
-        <div className="pa-frow">
-          <span className="pa-flabel">Topic</span>
-          <div className="pa-chips">{topics.map(t => (
-            <button key={t} className={'pa-chip' + (topicF === t ? ' on' : '')} onClick={() => setTopicF(t)}>{t}</button>
-          ))}</div>
+        <div className="pa-scorebar-legend">
+          <span className="pa-sb-legend"><i className="dot correct" /> {cnt.correct} correct</span>
+          <span className="pa-sb-legend"><i className="dot wrong" /> {cnt.wrong} wrong</span>
+          <span className="pa-sb-legend"><i className="dot skipped" /> {cnt.skipped} skipped</span>
         </div>
-        <div className="pa-frow">
-          <span className="pa-flabel">Difficulty</span>
-          <div className="pa-chips">{['All', 'Easy', 'Medium', 'Hard'].map(d => (
-            <button key={d} className={'pa-chip' + (diff === d ? ' on' : '')} onClick={() => setDiff(d)}>{d}</button>
-          ))}</div>
-        </div>
-        <div className="pa-frow">
-          <span className="pa-flabel">Your attempt</span>
-          <div className="pa-chips">
-            {[['All', 'All'], ['correct', 'Correct ' + cnt.correct], ['wrong', 'Wrong ' + cnt.wrong], ['skipped', 'Skipped ' + cnt.skipped]].map(([k, label]) => (
-              <button key={k} className={'pa-chip st-' + k + (st === k ? ' on' : '')} onClick={() => setSt(k)}>{label}</button>
-            ))}
-            <button className={'pa-chip' + (onlyBm ? ' on' : '')} onClick={() => setOnlyBm(v => !v)}>Bookmarked</button>
+      </div>
+
+      {/* filters — collapsed summary bar by default */}
+      <div className="pa-filterbar">
+        <button className="pa-filterbar-toggle" onClick={() => setFiltersOpen(v => !v)} aria-expanded={filtersOpen} aria-controls="pa-filter-controls">
+          <span className="pa-filterbar-summary">{summary}</span>
+          <ChevronDown size={16} className={'pa-filterbar-chev' + (filtersOpen ? ' open' : '')} />
+        </button>
+        {filtersOpen && (
+          <div className="pa-filters" id="pa-filter-controls">
+            <div className="pa-frow">
+              <span className="pa-flabel">Section</span>
+              <div className="pa-chips">{sections.map(s => (
+                <button key={s} className={'pa-chip' + (sec === s ? ' on' : '')} onClick={() => { setSec(s); setTopicF('All') }}>{s}</button>
+              ))}</div>
+            </div>
+            <div className="pa-frow">
+              <span className="pa-flabel">Topic</span>
+              <div className="pa-chips">{topics.map(t => (
+                <button key={t} className={'pa-chip' + (topicF === t ? ' on' : '')} onClick={() => setTopicF(t)}>{t}</button>
+              ))}</div>
+            </div>
+            <div className="pa-frow">
+              <span className="pa-flabel">Difficulty</span>
+              <div className="pa-chips">{['All', 'Easy', 'Medium', 'Hard'].map(d => (
+                <button key={d} className={'pa-chip' + (diff === d ? ' on' : '')} onClick={() => setDiff(d)}>{d}</button>
+              ))}</div>
+            </div>
+            <div className="pa-frow">
+              <span className="pa-flabel">Your attempt</span>
+              <div className="pa-chips">
+                {[['All', 'All'], ['correct', 'Correct ' + cnt.correct], ['wrong', 'Wrong ' + cnt.wrong], ['skipped', 'Skipped ' + cnt.skipped]].map(([k, label]) => (
+                  <button key={k} className={'pa-chip st-' + k + (st === k ? ' on' : '')} onClick={() => setSt(k)}>{label}</button>
+                ))}
+                <button className={'pa-chip' + (onlyBm ? ' on' : '')} onClick={() => setOnlyBm(v => !v)}>Bookmarked</button>
+              </div>
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
       {/* navigator */}

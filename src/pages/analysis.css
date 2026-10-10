@@ -413,6 +413,33 @@
 .mp-real { font-size: 10.5px; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; color: var(--primary); }
 
 .pa-card { animation: an-card-in .3s ease; }
+
+/* visual score bar (stacked correct / wrong / skipped) */
+.pa-scorebar { margin-bottom: 12px; }
+.pa-scorebar-track { display: flex; height: 8px; border-radius: var(--r-full); overflow: hidden; background: var(--border); }
+.pa-sb-seg { display: block; height: 100%; transition: width .5s cubic-bezier(.22,.61,.36,1); }
+.pa-sb-seg.correct { background: var(--primary); }
+.pa-sb-seg.wrong { background: var(--error); }
+.pa-sb-seg.skipped { background: var(--text-muted); opacity: .55; }
+.pa-scorebar-legend { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 7px; }
+.pa-sb-legend { display: inline-flex; align-items: center; gap: 6px; font: 600 11px var(--font-body); color: var(--text-secondary); }
+.pa-sb-legend .dot { width: 8px; height: 8px; border-radius: 999px; flex-shrink: 0; }
+.pa-sb-legend .dot.correct { background: var(--primary); }
+.pa-sb-legend .dot.wrong { background: var(--error); }
+.pa-sb-legend .dot.skipped { background: var(--text-muted); opacity: .55; }
+
+/* collapsible filter bar (collapsed summary by default) */
+.pa-filterbar { margin-bottom: 14px; }
+.pa-filterbar-toggle { display: flex; align-items: center; justify-content: space-between; gap: 10px; width: 100%;
+  padding: 11px 14px; border: 1px solid var(--border); border-radius: var(--r-md); background: var(--bg);
+  cursor: pointer; text-align: left; transition: border-color .2s, background .2s, box-shadow .2s; }
+.pa-filterbar-toggle:hover { border-color: var(--primary); background: var(--primary-soft); }
+.pa-filterbar-summary { font: 600 12px var(--font-body); color: var(--text-secondary); min-width: 0; }
+.pa-filterbar-toggle:hover .pa-filterbar-summary { color: var(--primary); }
+.pa-filterbar-chev { flex-shrink: 0; color: var(--text-muted); transition: transform .25s cubic-bezier(.22,.61,.36,1), color .2s; }
+.pa-filterbar-toggle:hover .pa-filterbar-chev { color: var(--primary); }
+.pa-filterbar-chev.open { transform: rotate(180deg); }
+.pa-filterbar .pa-filters { margin-top: 9px; margin-bottom: 0; }
 .pa-filters { display: grid; gap: 9px; padding: 13px; border: 1px solid var(--border); border-radius: var(--r-md); background: var(--bg); margin-bottom: 14px; }
 .pa-frow { display: grid; grid-template-columns: 86px minmax(0, 1fr); align-items: start; gap: 10px; }
 .pa-flabel { font: 700 10.5px var(--font-body); letter-spacing: .05em; text-transform: uppercase; color: var(--text-muted); padding-top: 5px; }
