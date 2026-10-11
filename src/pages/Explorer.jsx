@@ -3,8 +3,8 @@ import { ExternalLink, Loader2, Compass } from 'lucide-react'
 import './explorer.css'
 
 /* The DU Admissions Explorer is a separate, already-built app (repo cuet-pro/Cuet-pro-du),
-   deployed at its own Vercel URL. We embed it here so it lives inside the dashboard.
-   It posts its route (type: CUET_DASHBOARD_ROUTE_CHANGE) to the parent, so we remember
+   deployed at its own Vercel URL. We embed it here, full-bleed, so it lives inside the
+   dashboard. It posts its route (CUET_DASHBOARD_ROUTE_CHANGE) to the parent, so we remember
    where the student was and restore that route if they switch tabs and come back. */
 const DU_EXPLORER_URL = 'https://cuet-pro-du.vercel.app/'
 
@@ -33,15 +33,9 @@ export default function Explorer() {
 
   return (
     <div className="du-embed">
-      <div className="du-embed-bar">
-        <div className="du-embed-head">
-          <h1>DU Admissions Explorer</h1>
-          <p>Colleges, cutoffs, rankings, eligibility, subject combos &amp; preference sheet — the full explorer, live inside your dashboard.</p>
-        </div>
-        <a className="du-embed-open" href={DU_EXPLORER_URL} target="_blank" rel="noopener noreferrer">
-          <ExternalLink size={14} /> Open in new tab
-        </a>
-      </div>
+      <a className="du-embed-open" href={DU_EXPLORER_URL} target="_blank" rel="noopener noreferrer" title="Open in a new tab">
+        <ExternalLink size={14} /> Open in new tab
+      </a>
 
       <div className="du-embed-frame">
         {!loaded && !failed && (
