@@ -1,213 +1,69 @@
-import { useMemo, useState } from 'react'
-import { Search, Target, ArrowRight, Building2, BookOpen } from 'lucide-react'
-import { offerings, colleges, programs, getCutoff, getSeats, topCutoff } from '../data/duData'
-import { logoFor } from '../data/collegeLogos'
+import { useEffect, useState } from 'react'
+import { ExternalLink, Loader2, Compass } from 'lucide-react'
 import './explorer.css'
 
+/* The DU Admissions Explorer is a separate, already-built app (repo cuet-pro/Cuet-pro-du),
+   deployed at its own Vercel URL. We embed it here so it lives inside the dashboard.
+   It posts its route (type: CUET_DASHBOARD_ROUTE_CHANGE) to the parent, so we remember
+   where the student was and restore that route if they switch tabs and come back. */
+const DU_EXPLORER_URL = 'https://cuet-pro-du.vercel.app/'
+
+/* survives tab switches within this session (module scope resets only on full reload) */
+let lastRoute = '/'
+
+function duSrc(route) {
+  const path = route && route !== '/' ? route.replace(/^\//, '') : ''
+  return DU_EXPLORER_URL + path
+}
+
 export default function Explorer() {
-  const [tab, setTab] = useState('predictor')
-  return (
-    <div className="page">
-      <header className="page-head">
-        <div>
-          <h1>DU Admissions Explorer</h1>
-          <p>Every tool shares a filter-then-results pattern, with a "save to my list" trail back into your preference sheet.</p>
-        </div>
-      </header>
-      <div className="an-tabs">
-        <button className={tab === 'predictor' ? 'on' : ''} onClick={() => setTab('predictor')}>College & Course Predictor</button>
-        <button className={tab === 'cutoffs' ? 'on' : ''} onClick={() => setTab('cutoffs')}>Cutoff Explorer</button>
-        <button className={tab === 'colleges' ? 'on' : ''} onClick={() => setTab('colleges')}>Colleges</button>
-      </div>
-      {tab === 'predictor' && <Predictor />}
-      {tab === 'cutoffs' && <CutoffExplorer />}
-      {tab === 'colleges' && <CollegeList />}
-    </div>
-  )
-}
+  const [loaded, setLoaded] = useState(false)
+  const [failed, setFailed] = useState(false)
+  const [src] = useState(() => duSrc(lastRoute))
 
-/* ── Predictor: score → eligible colleges (real 2026 round-1 UR cutoffs) ── */
-function Predictor() {
-  const [score, setScore] = useState('')
-  const n = score === '' ? null : Math.max(0, Math.min(1000, Number(score) || 0))
-
-  const results = useMemo(() => {
-    if (n === null) return []
-    const map = new Map()
-    offerings.forEach(o => {
-      const cut = getCutoff(o, 'UR', 1)
-      if (cut && cut <= n) {
-        const key = o.collegeId + '|' + o.programId
-        if (!map.has(key)) {
-          map.set(key, {
-            college: o.collegeName, collegeId: o.collegeId,
-            program: o.programName, cutoff: cut,
-            seats: o.seats?.UR?.total ?? null,
-          })
-        }
+  useEffect(() => {
+    const onMsg = e => {
+      if (e.data && e.data.type === 'CUET_DASHBOARD_ROUTE_CHANGE' && typeof e.data.path === 'string') {
+        lastRoute = e.data.path
       }
-    })
-    return Array.from(map.values()).sort((a, b) => b.cutoff - a.cutoff).slice(0, 25)
-  }, [n])
-
-  const dream = useMemo(() => results.filter(r => n - r.cutoff < 25), [results, n])
-  const target = useMemo(() => results.filter(r => n - r.cutoff >= 25 && n - r.cutoff < 60), [results, n])
-  const safe = useMemo(() => results.filter(r => n - r.cutoff >= 60), [results, n])
+    }
+    window.addEventListener('message', onMsg)
+    return () => window.removeEventListener('message', onMsg)
+  }, [])
 
   return (
-    <div className="ex-stack">
-      <section className="cuet-card">
-        <div className="ex-input-row">
-          <div>
-            <h3 style={{ fontFamily: 'var(--font-display)', fontSize: 15 }}>Enter your estimated CUET score</h3>
-            <p style={{ fontSize: 12, color: 'var(--gray-500)', marginTop: 3 }}>Real 2026 Round-1 UR cutoffs — eligibility computed instantly</p>
-          </div>
-          <input
-            className="ex-input" type="number" min="0" max="1000" placeholder="e.g. 512"
-            value={score} onChange={e => setScore(e.target.value)}
-          />
-          <span className="ex-input-hint">/1000</span>
+    <div className="du-embed">
+      <div className="du-embed-bar">
+        <div className="du-embed-head">
+          <h1>DU Admissions Explorer</h1>
+          <p>Colleges, cutoffs, rankings, eligibility, subject combos &amp; preference sheet — the full explorer, live inside your dashboard.</p>
         </div>
-      </section>
-
-      {n === null ? (
-        <div className="ex-empty"><Search size={26} /><p>Enter your score to see eligible colleges with Dream / Target / Safe classification.</p></div>
-      ) : (
-        <>
-          {dream.length > 0 && <ResultGroup title="Dream" desc={`${dream.length} options — within 25 marks of your score`} color="var(--green-500)" rows={dream} />}
-          {target.length > 0 && <ResultGroup title="Target" desc={`${target.length} options — 25-60 marks margin`} color="var(--blue-500)" rows={target} />}
-          {safe.length > 0 && <ResultGroup title="Safe" desc={`${safe.length} options — 60+ marks margin`} color="var(--amber-500)" rows={safe} />}
-          {results.length === 0 && <div className="ex-empty"><p>No colleges eligible at this score — try a score above 400.</p></div>}
-        </>
-      )}
-    </div>
-  )
-}
-
-function ResultGroup({ title, desc, color, rows }) {
-  return (
-    <section className="cuet-card">
-      <div className="card-head">
-        <h3>{title}</h3><span className="card-sub">{desc}</span>
-        <span className="tg-count" style={{ background: color + '18', color }}>{rows.length}</span>
+        <a className="du-embed-open" href={DU_EXPLORER_URL} target="_blank" rel="noopener noreferrer">
+          <ExternalLink size={14} /> Open in new tab
+        </a>
       </div>
-      {rows.map(r => (
-        <div className="ex-row" key={r.collegeId + r.programId}>
-          <div className="ex-row-info">
-            <b>{r.college}</b>
-            <span>{r.program}</span>
+
+      <div className="du-embed-frame">
+        {!loaded && !failed && (
+          <div className="du-embed-loading">
+            <Loader2 size={22} className="du-spin" />
+            <span>Loading DU Admissions Explorer…</span>
           </div>
-          <div className="ex-row-nums">
-            <span className="ex-seats">{r.seats ? `${r.seats} seats` : '—'}</span>
-            <span className="ex-cut">cutoff {r.cutoff}</span>
+        )}
+        {failed && (
+          <div className="du-embed-fail">
+            <Compass size={26} />
+            <p>Couldn&apos;t load the explorer.</p>
+            <a className="btn btn-primary-sm" href={DU_EXPLORER_URL} target="_blank" rel="noopener noreferrer">Open in a new tab</a>
           </div>
-          <button className="btn btn-outline btn-sm"><Target size={13} /> Shortlist</button>
-        </div>
-      ))}
-    </section>
-  )
-}
-
-/* ── Cutoff Explorer ── */
-function CutoffExplorer() {
-  const [collegeId, setCollegeId] = useState(colleges[0]?.id || '')
-  const [q, setQ] = useState('')
-  const [sort, setSort] = useState({ key: 'r1', dir: 'desc' })
-  const college = colleges.find(c => c.id === collegeId)
-
-  const val = (o, key) => {
-    if (key === 'course') return o.programName
-    if (key === 'seats') return o.seats?.UR?.total ?? -1
-    const r = Number(key.replace('r', ''))
-    return getCutoff(o, 'UR', r) ?? -1
-  }
-  const toggleSort = key => setSort(s2 => s2.key === key ? { key, dir: s2.dir === 'asc' ? 'desc' : 'asc' } : { key, dir: key === 'course' ? 'asc' : 'desc' })
-
-  const rows = useMemo(() => {
-    let list = offerings.filter(o => o.collegeId === collegeId)
-    if (q.trim()) list = list.filter(o => o.programName.toLowerCase().includes(q.toLowerCase()))
-    const dir = sort.dir === 'asc' ? 1 : -1
-    return [...list].sort((a, b) => {
-      const va = val(a, sort.key), vb = val(b, sort.key)
-      if (typeof va === 'string' || typeof vb === 'string') return String(va).localeCompare(String(vb)) * dir
-      return (va - vb) * dir
-    })
-  }, [collegeId, q, sort])
-
-  return (
-    <div className="ex-stack">
-      <section className="cuet-card">
-        <div className="ex-filter-row">
-          <select className="ex-select" value={collegeId} onChange={e => setCollegeId(e.target.value)}>
-            {colleges.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-          </select>
-          <input className="ex-input" placeholder="Search course..." value={q} onChange={e => setQ(e.target.value)} style={{ maxWidth: 260 }} />
-        </div>
-      </section>
-      <section className="cuet-card">
-        <div className="card-head">
-          <div className="ex-coltitle">
-            {logoFor(college?.name) && <img className="ex-logo" src={logoFor(college?.name)} alt="" />}
-            <h3>{college?.name || ''}</h3>
-          </div>
-          <span className="card-sub">{rows.length} courses · Round 1 · UR · tap a column to sort</span>
-        </div>
-        <div className="ex-table">
-          <div className="ex-thead">
-            {[['course', 'Course'], ['r1', 'R1'], ['r2', 'R2'], ['r3', 'R3'], ['seats', 'UR seats']].map(([k, label]) => (
-              <button
-                key={k}
-                className={'ex-th' + (sort.key === k ? ' on' : '')}
-                onClick={() => toggleSort(k)}
-                title={'Sort by ' + label}
-              >
-                {label}<span className="ex-th-arrow">{sort.key === k ? (sort.dir === 'asc' ? '▲' : '▼') : '↕'}</span>
-              </button>
-            ))}
-          </div>
-          {rows.slice(0, 15).map(o => (
-            <div className="ex-trow" key={o.programId}>
-              <span className="ex-tprog">{o.programName}</span>
-              <span className="mono">{getCutoff(o, 'UR', 1) ?? '—'}</span>
-              <span className="mono">{getCutoff(o, 'UR', 2) ?? '—'}</span>
-              <span className="mono">{getCutoff(o, 'UR', 3) ?? '—'}</span>
-              <span className="mono">{o.seats?.UR?.total ?? '—'}</span>
-            </div>
-          ))}
-          {rows.length === 0 && <p style={{ padding: '18px 0', fontSize: 12.5, color: 'var(--gray-500)' }}>No courses found.</p>}
-        </div>
-      </section>
-    </div>
-  )
-}
-
-/* ── Colleges list ── */
-function CollegeList() {
-  const [q, setQ] = useState('')
-  const list = colleges.filter(c => !q || c.name.toLowerCase().includes(q.toLowerCase())).sort((a, b) => a.name.localeCompare(b.name))
-  return (
-    <div className="ex-stack">
-      <input className="ex-input" placeholder="Search 69 colleges..." value={q} onChange={e => setQ(e.target.value)} style={{ maxWidth: 320 }} />
-      <div className="ex-collist">
-        {list.map(c => {
-          const offs = offerings.filter(o => o.collegeId === c.id)
-          const maxCut = Math.max(0, ...offs.map(topCutoff))
-          return (
-            <div className="ex-colcard" key={c.id}>
-              <div className="ex-colhead">
-                <div className="ex-collo">{logoFor(c.name)
-                  ? <img src={logoFor(c.name)} alt="" />
-                  : <Building2 size={15} />}</div>
-                <div><b>{c.name}</b><span>{c.campus} Campus · {c.type}</span></div>
-              </div>
-              <div className="ex-colmeta">
-                <span>{offs.length} courses</span>
-                <span>Top cutoff <b className="mono">{maxCut || '—'}</b></span>
-              </div>
-              <button className="btn btn-outline btn-sm" style={{ marginTop: 10 }}>View <ArrowRight size={13} /></button>
-            </div>
-          )
-        })}
+        )}
+        <iframe
+          src={src}
+          title="DU Admissions Explorer"
+          onLoad={() => setLoaded(true)}
+          onError={() => setFailed(true)}
+          allow="fullscreen"
+        />
       </div>
     </div>
   )
