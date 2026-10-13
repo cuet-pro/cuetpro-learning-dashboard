@@ -6,6 +6,7 @@ import {
   User, Crown, HelpCircle, LogOut, CircleCheck, CircleAlert, Info,
 } from 'lucide-react'
 import { useProfile } from '../../lib/profile'
+import { signOut } from '../../lib/auth'
 import './shell.css'
 
 const NAV = [
@@ -142,7 +143,7 @@ function Topbar({ onNavigate, setMenuOpen, theme, setTheme }) {
               <button className="dd-item" onClick={() => alert('Deep-link → Upgrade plan')}><Crown size={15} />Upgrade to Pro</button>
               <button className="dd-item" onClick={() => alert('Deep-link → Help centre')}><HelpCircle size={15} />Help & support</button>
               <div className="dd-div" />
-              <button className="dd-item danger" onClick={() => alert('Deep-link → Sign out')}><LogOut size={15} />Sign out</button>
+              <button className="dd-item danger" onClick={signOut}><LogOut size={15} />Sign out</button>
             </div>
           </Dropdown>
         )}

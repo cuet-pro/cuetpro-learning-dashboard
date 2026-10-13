@@ -1,0 +1,120 @@
+import { useState } from 'react'
+import { Mail, Lock, Eye, EyeOff, ArrowRight } from 'lucide-react'
+import { useToast } from '../../components/shell/Shell'
+import { signIn } from '../../lib/auth'
+import OtpInput from './OtpInput'
+
+const isEmail = v => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)
+const isMobile = v => /^[6-9]\d{9}$/.test(v)
+
+function GoogleG() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true">
+      <path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z" />
+      <path fill="#FF3D00" d="m6.3 14.7 6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z" />
+      <path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-7.9l-6.5 5C9.5 39.6 16.2 44 24 44z" />
+      <path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z" />
+    </svg>
+  )
+}
+
+export default function Login({ onSwitch, onAuthed }) {
+  const toast = useToast()
+  const [method, setMethod] = useState('email')
+
+  const [email, setEmail] = useState('')
+  const [pw, setPw] = useState('')
+  const [showPw, setShowPw] = useState(false)
+  const [remember, setRemember] = useState(true)
+  const [emailErr, setEmailErr] = useState('')
+  const [pwErr, setPwErr] = useState('')
+
+  const [mobile, setMobile] = useState('')
+  const [otpSent, setOtpSent] = useState(false)
+  const [otp, setOtp] = useState('')
+  const [mobileErr, setMobileErr] = useState('')
+  const [otpHint, setOtpHint] = useState("We'll send a 6-digit code by SMS.")
+
+  const submitEmail = e => {
+    e.preventDefault()
+    const a = isEmail(email.trim()) ? '' : 'Enter a valid email address.'
+    const b = pw.length ? '' : 'Enter your password.'
+    setEmailErr(a); setPwErr(b)
+    if (a || b) return
+    signIn({ user: email.trim(), method: 'email', remember })
+    onAuthed()
+  }
+
+  const submitPhone = e => {
+    e.preventDefault()
+    if (!otpSent) {
+      if (!isMobile(mobile)) { setMobileErr('Enter a valid 10-digit Indian mobile number.'); return }
+      setMobileErr(''); setOtpSent(true)
+      setOtpHint('Code sent to +91 ' + mobile + '. Prototype: any 6 digits work.')
+    } else {
+      if (otp.length < 6) { setOtpHint('Enter all 6 digits.'); return }
+      signIn({ user: '+91 ' + mobile, method: 'phone', remember })
+      onAuthed()
+    }
+  }
+
+  return (
+    <div>
+      <div className="head"><h2>Welcome back</h2><p>Log in to your CUET Pro dashboard.</p></div>
+
+      <div className="seg" role="tablist" aria-label="Log in method">
+        <button type="button" role="tab" aria-selected={method === 'email'} onClick={() => setMethod('email')}>Email &amp; password</button>
+        <button type="button" role="tab" aria-selected={method === 'phone'} onClick={() => setMethod('phone')}>Mobile OTP</button>
+      </div>
+
+      {method === 'email' ? (
+        <form onSubmit={submitEmail} noValidate>
+          <div className="field">
+            <label htmlFor="lEmail">Email</label>
+            <div className="input-wrap">
+              <Mail className="ico" size={18} />
+              <input className={'input has-ico' + (emailErr ? ' invalid' : '')} id="lEmail" type="email" autoComplete="email" placeholder="you@example.com" value={email} onChange={e => setEmail(e.target.value)} />
+            </div>
+            {emailErr && <span className="err">{emailErr}</span>}
+          </div>
+          <div className="field">
+            <div className="label-row"><label htmlFor="lPw">Password</label><a href="#forgot" onClick={e => { e.preventDefault(); toast('A reset link would be emailed here.') }}>Forgot password?</a></div>
+            <div className="input-wrap">
+              <Lock className="ico" size={18} />
+              <input className={'input has-ico has-btn' + (pwErr ? ' invalid' : '')} id="lPw" type={showPw ? 'text' : 'password'} autoComplete="current-password" placeholder="Enter your password" value={pw} onChange={e => setPw(e.target.value)} />
+              <button type="button" className="eye" onClick={() => setShowPw(v => !v)} aria-label={showPw ? 'Hide password' : 'Show password'}>
+                {showPw ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            </div>
+            {pwErr && <span className="err">{pwErr}</span>}
+          </div>
+          <label className="check"><input type="checkbox" checked={remember} onChange={e => setRemember(e.target.checked)} /> Keep me logged in on this device</label>
+          <button className="btn btn-primary" type="submit">Log in <ArrowRight size={18} /></button>
+        </form>
+      ) : (
+        <form onSubmit={submitPhone} noValidate>
+          {!otpSent ? (
+            <div className="field">
+              <label htmlFor="lMobile">Mobile number</label>
+              <div className="phone-row"><span className="cc">+91</span><input className={'input' + (mobileErr ? ' invalid' : '')} id="lMobile" type="tel" inputMode="numeric" maxLength={10} autoComplete="tel-national" placeholder="10-digit mobile number" value={mobile} onChange={e => setMobile(e.target.value.replace(/\D/g, '').slice(0, 10))} /></div>
+              <span className={mobileErr ? 'err' : 'hint'}>{mobileErr || "We'll send a 6-digit code by SMS."}</span>
+            </div>
+          ) : (
+            <div className="field">
+              <div className="label-row"><span className="legend">Enter the 6-digit code</span><a href="#change" onClick={e => { e.preventDefault(); setOtpSent(false); setOtp(''); setOtpHint("We'll send a 6-digit code by SMS.") }}>Change number</a></div>
+              <OtpInput value={otp} onChange={setOtp} />
+              <span className="hint">{otpHint}</span>
+            </div>
+          )}
+          <button className="btn btn-primary" type="submit">{otpSent ? 'Verify & log in' : 'Send OTP'} <ArrowRight size={18} /></button>
+        </form>
+      )}
+
+      <div className="or">or</div>
+      <button className="btn btn-outline" type="button" onClick={() => toast('Google sign-in would open here (needs Firebase/Supabase).')}>
+        <GoogleG /> Continue with Google
+      </button>
+      <p className="switch">New to CUET Pro? <a href="#signup" onClick={e => { e.preventDefault(); onSwitch('signup') }}>Create a free account</a></p>
+    </div>
+  )
+}
