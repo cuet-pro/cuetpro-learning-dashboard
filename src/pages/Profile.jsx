@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Check, ChevronRight, Crown, HelpCircle, Trash2, Bell, Target, GraduationCap, Star, RefreshCcw, LogOut } from 'lucide-react'
 import { useProfile, STREAMS } from '../lib/profile'
+import { signOut } from '../lib/auth'
 import './profile.css'
 
 const NOTIFS = [
@@ -52,7 +53,7 @@ export default function Profile() {
           <b>{profile.name || 'Ananya Verma'}</b>
           <span>{profile.stream} · CUET 2027</span>
         </div>
-        <button className="btn btn-outline-sm"><LogOut size={13} /> Sign out</button>
+        <button className="btn btn-outline-sm" onClick={signOut}><LogOut size={13} /> Sign out</button>
       </section>
 
       {/* B. My target — feeds Dashboard, Analysis, Study Kit */}
