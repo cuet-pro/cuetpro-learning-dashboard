@@ -22,7 +22,7 @@ export default function BrandPanel({ view, step, onSwitch }) {
   const isLogin = view === 'login'
   return (
     <section className="brand">
-      <BrandLogo onDark size="md" />
+      <BrandLogo size="md" />
 
       {isLogin ? (
         <>
