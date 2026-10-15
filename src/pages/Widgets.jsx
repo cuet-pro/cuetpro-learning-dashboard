@@ -5,7 +5,7 @@ import {
   Compass, Target, Timer, Trophy, Video, Sparkles, ArrowLeft, ChevronRight, ArrowRight,
 } from 'lucide-react'
 import { VOCAB_CATEGORIES } from '../data/vocab'
-import { Modal } from '../components/shell/Shell.jsx'
+import { Modal, useToast } from '../components/shell/Shell.jsx'
 import { useGuestGate } from '../lib/guestGate'
 import './widgets.css'
 
@@ -217,6 +217,7 @@ export function BadgesTile() {
 
 export default function DashboardTiles({ onNavigate }) {
   const gate = useGuestGate()
+  const toast = useToast()
   const [wlOpen, setWlOpen] = useState(false)
   const [cat, setCat] = useState(null)
   const [q, setQ] = useState('')
@@ -243,15 +244,15 @@ export default function DashboardTiles({ onNavigate }) {
       tiles: [
         { id: 'word-list', label: 'Word list', tone: 'blue', icon: List, stat: { n: vocabCount, suffix: 'words' }, go: () => setWlOpen(true) },
         { id: 'flashcards', label: 'Flashcards', tone: 'green', icon: Layers, ring: 46, ringMeta: '230/500 mastered', recommended: true, nav: 'studykit', gate: { feature: 'Flashcards', action: 'flip your cards' } },
-        { id: 'syllabus', label: 'Syllabus PDF', tone: 'blue', icon: FileText, stat: { n: 19, suffix: 'chapters' }, go: () => alert('Deep-link → Syllabus PDF') },
+        { id: 'syllabus', label: 'Syllabus PDF', tone: 'blue', icon: FileText, stat: { n: 19, suffix: 'chapters' }, gate: { feature: 'Syllabus PDF', action: 'download the syllabus' }, go: () => toast('Syllabus PDF — coming soon') },
       ],
     },
     {
       key: 'plan', label: 'Plan',
       tiles: [
         { id: 'cutoffs', label: 'Cutoffs', tone: 'amber', icon: BarChart3, statText: '2025-26 data', nav: 'explorer' },
-        { id: 'eligibility', label: 'Eligibility', tone: 'green', icon: ListChecks, statText: 'check your course', go: () => alert('Deep-link → Eligibility checker') },
-        { id: 'sample-papers', label: 'Sample papers', tone: 'blue', icon: Files, stat: { n: 12, suffix: 'papers' }, go: () => alert('Deep-link → Sample papers') },
+        { id: 'eligibility', label: 'Eligibility', tone: 'green', icon: ListChecks, statText: 'check your course', gate: { feature: 'Eligibility Checker', action: 'check your eligibility' }, go: () => toast('Eligibility checker — coming soon') },
+        { id: 'sample-papers', label: 'Sample papers', tone: 'blue', icon: Files, stat: { n: 12, suffix: 'papers' }, gate: { feature: 'Sample Papers', action: 'open sample papers' }, go: () => toast('Sample papers — coming soon') },
       ],
     },
   ]

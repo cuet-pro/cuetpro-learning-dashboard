@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Moon, Sun } from 'lucide-react'
+import { ArrowRight, Moon, Sun } from 'lucide-react'
 import BrandPanel from './auth/BrandPanel'
 import Login from './auth/Login'
 import Signup from './auth/Signup'
@@ -37,7 +37,7 @@ export default function Auth({ onAuthed, onEnterGuest }) {
           {view === 'login'
             ? <Login onSwitch={switchView} onAuthed={onAuthed} />
             : <Signup step={step} setStep={setStep} onSwitch={switchView} onAuthed={onAuthed} />}
-          <button className="guest-enter" type="button" onClick={onEnterGuest}>Continue as guest →</button>
+          <button className="guest-enter" type="button" onClick={onEnterGuest}>Continue as guest <ArrowRight size={16} /></button>
         </div>
       </main>
     </div>
