@@ -6,6 +6,7 @@ import {
 } from 'lucide-react'
 import { VOCAB_CATEGORIES } from '../data/vocab'
 import { Modal } from '../components/shell/Shell.jsx'
+import { useGuestGate } from '../lib/guestGate'
 import './widgets.css'
 
 /* ── motion helpers (respect prefers-reduced-motion) ── */
@@ -215,6 +216,7 @@ export function BadgesTile() {
 }
 
 export default function DashboardTiles({ onNavigate }) {
+  const gate = useGuestGate()
   const [wlOpen, setWlOpen] = useState(false)
   const [cat, setCat] = useState(null)
   const [q, setQ] = useState('')
@@ -233,14 +235,14 @@ export default function DashboardTiles({ onNavigate }) {
     {
       key: 'play', label: 'Play',
       tiles: [
-        { id: 'word-battle', label: 'Word battle', tone: 'blue', icon: Swords, featured: true, sub: '5 rounds today · 1v1 vocabulary duel', live: '3 wins today', cta: 'Find opponent', go: () => alert('Deep-link → Word battle (Chill Zone)') },
+        { id: 'word-battle', label: 'Word battle', tone: 'blue', icon: Swords, featured: true, sub: '5 rounds today · 1v1 vocabulary duel', live: '3 wins today', cta: 'Find opponent', gate: { feature: 'Word Battle', action: 'find an opponent' }, go: () => onNavigate('chill') },
       ],
     },
     {
       key: 'learn', label: 'Learn',
       tiles: [
         { id: 'word-list', label: 'Word list', tone: 'blue', icon: List, stat: { n: vocabCount, suffix: 'words' }, go: () => setWlOpen(true) },
-        { id: 'flashcards', label: 'Flashcards', tone: 'green', icon: Layers, ring: 46, ringMeta: '230/500 mastered', recommended: true, nav: 'studykit' },
+        { id: 'flashcards', label: 'Flashcards', tone: 'green', icon: Layers, ring: 46, ringMeta: '230/500 mastered', recommended: true, nav: 'studykit', gate: { feature: 'Flashcards', action: 'flip your cards' } },
         { id: 'syllabus', label: 'Syllabus PDF', tone: 'blue', icon: FileText, stat: { n: 19, suffix: 'chapters' }, go: () => alert('Deep-link → Syllabus PDF') },
       ],
     },
@@ -257,7 +259,11 @@ export default function DashboardTiles({ onNavigate }) {
   const flat = groups.flatMap(g => g.tiles)
   const todayId = flat[new Date().getDate() % flat.length].id
 
-  const handle = t => { if (t.go) t.go(); else if (t.nav && onNavigate) onNavigate(t.nav) }
+  const handle = t => {
+    const run = () => { if (t.go) t.go(); else if (t.nav && onNavigate) onNavigate(t.nav) }
+    if (t.gate) gate(t.gate.feature, t.gate.action, run)
+    else run()
+  }
 
   return (
     <section className="tile green open">

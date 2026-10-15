@@ -1,5 +1,7 @@
 import { useState } from 'react'
 import { useAuth } from './lib/auth'
+import { takePending, closeGuestWall } from './lib/guestGate'
+import GuestWall from './components/GuestWall.jsx'
 import Dashboard from './pages/Dashboard.jsx'
 import StudyKit from './pages/StudyKit.jsx'
 import { consumeNotesDeepLink } from './lib/notesProgress.js'
@@ -29,26 +31,36 @@ function bootPage() {
 }
 
 export default function App() {
-  const [session] = useAuth()
+  const [session, { guest, enterGuest }] = useAuth()
   const [page, setPage] = useState(bootPage)
   const Page = PAGES[page]
   const navigate = p => { consumeNotesDeepLink(); setPage(p) }
 
-  if (!session) {
+  /* Google sign-in from the GuestWall → run the pending action, then land back where they were. */
+  const onGuestAuthed = () => {
+    const fn = takePending()
+    closeGuestWall()
+    if (fn) fn()
+  }
+
+  /* Neither session nor guest → full-screen Auth */
+  if (!session && !guest) {
     return (
       <ToastProvider>
-        <Auth onAuthed={() => setPage(bootPage())} />
+        <Auth onAuthed={() => setPage(bootPage())} onEnterGuest={enterGuest} />
       </ToastProvider>
     )
   }
 
+  /* Authed (session) or browsing as guest → the shell */
   return (
     <ToastProvider>
-      <AppShell page={page} onNavigate={navigate}>
+      <AppShell guest={guest} page={page} onNavigate={navigate}>
         <main className="shell-main-inner" key={page}>
-          <Page onNavigate={navigate} />
+          <Page guest={guest} onNavigate={navigate} />
         </main>
       </AppShell>
+      <GuestWall onAuthed={onGuestAuthed} />
     </ToastProvider>
   )
 }

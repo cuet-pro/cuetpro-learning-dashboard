@@ -6,7 +6,7 @@ import Signup from './auth/Signup'
 import './auth.css'
 
 /* Full-screen auth page — not wrapped by the sidebar/topbar/bottom-nav. */
-export default function Auth({ onAuthed }) {
+export default function Auth({ onAuthed, onEnterGuest }) {
   const [view, setView] = useState(() => (location.hash === '#signup' ? 'signup' : 'login'))
   const [step, setStep] = useState(1)
   const [theme, setTheme] = useState(() => localStorage.getItem('cp_theme') || 'light')
@@ -37,6 +37,7 @@ export default function Auth({ onAuthed }) {
           {view === 'login'
             ? <Login onSwitch={switchView} onAuthed={onAuthed} />
             : <Signup step={step} setStep={setStep} onSwitch={switchView} onAuthed={onAuthed} />}
+          <button className="guest-enter" type="button" onClick={onEnterGuest}>Continue as guest →</button>
         </div>
       </main>
     </div>

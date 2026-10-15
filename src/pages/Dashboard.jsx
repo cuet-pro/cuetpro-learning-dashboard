@@ -4,6 +4,7 @@ import {
   Trophy, PieChart, ArrowUpRight, Zap, Quote, Medal, Award, History,
 } from 'lucide-react'
 import { useProfile, dreamCollegeShort } from '../lib/profile'
+import { useGuestGate } from '../lib/guestGate'
 import HeroBanner from '../components/HeroBanner.jsx'
 import { Modal } from '../components/shell/Shell.jsx'
 import DashboardTiles, { ActivityTile, BadgesTile } from './Widgets.jsx'
@@ -124,6 +125,7 @@ const SYLLABUS_PCT = 64   // overall syllabus completion % — drives the ring +
 
 export default function Dashboard({ onNavigate }) {
   const [profile] = useProfile()
+  const gate = useGuestGate()
   const college = profile.dreamCollege
   const collegeShort = dreamCollegeShort(college)
   const cd = useLiveCountdown(profile.examDate)
@@ -181,15 +183,15 @@ export default function Dashboard({ onNavigate }) {
   const top5 = sortedRows.filter(r => !r.me).slice(0, 5)
   const pctOfLeader = pts => Math.max(4, Math.round((pts / leaderPts) * 100))
 
-  const pickWord = i => { if (wordPick === null) setWordPick(i) }
-  const pickQuiz = i => {
+  const pickWord = i => gate('Word of the Day', 'answer the word challenge', () => { if (wordPick === null) setWordPick(i) })
+  const pickQuiz = i => gate('Subject Quiz', 'answer the quiz', () => {
     if (quizPick !== null) return
     setQuizPick(i)
     if (i === QUIZ[quizIdx].answer) setQuizScore(s => s + 1)
     setTimeout(() => {
       if (quizIdx + 1 < QUIZ.length) { setQuizIdx(quizIdx + 1); setQuizPick(null) } else setQuizDone(true)
     }, 750)
-  }
+  })
 
   return (
     <div className="page dash">
@@ -267,7 +269,7 @@ export default function Dashboard({ onNavigate }) {
           <div className="ch-panel">
             <div className="ch-q">{RC.title}</div>
             <p className="ch-desc">A short passage on how cities lose 30% of treated water to leaks, and what Delhi's revival plans mean for residents.</p>
-            <button className="btn btn-blue" onClick={() => onNavigate('studykit')}>Start Reading · +{RC.pts} pts</button>
+            <button className="btn btn-blue" onClick={() => gate('RC of the Day', 'start the reading', () => onNavigate('studykit'))}>Start Reading · +{RC.pts} pts</button>
           </div>
         )}
       </section>

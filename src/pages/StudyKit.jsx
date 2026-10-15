@@ -1,10 +1,12 @@
 import { useEffect, useRef, useState } from 'react'
 import { NotebookText, Layers, Timer, FileQuestion, Archive, ArrowLeft, ArrowRight, PlayCircle, Video, Sigma, Zap, ChevronRight, ChevronDown, CheckSquare, Search, GraduationCap, Highlighter, FlaskConical, Settings, Sun, Moon } from 'lucide-react'
-import { boostRanking, weakTopicNames } from '../lib/analysisData'
+import { weakTopicNames } from '../lib/analysisData'
 import { ECON_UNITS } from '../data/econNotes'
 import { GEO_UNITS } from '../data/geoNotes'
 import { useProfile, STREAMS } from '../lib/profile'
 import { notesDeepLink, readNotesProgress, writeNotesProgress, lastReadSubject } from '../lib/notesProgress'
+import { useGuestGate } from '../lib/guestGate'
+import { useToast } from '../components/shell/Shell'
 import './studykit.css'
 
 const NOTES_BY_STREAM = {
@@ -27,20 +29,22 @@ const NOTES_BY_STREAM = {
 
 const LEARNING_TOOLS = [
   { id: 'notes', tone: 'green', icon: NotebookText, title: 'Notes', desc: 'Concise NCERT-based notes, chapter by chapter.', cta: 'Pick up where you left off', progress: { done: 12, total: 18, label: 'chapters' } },
-  { id: 'flashcards', tone: 'blue', icon: Layers, title: 'Flashcards', desc: 'Swipeable quick-revision cards, mark as learned.', cta: 'Flip 20 cards in 5 minutes', progress: { done: 56, total: 80, label: 'cards mastered' } },
+  { id: 'flashcards', tone: 'blue', icon: Layers, title: 'Flashcards', desc: 'Swipeable quick-revision cards, mark as learned.', cta: 'Flip 20 cards in 5 minutes', gate: { feature: 'Flashcards', action: 'flip your cards' }, progress: { done: 56, total: 80, label: 'cards mastered' } },
   { id: 'videos', tone: 'amber', icon: Video, title: 'Video lectures', desc: 'Short concept videos — 5-10 min each.', cta: 'Watch one 7-minute concept', progress: { done: 7, total: 12, label: 'watched' } },
   { id: 'cheats', tone: 'violet', icon: Sigma, title: 'Cheat Sheets', desc: 'Every formula and key definition, one page per subject.', cta: 'Revise all formulas in 10 minutes', progress: { done: 4, total: 6, label: 'viewed' } },
   { id: 'ncert', tone: 'violet', icon: Highlighter, title: 'Marked NCERT', desc: 'NCERT textbook pages with exam-relevant lines highlighted, chapter by chapter.', cta: 'Open marked NCERT', progress: { done: 0, total: 18, label: 'chapters' } },
 ]
 const TESTING_TOOLS = [
-  { id: 'quizzes', tone: 'blue', icon: Timer, title: '5-Minute Quick Quizzes', desc: 'Short, low-pressure self-checks — repeat anytime.', cta: 'Take today’s quick quiz', meta: { streak: '3-day streak', last: 'Last score 82%' } },
-  { id: 'mocks', tone: 'amber', icon: FileQuestion, title: 'Mock Tests', desc: 'Full-length, CUET-pattern, timed & auto-scored.', cta: 'Resume Mock 7 · 3 sections left', meta: { inProgress: 'Mock Test 7 · 60%', sub: 'Section 3 of 5 left' } },
+  { id: 'quizzes', tone: 'blue', icon: Timer, title: '5-Minute Quick Quizzes', desc: 'Short, low-pressure self-checks — repeat anytime.', cta: 'Take today’s quick quiz', gate: { feature: 'Quick Quizzes', action: 'take a quick quiz' }, meta: { streak: '3-day streak', last: 'Last score 82%' } },
+  { id: 'mocks', tone: 'amber', icon: FileQuestion, title: 'Mock Tests', desc: 'Full-length, CUET-pattern, timed & auto-scored.', cta: 'Resume Mock 7 · 3 sections left', gate: { feature: 'Mock Tests', action: 'attempt the mock test' }, meta: { inProgress: 'Mock Test 7 · 60%', sub: 'Section 3 of 5 left' } },
   { id: 'pyqs', tone: 'red', icon: Archive, title: 'Previous Year Questions', desc: 'Shift-wise & topic-wise PYQ bank, filterable.', cta: 'Browse 2022–2026, shift-wise', progress: { done: 60, total: 100, label: 'attempted' } },
 ]
 const ALL_TOOLS = [...LEARNING_TOOLS, ...TESTING_TOOLS]
 
 export default function StudyKit({ onNavigate }) {
   const [profile] = useProfile()
+  const gate = useGuestGate()
+  const toast = useToast()
   const stream = profile.stream
   const [subject, setSubject] = useState(() => {
     const dl = notesDeepLink()
@@ -60,10 +64,6 @@ export default function StudyKit({ onNavigate }) {
     localStorage.setItem('cp_last', JSON.stringify(v))
   }
 
-  const boostScope = subject === 'all' ? stream : subject
-  const ranked = boostRanking(boostScope)
-  const top3 = ranked.slice(0, 3)
-  const weakTopics = weakTopicNames(boostScope)
   const streamSubjects = STREAMS[stream] || []
   const showContinue = lastActivity && (!lastActivity.subject || streamSubjects.includes(lastActivity.subject))
 
@@ -83,11 +83,15 @@ export default function StudyKit({ onNavigate }) {
 
   /* open a tool; for Notes with no subject chosen, jump to the last-read subject */
   const openTool = t => {
-    if (t.id === 'notes' && subject === 'all') {
-      const s = lastReadSubject()
-      if (s && (STREAMS[stream] || []).includes(s)) setSubject(s)
+    const run = () => {
+      if (t.id === 'notes' && subject === 'all') {
+        const s = lastReadSubject()
+        if (s && (STREAMS[stream] || []).includes(s)) setSubject(s)
+      }
+      setSelected(t.id)
     }
-    setSelected(t.id)
+    if (t.gate) gate(t.gate.feature, t.gate.action, run)
+    else run()
   }
 
   return (
@@ -124,7 +128,7 @@ export default function StudyKit({ onNavigate }) {
             <span>{lastActivity.detail}</span>
             <div className="cont-bar"><i style={{ width: lastActivity.pct + '%' }} /></div>
           </div>
-          <button className="btn btn-primary-sm" onClick={() => { if (lastActivity && (lastActivity.subject === 'Economics' || lastActivity.subject === 'Geography')) { setSubject(lastActivity.subject); setSelected('notes') } else { alert('Deep-link → resume: ' + lastActivity.title) } }}>Resume</button>
+          <button className="btn btn-primary-sm" onClick={() => gate('Continue Learning', 'resume your last activity', () => { if (lastActivity && (lastActivity.subject === 'Economics' || lastActivity.subject === 'Geography')) { setSubject(lastActivity.subject); setSelected('notes') } else toast('Resume — coming soon') })}>Resume</button>
         </section>
       )}
 
@@ -135,7 +139,7 @@ export default function StudyKit({ onNavigate }) {
           <h3>Focus mock</h3>
           <p>A short mock built only from what you need to work on right now — about 20 minutes.</p>
         </div>
-        <button className="btn btn-primary-sm" onClick={() => alert('Deep-link → focus mock session (from boost topics: ' + top3.slice(0, 3).map(t => t.name).join(', ') + ')')}>Generate focus mock</button>
+        <button className="btn btn-primary-sm" onClick={() => gate('Focus Mock', 'generate a focus mock', () => toast('Focus mock — coming soon'))}>Generate focus mock</button>
       </section>
       </>)}
 
@@ -221,7 +225,7 @@ export default function StudyKit({ onNavigate }) {
                     key={t.id}
                     className={'sk-tcard tone-' + t.tone}
                     style={{ animationDelay: (idx * 45) + 'ms' }}
-                    onClick={() => { setSelected(t.id) }}
+                    onClick={() => { openTool(t) }}
                   >
                     <span className="sk-tcard-ico"><t.icon size={18} /></span>
                     <span className="sk-tcard-t">
@@ -652,20 +656,22 @@ const FLASHCARDS = [
   { f: 'Fiscal Deficit', b: 'Total expenditure − total receipts, excluding borrowings' },
 ]
 function FlashView({ record }) {
+  const gate = useGuestGate()
+  const toast = useToast()
   const [idx, setIdx] = useState(0)
   const [flip, setFlip] = useState(false)
   const c = FLASHCARDS[idx]
   return (
     <div className="sk-subgrid">
-      <div className={`sk-flash ${flip ? 'flip' : ''}`} onClick={() => setFlip(f => !f)}>
+      <div className={`sk-flash ${flip ? 'flip' : ''}`} onClick={() => gate('Flashcards', 'flip the card', () => setFlip(f => !f))}>
         <div className="sk-fc-inner">
           <div className="sk-fc-face sk-fc-front"><b>{c.f}</b><span>tap to flip</span></div>
           <div className="sk-fc-face sk-fc-back"><p>{c.b}</p><span>tap to flip back</span></div>
         </div>
       </div>
       <div style={{ display: 'flex', gap: 10 }}>
-        <button className="btn btn-outline-sm" onClick={() => { setFlip(false); setIdx((idx + 1) % FLASHCARDS.length) }}>Next card</button>
-        <button className="btn btn-primary-sm" onClick={() => { record({ title: 'Flashcards', detail: 'deck · card ' + (idx + 1), pct: 30 }); alert('Marked learned — saved to progress') }}>Mark learned</button>
+        <button className="btn btn-outline-sm" onClick={() => gate('Flashcards', 'go to the next card', () => { setFlip(false); setIdx((idx + 1) % FLASHCARDS.length) })}>Next card</button>
+        <button className="btn btn-primary-sm" onClick={() => gate('Flashcards', 'mark a card learned', () => { record({ title: 'Flashcards', detail: 'deck · card ' + (idx + 1), pct: 30 }); toast('Marked learned — saved to progress') })}>Mark learned</button>
       </div>
     </div>
   )
@@ -676,16 +682,17 @@ const QUICK_QS = [
   { q: 'Current Ratio formula:', o: ['CA/CL', 'CL/CA', 'Sales/Profit', 'Debt/Equity'], a: 0 },
 ]
 function QuizView() {
+  const gate = useGuestGate()
   const [idx, setIdx] = useState(0)
   const [pick, setPick] = useState(null)
   const [score, setScore] = useState(0)
   const q = QUICK_QS[idx]
-  const choose = i => {
+  const choose = i => gate('Quick Quizzes', 'answer the quiz', () => {
     if (pick !== null) return
     setPick(i)
     if (i === q.a) setScore(s => s + 1)
     setTimeout(() => { if (idx + 1 < QUICK_QS.length) { setIdx(idx + 1); setPick(null) } }, 800)
-  }
+  })
   return (
     <div className="sk-subgrid">
       <div className="sk-subcard">
@@ -723,7 +730,9 @@ const PYQ_ATTEMPTS = {
 }
 const scoreTone = s => (s >= 75 ? 'good' : s >= 50 ? 'mid' : 'low')
 
-function PyqRow({ p, attempt, scope }) {
+function PyqRow({ p, attempt }) {
+  const gate = useGuestGate()
+  const toast = useToast()
   const ShiftIcon = p.shift === 1 ? Sun : Moon
   return (
     <div className="pyq-row">
@@ -732,13 +741,13 @@ function PyqRow({ p, attempt, scope }) {
       <span className="pyq-row-qs">{p.qs} Qs</span>
       <span className="pyq-row-action">
         {!attempt ? (
-          <button className="btn btn-outline-sm" onClick={() => alert(`Deep-link → PYQ: ${scope} ${p.year} · ${p.date} Shift ${p.shift}`)}>Attempt</button>
+          <button className="btn btn-outline-sm" onClick={() => gate('PYQ Papers', 'attempt this paper', () => toast('PYQ attempt — coming soon'))}>Attempt</button>
         ) : attempt.status === 'progress' ? (
-          <button className="pyq-resume" onClick={() => alert(`Deep-link → resume PYQ: ${scope} ${p.year} · ${p.date} Shift ${p.shift}`)}>Resume</button>
+          <button className="pyq-resume" onClick={() => gate('PYQ Papers', 'resume this paper', () => toast('PYQ resume — coming soon'))}>Resume</button>
         ) : (
           <>
             <span className={'pyq-score ' + scoreTone(attempt.score)}>{attempt.score}%</span>
-            <button className="pyq-review" onClick={() => alert(`Deep-link → review PYQ: ${scope} ${p.year} · ${p.date} Shift ${p.shift}`)}>Review</button>
+            <button className="pyq-review" onClick={() => gate('PYQ Papers', 'review this paper', () => toast('PYQ review — coming soon'))}>Review</button>
           </>
         )}
       </span>
@@ -811,7 +820,7 @@ function PyqView({ subject, stream, weakOnly, setWeakOnly }) {
             </button>
             {open && (
               <div className="pyq-rows">
-                {shiftsFor(y).map(p => <PyqRow key={p.id} p={p} attempt={PYQ_ATTEMPTS[p.id]} scope={scope} />)}
+                {shiftsFor(y).map(p => <PyqRow key={p.id} p={p} attempt={PYQ_ATTEMPTS[p.id]} />)}
                 {shiftsFor(y).length === 0 && <p className="muted-empty">No papers for this year yet.</p>}
               </div>
             )}
@@ -824,6 +833,8 @@ function PyqView({ subject, stream, weakOnly, setWeakOnly }) {
 }
 
 function MockView({ examMode, setExamMode }) {
+  const gate = useGuestGate()
+  const toast = useToast()
   return (
     <div className="sk-subgrid">
       <div className="sk-subcard">
@@ -831,8 +842,8 @@ function MockView({ examMode, setExamMode }) {
         <div className="sk-bar"><i style={{ width: '60%' }} /></div>
         <p style={{ fontSize: 12.5, color: 'var(--text-secondary)', margin: '10px 0' }}>Section 3 of 5 left — Accountancy (20 Qs). You stopped at Q31.</p>
         <div style={{ display: 'flex', gap: 8 }}>
-          <button className="btn btn-primary-sm" onClick={() => alert('Deep-link → resume at Q31')}>Resume mock</button>
-          <button className="btn btn-outline-sm" onClick={() => alert('Restart from section 1')}>Restart</button>
+          <button className="btn btn-primary-sm" onClick={() => gate('Mock Tests', 'resume the mock test', () => toast('Mock resume — coming soon'))}>Resume mock</button>
+          <button className="btn btn-outline-sm" onClick={() => gate('Mock Tests', 'restart the mock test', () => toast('Mock restart — coming soon'))}>Restart</button>
         </div>
         <div className="sk-exam-mode" style={{ marginTop: 14 }}>
           <span>Exam mode</span>

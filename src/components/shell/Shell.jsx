@@ -6,7 +6,7 @@ import {
   User, Crown, HelpCircle, LogOut, CircleCheck, CircleAlert, Info,
 } from 'lucide-react'
 import { useProfile } from '../../lib/profile'
-import { signOut } from '../../lib/auth'
+import { signOut, exitGuest } from '../../lib/auth'
 import './shell.css'
 
 const NAV = [
@@ -30,9 +30,9 @@ function useTheme() {
 }
 
 /* ── Sidebar ── */
-function Sidebar({ active, onNavigate, rail, setRail, open, setOpen }) {
+function Sidebar({ active, onNavigate, guest, rail, setRail, open, setOpen }) {
   const [profile] = useProfile()
-  const initials = (profile.name || 'CUET Pro').split(/\s+/).map(w => w[0]).slice(0, 2).join('').toUpperCase()
+  const initials = guest ? 'G' : (profile.name || 'CUET Pro').split(/\s+/).map(w => w[0]).slice(0, 2).join('').toUpperCase()
   return (
     <>
       {open && <button className="scrim" onClick={() => setOpen(false)} aria-label="Close menu" />}
@@ -63,8 +63,8 @@ function Sidebar({ active, onNavigate, rail, setRail, open, setOpen }) {
           >
             <span className="side-user-av">{initials}</span>
             <span className="side-user-txt">
-              <b>{profile.name}</b>
-              <span>{profile.stream ? 'CUET 2027 · ' + profile.stream : 'CUET 2027'}</span>
+              <b>{guest ? 'Guest' : profile.name}</b>
+              <span>{guest ? 'Browse as guest' : (profile.stream ? 'CUET 2027 · ' + profile.stream : 'CUET 2027')}</span>
             </span>
             <Settings size={16} strokeWidth={1.9} className="side-user-gear" />
           </button>
@@ -109,9 +109,9 @@ function Dropdown({ onClose, children }) {
 }
 
 /* ── Topbar ── */
-function Topbar({ onNavigate, setMenuOpen, theme, setTheme }) {
+function Topbar({ onNavigate, setMenuOpen, theme, setTheme, guest }) {
   const [profile] = useProfile()
-  const initials = (profile.name || 'CUET Pro').split(/\s+/).map(w => w[0]).slice(0, 2).join('').toUpperCase()
+  const initials = guest ? 'G' : (profile.name || 'CUET Pro').split(/\s+/).map(w => w[0]).slice(0, 2).join('').toUpperCase()
   const [dd, setDd] = useState(null) // 'bell' | 'user'
   const closeDd = useCallback(() => setDd(null), [])
   const go = id => { onNavigate(id); closeDd() }
@@ -133,17 +133,19 @@ function Topbar({ onNavigate, setMenuOpen, theme, setTheme }) {
       <div style={{ position: 'relative' }}>
         <button className="tb-user" onClick={e => { e.stopPropagation(); setDd(dd === 'user' ? null : 'user') }}>
           <span className="tb-user-av">{initials}</span>
-          <b>{(profile.name || 'Ananya Verma').split(' ')[0]}</b>
+          <b>{guest ? 'Guest' : (profile.name || 'Ananya Verma').split(' ')[0]}</b>
           <ChevronDown size={14} />
         </button>
         {dd === 'user' && (
           <Dropdown onClose={closeDd}>
             <div className="dd">
-              <button className="dd-item" onClick={() => go('profile')}><User size={15} />Profile & Settings</button>
-              <button className="dd-item" onClick={() => alert('Deep-link → Upgrade plan')}><Crown size={15} />Upgrade to Pro</button>
-              <button className="dd-item" onClick={() => alert('Deep-link → Help centre')}><HelpCircle size={15} />Help & support</button>
+              <button className="dd-item" onClick={() => go('profile')}><User size={15} />Profile &amp; Settings</button>
+              {!guest && <button className="dd-item" onClick={() => alert('Deep-link → Upgrade plan')}><Crown size={15} />Upgrade to Pro</button>}
+              {!guest && <button className="dd-item" onClick={() => alert('Deep-link → Help centre')}><HelpCircle size={15} />Help &amp; support</button>}
               <div className="dd-div" />
-              <button className="dd-item danger" onClick={signOut}><LogOut size={15} />Sign out</button>
+              {guest
+                ? <button className="dd-item" onClick={() => { closeDd(); exitGuest() }}><LogOut size={15} />Sign in</button>
+                : <button className="dd-item danger" onClick={signOut}><LogOut size={15} />Sign out</button>}
             </div>
           </Dropdown>
         )}
@@ -221,18 +223,25 @@ export function Modal({ open, onClose, title, children, footer, wide }) {
 }
 
 /* ── App shell ── */
-export default function AppShell({ page, onNavigate, children }) {
+export default function AppShell({ page, onNavigate, guest, children }) {
   const [rail, setRail] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
   const [theme, setTheme] = useTheme()
+
+  /* Guests browse freely, but Analysis + Profile are login walls → exit to Auth. */
+  const go = id => {
+    if (guest && (id === 'analysis' || id === 'profile')) exitGuest()
+    else onNavigate(id)
+  }
+
   return (
     <div className={'shell' + (rail ? ' rail' : '')}>
-      <Sidebar active={page} onNavigate={onNavigate} rail={rail} setRail={setRail} open={menuOpen} setOpen={setMenuOpen} />
+      <Sidebar active={page} onNavigate={go} guest={guest} rail={rail} setRail={setRail} open={menuOpen} setOpen={setMenuOpen} />
       <div className="shell-main">
-        <Topbar onNavigate={onNavigate} setMenuOpen={setMenuOpen} theme={theme} setTheme={setTheme} />
+        <Topbar onNavigate={go} setMenuOpen={setMenuOpen} theme={theme} setTheme={setTheme} guest={guest} />
         {children}
       </div>
-      <BottomNav active={page} onNavigate={onNavigate} />
+      <BottomNav active={page} onNavigate={go} />
     </div>
   )
 }
