@@ -2,7 +2,7 @@
    Token-based. The navy brand panel stays #1D3557 in both themes. */
 
 /* ── Brand logo (BrandLogo.jsx) ── */
-.brand-logo { display: inline-flex; align-items: center; }
+.brand-logo { display: inline-flex; align-items: center; align-self: flex-start; }
 .brand-logo.on-dark { background: #fff; padding: 8px 12px; border-radius: var(--r-md); }
 .brand-logo-img { height: 44px; width: auto; display: block; }
 .brand-logo-img.sm { height: 36px; }
