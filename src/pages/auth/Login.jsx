@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Mail, Lock, Eye, EyeOff, ArrowRight } from 'lucide-react'
 import { useToast } from '../../components/shell/Shell'
-import { signIn } from '../../lib/auth'
+import { signInWithEmail, sendPhoneOtp, verifyPhoneOtp, signInWithGoogle, friendlyAuthError } from '../../lib/auth'
 import OtpInput from './OtpInput'
 
 const isEmail = v => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)
@@ -21,6 +21,7 @@ function GoogleG() {
 export default function Login({ onSwitch, onAuthed }) {
   const toast = useToast()
   const [method, setMethod] = useState('email')
+  const [loading, setLoading] = useState(false)
 
   const [email, setEmail] = useState('')
   const [pw, setPw] = useState('')
@@ -35,27 +36,43 @@ export default function Login({ onSwitch, onAuthed }) {
   const [mobileErr, setMobileErr] = useState('')
   const [otpHint, setOtpHint] = useState("We'll send a 6-digit code by SMS.")
 
-  const submitEmail = e => {
+  const submitEmail = async e => {
     e.preventDefault()
     const a = isEmail(email.trim()) ? '' : 'Enter a valid email address.'
     const b = pw.length ? '' : 'Enter your password.'
     setEmailErr(a); setPwErr(b)
     if (a || b) return
-    signIn({ user: email.trim(), method: 'email', remember })
+    setLoading(true)
+    const { error } = await signInWithEmail({ email: email.trim(), password: pw, remember })
+    setLoading(false)
+    if (error) { setPwErr(friendlyAuthError(error)); return }
     onAuthed()
   }
 
-  const submitPhone = e => {
+  const submitPhone = async e => {
     e.preventDefault()
     if (!otpSent) {
       if (!isMobile(mobile)) { setMobileErr('Enter a valid 10-digit Indian mobile number.'); return }
-      setMobileErr(''); setOtpSent(true)
-      setOtpHint('Code sent to +91 ' + mobile + '. Prototype: any 6 digits work.')
+      setMobileErr(''); setLoading(true)
+      const { error } = await sendPhoneOtp({ phone: '+91' + mobile })
+      setLoading(false)
+      if (error) { setOtpHint(friendlyAuthError(error)); return }
+      setOtpSent(true)
+      setOtpHint('Code sent to +91 ' + mobile + '.')
     } else {
       if (otp.length < 6) { setOtpHint('Enter all 6 digits.'); return }
-      signIn({ user: '+91 ' + mobile, method: 'phone', remember })
+      setLoading(true)
+      const { error } = await verifyPhoneOtp({ phone: '+91' + mobile, token: otp, remember })
+      setLoading(false)
+      if (error) { setOtpHint(friendlyAuthError(error)); return }
       onAuthed()
     }
+  }
+
+  const google = async () => {
+    setLoading(true)
+    const { error } = await signInWithGoogle()
+    if (error) { setLoading(false); toast(friendlyAuthError(error)) }
   }
 
   return (
@@ -89,7 +106,7 @@ export default function Login({ onSwitch, onAuthed }) {
             {pwErr && <span className="err">{pwErr}</span>}
           </div>
           <label className="check"><input type="checkbox" checked={remember} onChange={e => setRemember(e.target.checked)} /> Keep me logged in on this device</label>
-          <button className="btn btn-primary" type="submit">Log in <ArrowRight size={18} /></button>
+          <button className="btn btn-primary" type="submit" disabled={loading}>Log in <ArrowRight size={18} /></button>
         </form>
       ) : (
         <form onSubmit={submitPhone} noValidate>
@@ -106,12 +123,12 @@ export default function Login({ onSwitch, onAuthed }) {
               <span className="hint">{otpHint}</span>
             </div>
           )}
-          <button className="btn btn-primary" type="submit">{otpSent ? 'Verify & log in' : 'Send OTP'} <ArrowRight size={18} /></button>
+          <button className="btn btn-primary" type="submit" disabled={loading}>{otpSent ? 'Verify & log in' : 'Send OTP'} <ArrowRight size={18} /></button>
         </form>
       )}
 
       <div className="or">or</div>
-      <button className="btn btn-outline" type="button" onClick={() => toast('Google sign-in would open here (needs Firebase/Supabase).')}>
+      <button className="btn btn-outline" type="button" onClick={google} disabled={loading}>
         <GoogleG /> Continue with Google
       </button>
       <p className="switch">New to CUET Pro? <a href="#signup" onClick={e => { e.preventDefault(); onSwitch('signup') }}>Create a free account</a></p>

@@ -1,5 +1,6 @@
 import { X } from 'lucide-react'
-import { signIn, exitGuest } from '../lib/auth'
+import { signInWithGoogle, friendlyAuthError, exitGuest } from '../lib/auth'
+import { useToast } from './shell/Shell'
 import { closeGuestWall, takePending, useWallData } from '../lib/guestGate'
 import './guestwall.css'
 
@@ -14,12 +15,20 @@ const GoogleG = () => (
 
 /* AfterBoards-style login wall. Rendered once at the shell level; it shows
    itself whenever a gated CTA is hit while browsing as a guest. */
-export default function GuestWall({ onAuthed }) {
+export default function GuestWall() {
+  const toast = useToast()
   const wall = useWallData()
   if (!wall) return null
   const { feature, action } = wall
 
-  const google = () => { signIn({ user: 'Guest', method: 'google' }); onAuthed() }
+  /* Real Google OAuth is a redirect (page navigates away), so the in-memory
+     pending action can't survive it. Once the Google provider is configured,
+     the app lands back logged-in; the wall's "Continue with email" path is the
+     one that resumes the pending action in-session. */
+  const google = async () => {
+    const { error } = await signInWithGoogle()
+    if (error) toast(friendlyAuthError(error))
+  }
   const email = () => { takePending(); closeGuestWall(); exitGuest() }
 
   return (

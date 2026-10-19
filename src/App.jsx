@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import { useAuth } from './lib/auth'
-import { takePending, closeGuestWall } from './lib/guestGate'
 import GuestWall from './components/GuestWall.jsx'
 import Dashboard from './pages/Dashboard.jsx'
 import StudyKit from './pages/StudyKit.jsx'
@@ -36,13 +35,6 @@ export default function App() {
   const Page = PAGES[page]
   const navigate = p => { consumeNotesDeepLink(); setPage(p) }
 
-  /* Google sign-in from the GuestWall → run the pending action, then land back where they were. */
-  const onGuestAuthed = () => {
-    const fn = takePending()
-    closeGuestWall()
-    if (fn) fn()
-  }
-
   /* Neither session nor guest → full-screen Auth */
   if (!session && !guest) {
     return (
@@ -60,7 +52,7 @@ export default function App() {
           <Page guest={guest} onNavigate={navigate} />
         </main>
       </AppShell>
-      <GuestWall onAuthed={onGuestAuthed} />
+      <GuestWall />
     </ToastProvider>
   )
 }

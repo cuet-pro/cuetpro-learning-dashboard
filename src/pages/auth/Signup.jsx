@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Eye, EyeOff, ArrowRight, Check } from 'lucide-react'
 import { useToast } from '../../components/shell/Shell'
 import { STREAMS, saveProfile, loadProfile } from '../../lib/profile'
-import { signIn } from '../../lib/auth'
+import { signUp, signInWithEmail, signInWithGoogle, syncProfile, friendlyAuthError } from '../../lib/auth'
 import { colleges } from '../../data/duData'
 
 const isEmail = v => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)
@@ -29,6 +29,7 @@ export default function Signup({ step, setStep, onSwitch, onAuthed }) {
   const [showPw, setShowPw] = useState(false)
   const [terms, setTerms] = useState(false)
   const [errs, setErrs] = useState({})
+  const [loading, setLoading] = useState(false)
 
   const [stream, setStream] = useState('Commerce')
   const [dream, setDream] = useState('')
@@ -64,13 +65,49 @@ export default function Signup({ step, setStep, onSwitch, onAuthed }) {
     setStep(3)
   }
 
+  const google = async () => {
+    setLoading(true)
+    const { error } = await signInWithGoogle()
+    if (error) { setLoading(false); toast(friendlyAuthError(error)) }
+  }
+
+  const goToDashboard = async () => {
+    setLoading(true)
+    const profile = {
+      name: name.trim(),
+      mobile,
+      stream,
+      subjects: [...STREAMS[stream]],
+      dreamCollege: dream.trim() || null,
+      targetPercentile: target,
+      examDate,
+    }
+    // Create the Supabase account (auto-confirms email → session lands here)
+    const res = await signUp({ email: email.trim(), password: pw, name: name.trim(), mobile })
+    if (res.session) {
+      await syncProfile(profile)
+      onAuthed()
+      return
+    }
+    // No session → either the email already exists, or signup errored. Try login.
+    const fb = await signInWithEmail({ email: email.trim(), password: pw, remember: false })
+    if (fb.error) {
+      setLoading(false)
+      const already = (res.error?.message || '').toLowerCase().includes('already')
+      toast(already ? 'This email already has an account. Try logging in instead.' : friendlyAuthError(fb.error))
+      return
+    }
+    await syncProfile(profile)
+    onAuthed()
+  }
+
   if (step === 3) {
     const first = name.trim().split(' ')[0] || 'there'
     return (
       <div className="form-wrap" style={{ maxWidth: 'none' }}>
         <span className="done-ico"><Check size={28} /></span>
         <div className="head"><h2>You&apos;re all set, {first}</h2><p>We&apos;ve set up your {stream} subjects. Your dashboard opens with today&apos;s focus and your exam countdown.</p></div>
-        <button className="btn btn-primary" type="button" onClick={() => { signIn({ user: email.trim(), method: 'email', remember: false }); onAuthed() }}>Go to my dashboard</button>
+        <button className="btn btn-primary" type="button" onClick={goToDashboard} disabled={loading}>{loading ? 'Setting up…' : 'Go to my dashboard'}</button>
       </div>
     )
   }
@@ -86,7 +123,7 @@ export default function Signup({ step, setStep, onSwitch, onAuthed }) {
         <form onSubmit={submitStep1} noValidate>
           <div className="head"><h2>Create your account</h2><p>Free to start. No card needed.</p></div>
 
-          <button className="btn btn-outline" type="button" onClick={() => toast('Google sign-in would open here (needs Firebase/Supabase).')}>
+          <button className="btn btn-outline" type="button" onClick={google} disabled={loading}>
             <GoogleG /> Sign up with Google
           </button>
           <div className="or">or with email</div>
