@@ -48,6 +48,17 @@ export async function signInWithEmail({ email, password, remember = true }) {
   return { session: data?.session || null, user: data?.user || null, error }
 }
 
+/* Email magic link — free (uses Supabase built-in email, no SMS provider).
+   Sends a one-click login link; the browser lands back logged-in via
+   detectSessionInUrl. */
+export async function sendEmailMagicLink({ email }) {
+  const { error } = await supabase.auth.signInWithOtp({
+    email,
+    options: { emailRedirectTo: window.location.origin },
+  })
+  return { error }
+}
+
 export async function sendPhoneOtp({ phone }) {
   const { error } = await supabase.auth.signInWithOtp({ phone })
   return { error }
@@ -140,6 +151,7 @@ export function useAuth() {
   return [session, {
     signIn: signInWithEmail,
     signUp,
+    sendEmailMagicLink,
     sendPhoneOtp,
     verifyPhoneOtp,
     signInWithGoogle,

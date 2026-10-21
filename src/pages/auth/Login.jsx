@@ -1,11 +1,9 @@
 import { useState } from 'react'
 import { Mail, Lock, Eye, EyeOff, ArrowRight } from 'lucide-react'
 import { useToast } from '../../components/shell/Shell'
-import { signInWithEmail, sendPhoneOtp, verifyPhoneOtp, signInWithGoogle, friendlyAuthError } from '../../lib/auth'
-import OtpInput from './OtpInput'
+import { signInWithEmail, sendEmailMagicLink, signInWithGoogle, friendlyAuthError } from '../../lib/auth'
 
 const isEmail = v => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)
-const isMobile = v => /^[6-9]\d{9}$/.test(v)
 
 function GoogleG() {
   return (
@@ -30,11 +28,9 @@ export default function Login({ onSwitch, onAuthed }) {
   const [emailErr, setEmailErr] = useState('')
   const [pwErr, setPwErr] = useState('')
 
-  const [mobile, setMobile] = useState('')
-  const [otpSent, setOtpSent] = useState(false)
-  const [otp, setOtp] = useState('')
-  const [mobileErr, setMobileErr] = useState('')
-  const [otpHint, setOtpHint] = useState("We'll send a 6-digit code by SMS.")
+  const [magicEmail, setMagicEmail] = useState('')
+  const [magicSent, setMagicSent] = useState(false)
+  const [magicErr, setMagicErr] = useState('')
 
   const submitEmail = async e => {
     e.preventDefault()
@@ -49,24 +45,15 @@ export default function Login({ onSwitch, onAuthed }) {
     onAuthed()
   }
 
-  const submitPhone = async e => {
+  const submitMagicLink = async e => {
     e.preventDefault()
-    if (!otpSent) {
-      if (!isMobile(mobile)) { setMobileErr('Enter a valid 10-digit Indian mobile number.'); return }
-      setMobileErr(''); setLoading(true)
-      const { error } = await sendPhoneOtp({ phone: '+91' + mobile })
-      setLoading(false)
-      if (error) { setOtpHint(friendlyAuthError(error)); return }
-      setOtpSent(true)
-      setOtpHint('Code sent to +91 ' + mobile + '.')
-    } else {
-      if (otp.length < 6) { setOtpHint('Enter all 6 digits.'); return }
-      setLoading(true)
-      const { error } = await verifyPhoneOtp({ phone: '+91' + mobile, token: otp, remember })
-      setLoading(false)
-      if (error) { setOtpHint(friendlyAuthError(error)); return }
-      onAuthed()
-    }
+    if (!isEmail(magicEmail.trim())) { setMagicErr('Enter a valid email address.'); return }
+    setMagicErr(''); setLoading(true)
+    const { error } = await sendEmailMagicLink({ email: magicEmail.trim() })
+    setLoading(false)
+    if (error) { setMagicErr(friendlyAuthError(error)); return }
+    setMagicSent(true)
+    toast('Login link sent! Check your email.')
   }
 
   const google = async () => {
@@ -81,7 +68,7 @@ export default function Login({ onSwitch, onAuthed }) {
 
       <div className="seg" role="tablist" aria-label="Log in method">
         <button type="button" role="tab" aria-selected={method === 'email'} onClick={() => setMethod('email')}>Email &amp; password</button>
-        <button type="button" role="tab" aria-selected={method === 'phone'} onClick={() => setMethod('phone')}>Mobile OTP</button>
+        <button type="button" role="tab" aria-selected={method === 'link'} onClick={() => setMethod('link')}>Email link</button>
       </div>
 
       {method === 'email' ? (
@@ -109,21 +96,19 @@ export default function Login({ onSwitch, onAuthed }) {
           <button className="btn btn-primary" type="submit" disabled={loading}>Log in <ArrowRight size={18} /></button>
         </form>
       ) : (
-        <form onSubmit={submitPhone} noValidate>
-          {!otpSent ? (
-            <div className="field">
-              <label htmlFor="lMobile">Mobile number</label>
-              <div className="phone-row"><span className="cc">+91</span><input className={'input' + (mobileErr ? ' invalid' : '')} id="lMobile" type="tel" inputMode="numeric" maxLength={10} autoComplete="tel-national" placeholder="10-digit mobile number" value={mobile} onChange={e => setMobile(e.target.value.replace(/\D/g, '').slice(0, 10))} /></div>
-              <span className={mobileErr ? 'err' : 'hint'}>{mobileErr || "We'll send a 6-digit code by SMS."}</span>
+        <form onSubmit={submitMagicLink} noValidate>
+          <div className="field">
+            <label htmlFor="lMagicEmail">Email</label>
+            <div className="input-wrap">
+              <Mail className="ico" size={18} />
+              <input className={'input has-ico' + (magicErr ? ' invalid' : '')} id="lMagicEmail" type="email" autoComplete="email" placeholder="you@example.com" value={magicEmail} onChange={e => setMagicEmail(e.target.value)} />
             </div>
-          ) : (
-            <div className="field">
-              <div className="label-row"><span className="legend">Enter the 6-digit code</span><a href="#change" onClick={e => { e.preventDefault(); setOtpSent(false); setOtp(''); setOtpHint("We'll send a 6-digit code by SMS.") }}>Change number</a></div>
-              <OtpInput value={otp} onChange={setOtp} />
-              <span className="hint">{otpHint}</span>
-            </div>
-          )}
-          <button className="btn btn-primary" type="submit" disabled={loading}>{otpSent ? 'Verify & log in' : 'Send OTP'} <ArrowRight size={18} /></button>
+            {magicErr && <span className="err">{magicErr}</span>}
+          </div>
+          <span className="hint">{magicSent
+            ? `Link sent to ${magicEmail} — check your email and click it to log in.`
+            : "We'll email you a secure one-click login link. No password needed."}</span>
+          <button className="btn btn-primary" type="submit" disabled={loading}>{magicSent ? 'Link sent ✓' : 'Email me a login link'} <ArrowRight size={18} /></button>
         </form>
       )}
 

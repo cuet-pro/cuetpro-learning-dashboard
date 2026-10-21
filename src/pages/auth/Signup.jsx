@@ -44,7 +44,7 @@ export default function Signup({ step, setStep, onSwitch, onAuthed }) {
     const er = {}
     if (name.trim().length < 2) er.name = 'Enter your name.'
     if (!isEmail(email.trim())) er.email = 'Enter a valid email address.'
-    if (!isMobile(mobile)) er.mobile = 'Enter a valid 10-digit mobile number.'
+    if (mobile && !isMobile(mobile)) er.mobile = 'Enter a valid 10-digit mobile number.'
     if (!pwStrong) er.pw = 'Needs 8+ characters and at least one number.'
     if (!terms) er.terms = 'Please accept the Terms to continue.'
     setErrs(er)
@@ -141,7 +141,7 @@ export default function Signup({ step, setStep, onSwitch, onAuthed }) {
           </div>
 
           <div className="field">
-            <label htmlFor="sMobile">Mobile number <span style={{ fontWeight: 500, color: 'var(--text-secondary)' }}>(for OTP login)</span></label>
+            <label htmlFor="sMobile">Mobile number <span style={{ fontWeight: 500, color: 'var(--text-secondary)' }}>(optional)</span></label>
             <div className="phone-row"><span className="cc">+91</span><input className={'input' + (errs.mobile ? ' invalid' : '')} id="sMobile" type="tel" inputMode="numeric" maxLength={10} autoComplete="tel-national" placeholder="10-digit mobile number" value={mobile} onChange={e => setMobile(e.target.value.replace(/\D/g, '').slice(0, 10))} /></div>
             {errs.mobile && <span className="err">{errs.mobile}</span>}
           </div>
