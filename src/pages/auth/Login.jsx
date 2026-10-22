@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Mail, Lock, Eye, EyeOff, ArrowRight } from 'lucide-react'
 import { useToast } from '../../components/shell/Shell'
-import { signInWithEmail, sendEmailMagicLink, signInWithGoogle, friendlyAuthError } from '../../lib/auth'
+import { signInWithEmail, signInWithGoogle, friendlyAuthError } from '../../lib/auth'
 
 const isEmail = v => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)
 
@@ -18,7 +18,6 @@ function GoogleG() {
 
 export default function Login({ onSwitch, onAuthed }) {
   const toast = useToast()
-  const [method, setMethod] = useState('email')
   const [loading, setLoading] = useState(false)
 
   const [email, setEmail] = useState('')
@@ -27,10 +26,6 @@ export default function Login({ onSwitch, onAuthed }) {
   const [remember, setRemember] = useState(true)
   const [emailErr, setEmailErr] = useState('')
   const [pwErr, setPwErr] = useState('')
-
-  const [magicEmail, setMagicEmail] = useState('')
-  const [magicSent, setMagicSent] = useState(false)
-  const [magicErr, setMagicErr] = useState('')
 
   const submitEmail = async e => {
     e.preventDefault()
@@ -45,17 +40,6 @@ export default function Login({ onSwitch, onAuthed }) {
     onAuthed()
   }
 
-  const submitMagicLink = async e => {
-    e.preventDefault()
-    if (!isEmail(magicEmail.trim())) { setMagicErr('Enter a valid email address.'); return }
-    setMagicErr(''); setLoading(true)
-    const { error } = await sendEmailMagicLink({ email: magicEmail.trim() })
-    setLoading(false)
-    if (error) { setMagicErr(friendlyAuthError(error)); return }
-    setMagicSent(true)
-    toast('Login link sent! Check your email.')
-  }
-
   const google = async () => {
     setLoading(true)
     const { error } = await signInWithGoogle()
@@ -66,51 +50,29 @@ export default function Login({ onSwitch, onAuthed }) {
     <div>
       <div className="head"><h2>Welcome back</h2><p>Log in to your CUET Pro dashboard.</p></div>
 
-      <div className="seg" role="tablist" aria-label="Log in method">
-        <button type="button" role="tab" aria-selected={method === 'email'} onClick={() => setMethod('email')}>Email &amp; password</button>
-        <button type="button" role="tab" aria-selected={method === 'link'} onClick={() => setMethod('link')}>Email link</button>
-      </div>
-
-      {method === 'email' ? (
-        <form onSubmit={submitEmail} noValidate>
-          <div className="field">
-            <label htmlFor="lEmail">Email</label>
-            <div className="input-wrap">
-              <Mail className="ico" size={18} />
-              <input className={'input has-ico' + (emailErr ? ' invalid' : '')} id="lEmail" type="email" autoComplete="email" placeholder="you@example.com" value={email} onChange={e => setEmail(e.target.value)} />
-            </div>
-            {emailErr && <span className="err">{emailErr}</span>}
+      <form onSubmit={submitEmail} noValidate>
+        <div className="field">
+          <label htmlFor="lEmail">Email</label>
+          <div className="input-wrap">
+            <Mail className="ico" size={18} />
+            <input className={'input has-ico' + (emailErr ? ' invalid' : '')} id="lEmail" type="email" autoComplete="email" placeholder="you@example.com" value={email} onChange={e => setEmail(e.target.value)} />
           </div>
-          <div className="field">
-            <div className="label-row"><label htmlFor="lPw">Password</label><a href="#forgot" onClick={e => { e.preventDefault(); toast('A reset link would be emailed here.') }}>Forgot password?</a></div>
-            <div className="input-wrap">
-              <Lock className="ico" size={18} />
-              <input className={'input has-ico has-btn' + (pwErr ? ' invalid' : '')} id="lPw" type={showPw ? 'text' : 'password'} autoComplete="current-password" placeholder="Enter your password" value={pw} onChange={e => setPw(e.target.value)} />
-              <button type="button" className="eye" onClick={() => setShowPw(v => !v)} aria-label={showPw ? 'Hide password' : 'Show password'}>
-                {showPw ? <EyeOff size={18} /> : <Eye size={18} />}
-              </button>
-            </div>
-            {pwErr && <span className="err">{pwErr}</span>}
+          {emailErr && <span className="err">{emailErr}</span>}
+        </div>
+        <div className="field">
+          <div className="label-row"><label htmlFor="lPw">Password</label><a href="#forgot" onClick={e => { e.preventDefault(); toast('A reset link would be emailed here.') }}>Forgot password?</a></div>
+          <div className="input-wrap">
+            <Lock className="ico" size={18} />
+            <input className={'input has-ico has-btn' + (pwErr ? ' invalid' : '')} id="lPw" type={showPw ? 'text' : 'password'} autoComplete="current-password" placeholder="Enter your password" value={pw} onChange={e => setPw(e.target.value)} />
+            <button type="button" className="eye" onClick={() => setShowPw(v => !v)} aria-label={showPw ? 'Hide password' : 'Show password'}>
+              {showPw ? <EyeOff size={18} /> : <Eye size={18} />}
+            </button>
           </div>
-          <label className="check"><input type="checkbox" checked={remember} onChange={e => setRemember(e.target.checked)} /> Keep me logged in on this device</label>
-          <button className="btn btn-primary" type="submit" disabled={loading}>Log in <ArrowRight size={18} /></button>
-        </form>
-      ) : (
-        <form onSubmit={submitMagicLink} noValidate>
-          <div className="field">
-            <label htmlFor="lMagicEmail">Email</label>
-            <div className="input-wrap">
-              <Mail className="ico" size={18} />
-              <input className={'input has-ico' + (magicErr ? ' invalid' : '')} id="lMagicEmail" type="email" autoComplete="email" placeholder="you@example.com" value={magicEmail} onChange={e => setMagicEmail(e.target.value)} />
-            </div>
-            {magicErr && <span className="err">{magicErr}</span>}
-          </div>
-          <span className="hint">{magicSent
-            ? `Link sent to ${magicEmail} — check your email and click it to log in.`
-            : "We'll email you a secure one-click login link. No password needed."}</span>
-          <button className="btn btn-primary" type="submit" disabled={loading}>{magicSent ? 'Link sent ✓' : 'Email me a login link'} <ArrowRight size={18} /></button>
-        </form>
-      )}
+          {pwErr && <span className="err">{pwErr}</span>}
+        </div>
+        <label className="check"><input type="checkbox" checked={remember} onChange={e => setRemember(e.target.checked)} /> Keep me logged in on this device</label>
+        <button className="btn btn-primary" type="submit" disabled={loading}>Log in <ArrowRight size={18} /></button>
+      </form>
 
       <div className="or">or</div>
       <button className="btn btn-outline" type="button" onClick={google} disabled={loading}>

@@ -1,9 +1,8 @@
 /* Auth store — Supabase-backed. Same public surface as the old mock (getSession,
    signOut, enterGuest, exitGuest, isGuest, useAuth) so the shell, GuestWall and
    all the guest gates keep working unchanged. The only additions are the async
-   Supabase helpers (signUp / signInWithEmail / sendPhoneOtp / verifyPhoneOtp /
-   signInWithGoogle) and syncProfile(), which mirrors the local profile into
-   public.profiles.
+   Supabase helpers (signUp / signInWithEmail / signInWithGoogle) and
+   syncProfile(), which mirrors the local profile into public.profiles.
 
    Guest mode (AfterBoards-style): a visitor sets cp_guest to browse freely.
    isGuest() is only true when that flag is set AND there is no real Supabase
@@ -48,31 +47,9 @@ export async function signInWithEmail({ email, password, remember = true }) {
   return { session: data?.session || null, user: data?.user || null, error }
 }
 
-/* Email magic link — free (uses Supabase built-in email, no SMS provider).
-   Sends a one-click login link; the browser lands back logged-in via
-   detectSessionInUrl. */
-export async function sendEmailMagicLink({ email }) {
-  const { error } = await supabase.auth.signInWithOtp({
-    email,
-    options: { emailRedirectTo: window.location.origin },
-  })
-  return { error }
-}
-
-export async function sendPhoneOtp({ phone }) {
-  const { error } = await supabase.auth.signInWithOtp({ phone })
-  return { error }
-}
-
-export async function verifyPhoneOtp({ phone, token, remember = true }) {
-  setSessionStorageMode(!remember)
-  const { data, error } = await supabase.auth.verifyOtp({ phone, token, type: 'sms' })
-  return { session: data?.session || null, user: data?.user || null, error }
-}
-
 export async function signInWithGoogle() {
-  // Until the Google provider is configured, short-circuit with a friendly
-  // error so the UI shows a toast instead of navigating to a GoTrue error page.
+  // GOOGLE_AUTH_ENABLED guards the OAuth redirect: if it's ever flipped off,
+  // the UI shows a toast instead of navigating to a GoTrue error page.
   if (!GOOGLE_AUTH_ENABLED) {
     return { error: new Error('Google sign-in is not set up yet.') }
   }
@@ -115,7 +92,7 @@ export function friendlyAuthError(error) {
   if (m.includes('already registered')) return 'This email already has an account. Try logging in instead.'
   if (m.includes('invalid login credentials')) return 'Incorrect email or password.'
   if (m.includes('email not confirmed')) return 'Please confirm your email first.'
-  if (m.includes('rate limit')) return 'Too many attempts. Please wait a moment and try again.'
+  if (m.includes('rate limit') || m.includes('too many')) return 'Too many attempts. Please wait a moment and try again.'
   if (m.includes('password should be')) return 'Password is too weak. Use at least 6 characters.'
   if (m.includes('sms') || m.includes('twilio') || m.includes('messagebird') || m.includes('vonage')) return 'Phone login is not set up yet.'
   if (m.includes('provider') || m.includes('oauth') || m.includes('google')) return 'Google sign-in is not set up yet.'
@@ -151,9 +128,6 @@ export function useAuth() {
   return [session, {
     signIn: signInWithEmail,
     signUp,
-    sendEmailMagicLink,
-    sendPhoneOtp,
-    verifyPhoneOtp,
     signInWithGoogle,
     signOut,
     syncProfile,
