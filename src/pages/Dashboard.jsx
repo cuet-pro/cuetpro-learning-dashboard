@@ -5,7 +5,7 @@ import {
 } from 'lucide-react'
 import { useProfile, dreamCollegeShort } from '../lib/profile'
 import { useGuestGate } from '../lib/guestGate'
-import { fetchWordOfTheDay } from '../lib/content'
+import { fetchWordOfTheDay, fetchDailyQuiz } from '../lib/content'
 import HeroBanner from '../components/HeroBanner.jsx'
 import { Modal } from '../components/shell/Shell.jsx'
 import DashboardTiles, { ActivityTile, BadgesTile } from './Widgets.jsx'
@@ -143,9 +143,22 @@ export default function Dashboard({ onNavigate }) {
     return () => { alive = false }
   }, [])
 
+  /* Subject Quiz — live from Supabase (static QUIZ is the fallback while loading) */
+  useEffect(() => {
+    let alive = true
+    fetchDailyQuiz(3).then(({ data }) => {
+      if (alive && data && data.length) {
+        setQuizData(data)
+        setQuizIdx(0); setQuizPick(null); setQuizScore(0); setQuizDone(false)
+      }
+    })
+    return () => { alive = false }
+  }, [])
+
   const [chTab, setChTab] = useState('word')
   const [wordPick, setWordPick] = useState(null)
   const [wotd, setWotd] = useState(null)
+  const [quizData, setQuizData] = useState(null)
   const [quizIdx, setQuizIdx] = useState(0)
   const [quizPick, setQuizPick] = useState(null)
   const [quizScore, setQuizScore] = useState(0)
@@ -196,13 +209,24 @@ export default function Dashboard({ onNavigate }) {
     ? { word: wotd.question, lead: wotd.topic === 'antonyms' ? 'Choose the word opposite in meaning to "' : 'Choose the word closest in meaning to "', trail: '"', options: wotd.options || [], answer: wotd.answer_index, pts: 10 }
     : { word: WORD_Q.word, lead: 'What does "', trail: '" mean?', options: WORD_Q.options, answer: WORD_Q.answer, pts: 10 }
 
+  const quizQ = quizData
+    ? quizData.map(q => ({ topic: q.topic, q: q.question, options: q.options || [], answer: q.answer_index }))
+    : QUIZ
+
+  const quizHeading = q => {
+    if (!q.topic) return q.q
+    if (q.topic === 'synonyms') return <span>Choose the word closest in meaning to: <b>{q.q}</b></span>
+    if (q.topic === 'antonyms') return <span>Choose the word opposite in meaning to: <b>{q.q}</b></span>
+    return <span>Convert to indirect speech: <b>{q.q}</b></span>
+  }
+
   const pickWord = i => gate('Word of the Day', 'answer the word challenge', () => { if (wordPick === null) setWordPick(i) })
   const pickQuiz = i => gate('Subject Quiz', 'answer the quiz', () => {
     if (quizPick !== null) return
     setQuizPick(i)
-    if (i === QUIZ[quizIdx].answer) setQuizScore(s => s + 1)
+    if (i === quizQ[quizIdx].answer) setQuizScore(s => s + 1)
     setTimeout(() => {
-      if (quizIdx + 1 < QUIZ.length) { setQuizIdx(quizIdx + 1); setQuizPick(null) } else setQuizDone(true)
+      if (quizIdx + 1 < quizQ.length) { setQuizIdx(quizIdx + 1); setQuizPick(null) } else setQuizDone(true)
     }, 750)
   })
 
@@ -264,17 +288,17 @@ export default function Dashboard({ onNavigate }) {
         {chTab === 'quiz' && (
           <div className="ch-panel">
             {!quizDone ? (<>
-              <div className="ch-q">{QUIZ[quizIdx].q}</div>
+              <div className="ch-q">{quizHeading(quizQ[quizIdx])}</div>
               <div className="ch-opts">
-                {QUIZ[quizIdx].options.map((o, i) => {
+                {quizQ[quizIdx].options.map((o, i) => {
                   let cls = 'ch-opt'
-                  if (quizPick !== null) { if (i === QUIZ[quizIdx].answer) cls += ' c'; else if (i === quizPick) cls += ' w' }
+                  if (quizPick !== null) { if (i === quizQ[quizIdx].answer) cls += ' c'; else if (i === quizPick) cls += ' w' }
                   return <button key={i} className={cls} onClick={() => pickQuiz(i)} disabled={quizPick !== null}>{o}</button>
                 })}
               </div>
-              <div className="ch-pts">{quizPick !== null ? (quizPick === QUIZ[quizIdx].answer ? <span className="ok">✓ Correct!</span> : <span className="no">Wrong — correct answer is highlighted green</span>) : `Question ${quizIdx + 1}/3`}</div>
+              <div className="ch-pts">{quizPick !== null ? (quizPick === quizQ[quizIdx].answer ? <span className="ok">✓ Correct!</span> : <span className="no">Wrong — correct answer is highlighted green</span>) : `Question ${quizIdx + 1}/${quizQ.length}`}</div>
             </>) : (
-              <div className="quiz-done"><b>{quizScore}/3 correct!</b><p>Economics · Money & Banking — next quiz tomorrow.</p><span className="ok">+{quizScore * 5} pts added</span></div>
+              <div className="quiz-done"><b>{quizScore}/{quizQ.length} correct!</b><p>English · Vocabulary & Grammar — next quiz tomorrow.</p><span className="ok">+{quizScore * 5} pts added</span></div>
             )}
           </div>
         )}
