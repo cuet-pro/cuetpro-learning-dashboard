@@ -7,6 +7,7 @@ import { useProfile, STREAMS } from '../lib/profile'
 import { notesDeepLink, readNotesProgress, writeNotesProgress, lastReadSubject } from '../lib/notesProgress'
 import { useGuestGate } from '../lib/guestGate'
 import { useToast } from '../components/shell/Shell'
+import { fetchFlashcards, fetchFlashcardTopics } from '../lib/content'
 import './studykit.css'
 
 const NOTES_BY_STREAM = {
@@ -649,30 +650,60 @@ function NcertView({ stream, subject }) {
   )
 }
 
-const FLASHCARDS = [
-  { f: 'Repo Rate', b: 'The rate at which RBI lends short-term funds to commercial banks' },
-  { f: 'Liquidity', b: 'How quickly an asset can be converted into cash' },
-  { f: 'Opportunity Cost', b: 'The value of the next best alternative you gave up' },
-  { f: 'Fiscal Deficit', b: 'Total expenditure − total receipts, excluding borrowings' },
-]
 function FlashView({ record }) {
   const gate = useGuestGate()
   const toast = useToast()
+  const [topics, setTopics] = useState([])
+  const [topic, setTopic] = useState(null)
+  const [cards, setCards] = useState([])
   const [idx, setIdx] = useState(0)
   const [flip, setFlip] = useState(false)
-  const c = FLASHCARDS[idx]
+
+  useEffect(() => {
+    let alive = true
+    fetchFlashcardTopics().then(({ data }) => {
+      if (alive && data && data.length) { setTopics(data); setTopic(data[0].topic) }
+    })
+    return () => { alive = false }
+  }, [])
+
+  useEffect(() => {
+    if (!topic) return
+    let alive = true
+    fetchFlashcards(topic, 100).then(({ data }) => {
+      if (alive && data && data.length) { setCards(data); setIdx(0); setFlip(false) }
+    })
+    return () => { alive = false }
+  }, [topic])
+
+  const c = cards[idx]
+  const total = cards.length
+
   return (
     <div className="sk-subgrid">
-      <div className={`sk-flash ${flip ? 'flip' : ''}`} onClick={() => gate('Flashcards', 'flip the card', () => setFlip(f => !f))}>
-        <div className="sk-fc-inner">
-          <div className="sk-fc-face sk-fc-front"><b>{c.f}</b><span>tap to flip</span></div>
-          <div className="sk-fc-face sk-fc-back"><p>{c.b}</p><span>tap to flip back</span></div>
-        </div>
+      <div className="fc-decks">
+        <label className="fc-decks-lbl">Deck</label>
+        <select className="fc-decks-sel" value={topic || ''} onChange={e => setTopic(e.target.value)}>
+          {topics.map(t => <option key={t.topic} value={t.topic}>{t.name}{t.n ? ` (${t.n})` : ''}</option>)}
+        </select>
       </div>
-      <div style={{ display: 'flex', gap: 10 }}>
-        <button className="btn btn-outline-sm" onClick={() => gate('Flashcards', 'go to the next card', () => { setFlip(false); setIdx((idx + 1) % FLASHCARDS.length) })}>Next card</button>
-        <button className="btn btn-primary-sm" onClick={() => gate('Flashcards', 'mark a card learned', () => { record({ title: 'Flashcards', detail: 'deck · card ' + (idx + 1), pct: 30 }); toast('Marked learned — saved to progress') })}>Mark learned</button>
-      </div>
+      {c ? (
+        <>
+          <div className={`sk-flash ${flip ? 'flip' : ''}`} onClick={() => gate('Flashcards', 'flip the card', () => setFlip(f => !f))}>
+            <div className="sk-fc-inner">
+              <div className="sk-fc-face sk-fc-front"><b>{c.front}</b><span>tap to flip</span></div>
+              <div className="sk-fc-face sk-fc-back"><p>{c.back}</p><span>tap to flip back</span></div>
+            </div>
+          </div>
+          <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+            <span className="fc-count">{idx + 1} / {total}</span>
+            <button className="btn btn-outline-sm" onClick={() => gate('Flashcards', 'go to the next card', () => { setFlip(false); setIdx((idx + 1) % total) })}>Next card</button>
+            <button className="btn btn-primary-sm" onClick={() => gate('Flashcards', 'mark a card learned', () => { record({ title: 'Flashcards', detail: 'deck · card ' + (idx + 1), pct: 30 }); toast('Marked learned — saved to progress') })}>Mark learned</button>
+          </div>
+        </>
+      ) : (
+        <p className="muted-empty">Loading flashcards…</p>
+      )}
     </div>
   )
 }

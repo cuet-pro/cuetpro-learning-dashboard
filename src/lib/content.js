@@ -65,6 +65,30 @@ export async function fetchFlashcards(topic = null, limit = 30) {
   return { data, error }
 }
 
+/* Flashcard decks (topics) — fixed order + display names, with live counts. */
+const FLASHCARD_TOPICS = [
+  { topic: 'antonyms', name: 'Antonyms' },
+  { topic: 'synonyms', name: 'Synonyms' },
+  { topic: 'direct-indirect-speech', name: 'Direct & Indirect Speech' },
+  { topic: 'voice', name: 'Voice (Active & Passive)' },
+  { topic: 'tenses', name: 'Tenses' },
+  { topic: 'articles', name: 'Articles' },
+  { topic: 'subject-verb-agreement', name: 'Subject–Verb Agreement' },
+  { topic: 'prefixes', name: 'Prefixes' },
+  { topic: 'suffixes', name: 'Suffixes' },
+  { topic: 'root-words', name: 'Root Words' },
+  { topic: 'syn-ant-guide', name: 'Synonyms & Antonyms Guide' },
+  { topic: 'reading-comprehension', name: 'Reading Comprehension' },
+]
+
+export async function fetchFlashcardTopics() {
+  const { data, error } = await supabase.from('flashcards').select('topic')
+  if (error || !data) return { data: FLASHCARD_TOPICS, error }
+  const counts = {}
+  for (const r of data) counts[r.topic] = (counts[r.topic] || 0) + 1
+  return { data: FLASHCARD_TOPICS.map(t => ({ ...t, n: counts[t.topic] || 0 })), error: null }
+}
+
 /* RC passages by type: factual | narrative | literary. */
 export async function fetchPassages(type = null, limit = 10) {
   let q = supabase.from('rc_passages').select('id, passage_type, title, passage, questions')
