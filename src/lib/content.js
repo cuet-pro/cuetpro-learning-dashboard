@@ -76,11 +76,10 @@ export async function fetchPassages(type = null, limit = 10) {
 
 /* Vocab bank — all vocab_words grouped into UI categories (word/root/prefix/suffix).
    Mirrors the shape of the static VOCAB_CATEGORIES so the Word list modal drops it in
-   unchanged. Word-bank "meaning" is intentionally omitted until the space-stripping
-   from the source PDF is cleaned up (synonyms/antonyms are clean). */
+   unchanged. Word-bank meanings are cleaned (space-restored) in the backend. */
 const VOCAB_BANK_DEFS = [
   { id: 'word-bank', name: 'Word bank', icon: '🔤', color: '#00C97F', unit: 'words', cat: 'word',
-    cols: [{ h: 'Word', f: 'word', star: true }, { h: 'Synonyms', f: 'syn', join: true }, { h: 'Antonyms', f: 'ant', join: true }] },
+    cols: [{ h: 'Word', f: 'word', star: true }, { h: 'Meaning', f: 'mean' }, { h: 'Synonyms', f: 'syn', join: true }, { h: 'Antonyms', f: 'ant', join: true }] },
   { id: 'roots', name: 'Root words', icon: '🌱', color: '#2F6FDB', unit: 'roots', cat: 'root',
     cols: [{ h: 'Root', f: 'word', star: true }, { h: 'Meaning', f: 'mean' }, { h: 'Origin', f: 'origin' }] },
   { id: 'prefixes', name: 'Prefixes', icon: '🔗', color: '#7C5CFF', unit: 'prefixes', cat: 'prefix',
