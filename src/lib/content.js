@@ -82,12 +82,21 @@ const VOCAB_BANK_DEFS = [
   { id: 'word-bank', name: 'Word bank', icon: '🔤', color: '#00C97F', unit: 'words', cat: 'word',
     cols: [{ h: 'Word', f: 'word', star: true }, { h: 'Synonyms', f: 'syn', join: true }, { h: 'Antonyms', f: 'ant', join: true }] },
   { id: 'roots', name: 'Root words', icon: '🌱', color: '#2F6FDB', unit: 'roots', cat: 'root',
-    cols: [{ h: 'Root', f: 'word', star: true }, { h: 'Meaning', f: 'mean' }] },
+    cols: [{ h: 'Root', f: 'word', star: true }, { h: 'Meaning', f: 'mean' }, { h: 'Origin', f: 'origin' }] },
   { id: 'prefixes', name: 'Prefixes', icon: '🔗', color: '#7C5CFF', unit: 'prefixes', cat: 'prefix',
-    cols: [{ h: 'Prefix', f: 'word', star: true }, { h: 'Meaning', f: 'mean' }] },
+    cols: [{ h: 'Prefix', f: 'word', star: true }, { h: 'Meaning', f: 'mean' }, { h: 'Origin', f: 'origin' }] },
   { id: 'suffixes', name: 'Suffixes', icon: '🔚', color: '#F5A623', unit: 'suffixes', cat: 'suffix',
-    cols: [{ h: 'Suffix', f: 'word', star: true }, { h: 'Meaning', f: 'mean' }] },
+    cols: [{ h: 'Suffix', f: 'word', star: true }, { h: 'Meaning', f: 'mean' }, { h: 'Origin', f: 'origin' }] },
 ]
+
+/* Split a "[Latin]" / "[Greek]" origin tag out of the meaning text so the
+   table can show a clean Meaning column + a separate Origin column. */
+function splitOrigin(meaning) {
+  const m = (meaning || '').trim()
+  const tag = m.match(/\[([^\]]+)\]\s*$/)
+  if (tag) return { mean: m.slice(0, tag.index).trim(), origin: tag[1] }
+  return { mean: m, origin: '' }
+}
 
 export async function fetchVocabBank() {
   const { data, error } = await supabase
@@ -99,9 +108,10 @@ export async function fetchVocabBank() {
   for (const r of data) (byCat[r.category] ||= []).push(r)
   const categories = VOCAB_BANK_DEFS.map(d => ({
     id: d.id, name: d.name, icon: d.icon, color: d.color, unit: d.unit, cols: d.cols,
-    items: (byCat[d.cat] || []).map(r => ({
-      id: r.id, word: r.word, mean: r.meaning, syn: r.synonyms || [], ant: r.antonyms || [], pyq: false,
-    })),
+    items: (byCat[d.cat] || []).map(r => {
+      const { mean, origin } = splitOrigin(r.meaning)
+      return { id: r.id, word: r.word, mean, origin, syn: r.synonyms || [], ant: r.antonyms || [], pyq: false }
+    }),
   })).filter(c => c.items.length > 0)
   return { data: categories, error: null }
 }
