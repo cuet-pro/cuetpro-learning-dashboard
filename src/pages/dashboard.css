@@ -820,3 +820,17 @@ button.hero-chip:hover { border-color: var(--primary); }
   transition: transform .6s cubic-bezier(.22,.61,.36,1); }
 .ring-avatar.bounce .dash-avatar-svg { animation: ring-bounce .42s cubic-bezier(.34,1.56,.64,1); }
 @keyframes ring-bounce { 0% { transform: scale(1) } 45% { transform: scale(1.2) } 100% { transform: scale(1) } }
+
+/* RC of the Day — reading modal (live from Supabase) */
+.rc-read { display: flex; flex-direction: column; gap: 16px; }
+.rc-passage { font: 400 14px/1.7 var(--font-body); color: var(--text); white-space: pre-wrap; }
+.rc-questions { display: flex; flex-direction: column; gap: 14px; }
+.rc-q { padding: 14px; border: 1px solid var(--border); border-radius: 12px; background: var(--card); }
+.rc-q-t { font: 600 14px/1.5 var(--font-body); color: var(--text); margin-bottom: 10px; }
+.rc-opts { display: flex; flex-direction: column; gap: 8px; }
+.rc-opt { text-align: left; padding: 10px 12px; border: 1px solid var(--border); border-radius: 10px; background: transparent; font: 500 13.5px/1.4 var(--font-body); color: var(--text); cursor: pointer; transition: background .15s, border-color .15s; }
+.rc-opt:hover:not(:disabled) { border-color: var(--primary); background: color-mix(in srgb, var(--primary) 6%, transparent); }
+.rc-opt.correct { border-color: var(--success); background: color-mix(in srgb, var(--success) 12%, transparent); color: var(--success); }
+.rc-opt.wrong { border-color: var(--error); background: color-mix(in srgb, var(--error) 10%, transparent); color: var(--error); }
+.rc-opt:disabled { cursor: default; opacity: .85; }
+.rc-ans { font: 600 13px var(--font-body); margin-top: 10px; color: var(--muted); }

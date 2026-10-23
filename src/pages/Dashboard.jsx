@@ -5,7 +5,7 @@ import {
 } from 'lucide-react'
 import { useProfile, dreamCollegeShort } from '../lib/profile'
 import { useGuestGate } from '../lib/guestGate'
-import { fetchWordOfTheDay, fetchDailyQuiz } from '../lib/content'
+import { fetchWordOfTheDay, fetchDailyQuiz, fetchRcPassage } from '../lib/content'
 import HeroBanner from '../components/HeroBanner.jsx'
 import { Modal } from '../components/shell/Shell.jsx'
 import DashboardTiles, { ActivityTile, BadgesTile } from './Widgets.jsx'
@@ -124,6 +124,24 @@ function useLiveCountdown(examDate) {
 
 const SYLLABUS_PCT = 64   // overall syllabus completion % — drives the ring + avatar tier
 
+/* RC passage question — click an option to reveal correct/incorrect. */
+function RcQuestion({ q, n }) {
+  const [pick, setPick] = useState(null)
+  return (
+    <div className="rc-q">
+      <div className="rc-q-t"><b>Q{n}.</b> {q.question}</div>
+      <div className="rc-opts">
+        {(q.options || []).map(o => {
+          let cls = 'rc-opt'
+          if (pick !== null) { if (o.key === q.answer) cls += ' correct'; else if (o.key === pick) cls += ' wrong' }
+          return <button key={o.key} className={cls} onClick={() => { if (pick === null) setPick(o.key) }}>{o.key}. {o.text}</button>
+        })}
+      </div>
+      {pick !== null && <div className="rc-ans">{pick === q.answer ? '✓ Correct!' : '✗ Correct answer: ' + q.answer}</div>}
+    </div>
+  )
+}
+
 export default function Dashboard({ onNavigate }) {
   const [profile] = useProfile()
   const gate = useGuestGate()
@@ -155,10 +173,18 @@ export default function Dashboard({ onNavigate }) {
     return () => { alive = false }
   }, [])
 
+  /* RC of the Day — one random passage from Supabase */
+  useEffect(() => {
+    let alive = true
+    fetchRcPassage().then(({ data }) => { if (alive && data) setRcPassage(data) })
+    return () => { alive = false }
+  }, [])
+
   const [chTab, setChTab] = useState('word')
   const [wordPick, setWordPick] = useState(null)
   const [wotd, setWotd] = useState(null)
   const [quizData, setQuizData] = useState(null)
+  const [rcPassage, setRcPassage] = useState(null)
   const [quizIdx, setQuizIdx] = useState(0)
   const [quizPick, setQuizPick] = useState(null)
   const [quizScore, setQuizScore] = useState(0)
@@ -167,6 +193,7 @@ export default function Dashboard({ onNavigate }) {
   const [showBadges, setShowBadges] = useState(false)
   const [showActivity, setShowActivity] = useState(false)
   const [showStanding, setShowStanding] = useState(false)
+  const [showRc, setShowRc] = useState(false)
   const [openRow, setOpenRow] = useState(null)
   const [syllabusPct] = useState(SYLLABUS_PCT)
   const [bounce, setBounce] = useState(false)
@@ -219,6 +246,10 @@ export default function Dashboard({ onNavigate }) {
     if (q.topic === 'antonyms') return <span>Choose the word opposite in meaning to: <b>{q.q}</b></span>
     return <span>Convert to indirect speech: <b>{q.q}</b></span>
   }
+
+  const rcTitle = rcPassage?.title || RC.title
+  const rcSnippet = rcPassage?.passage ? rcPassage.passage.slice(0, 200).trim() + '…' : ''
+  const rcQCount = rcPassage?.questions?.length || 0
 
   const pickWord = i => gate('Word of the Day', 'answer the word challenge', () => { if (wordPick === null) setWordPick(i) })
   const pickQuiz = i => gate('Subject Quiz', 'answer the quiz', () => {
@@ -304,9 +335,9 @@ export default function Dashboard({ onNavigate }) {
         )}
         {chTab === 'rc' && (
           <div className="ch-panel">
-            <div className="ch-q">{RC.title}</div>
-            <p className="ch-desc">A short passage on how cities lose 30% of treated water to leaks, and what Delhi's revival plans mean for residents.</p>
-            <button className="btn btn-blue" onClick={() => gate('RC of the Day', 'start the reading', () => onNavigate('studykit'))}>Start Reading · +{RC.pts} pts</button>
+            <div className="ch-q">{rcTitle}</div>
+            <p className="ch-desc">{rcSnippet || 'Loading passage…'}{rcPassage ? ` · ${rcQCount} questions` : ''}</p>
+            <button className="btn btn-blue" disabled={!rcPassage} onClick={() => gate('RC of the Day', 'start the reading', () => setShowRc(true))}>Start Reading · +{RC.pts} pts</button>
           </div>
         )}
       </section>
@@ -510,6 +541,16 @@ export default function Dashboard({ onNavigate }) {
           })}
         </div>
         <p className="lb-foot">Showing all {sortedRows.length} students you can see · {(lb.of - sortedRows.length).toLocaleString('en-IN')} more below you in this cohort</p>
+      </Modal>
+      <Modal open={showRc} onClose={() => setShowRc(false)} title={rcTitle} wide>
+        {rcPassage && (
+          <div className="rc-read">
+            <p className="rc-passage">{rcPassage.passage}</p>
+            <div className="rc-questions">
+              {(rcPassage.questions || []).map((q, i) => <RcQuestion key={i} q={q} n={i + 1} />)}
+            </div>
+          </div>
+        )}
       </Modal>
     </div>
   )

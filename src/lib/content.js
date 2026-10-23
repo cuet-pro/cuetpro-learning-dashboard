@@ -98,6 +98,17 @@ export async function fetchPassages(type = null, limit = 10) {
   return { data, error }
 }
 
+/* RC of the Day — one random passage (with its questions) for the daily challenge. */
+export async function fetchRcPassage() {
+  const { data, error } = await supabase
+    .from('rc_passages')
+    .select('id, passage_type, title, passage, questions')
+    .limit(30)
+  if (error || !data || data.length === 0) return { data: null, error }
+  const pick = data[Math.floor(Math.random() * data.length)]
+  return { data: pick, error: null }
+}
+
 /* Vocab bank — all vocab_words grouped into UI categories (word/root/prefix/suffix).
    Mirrors the shape of the static VOCAB_CATEGORIES so the Word list modal drops it in
    unchanged. Word-bank meanings are cleaned (space-restored) in the backend. */
