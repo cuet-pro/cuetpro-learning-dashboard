@@ -83,7 +83,7 @@ const VOCAB_BANK_DEFS = [
   { id: 'roots', name: 'Root words', icon: '🌱', color: '#2F6FDB', unit: 'roots', cat: 'root',
     cols: [{ h: 'Root', f: 'word', star: true }, { h: 'Meaning', f: 'mean' }, { h: 'Origin', f: 'origin' }] },
   { id: 'prefixes', name: 'Prefixes', icon: '🔗', color: '#7C5CFF', unit: 'prefixes', cat: 'prefix',
-    cols: [{ h: 'Prefix', f: 'word', star: true }, { h: 'Meaning', f: 'mean' }, { h: 'Origin', f: 'origin' }] },
+    cols: [{ h: 'Prefix', f: 'word', star: true }, { h: 'Meaning', f: 'mean' }] },
   { id: 'suffixes', name: 'Suffixes', icon: '🔚', color: '#F5A623', unit: 'suffixes', cat: 'suffix',
     cols: [{ h: 'Suffix', f: 'word', star: true }, { h: 'Meaning', f: 'mean' }, { h: 'Origin', f: 'origin' }] },
 ]
