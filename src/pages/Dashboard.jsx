@@ -5,6 +5,7 @@ import {
 } from 'lucide-react'
 import { useProfile, dreamCollegeShort } from '../lib/profile'
 import { useGuestGate } from '../lib/guestGate'
+import { fetchWordOfTheDay } from '../lib/content'
 import HeroBanner from '../components/HeroBanner.jsx'
 import { Modal } from '../components/shell/Shell.jsx'
 import DashboardTiles, { ActivityTile, BadgesTile } from './Widgets.jsx'
@@ -135,8 +136,16 @@ export default function Dashboard({ onNavigate }) {
     return () => clearInterval(iv)
   }, [])
 
+  /* Word of the Day — live from Supabase (static WORD_Q is the fallback while loading) */
+  useEffect(() => {
+    let alive = true
+    fetchWordOfTheDay().then(({ data }) => { if (alive && data) setWotd(data) })
+    return () => { alive = false }
+  }, [])
+
   const [chTab, setChTab] = useState('word')
   const [wordPick, setWordPick] = useState(null)
+  const [wotd, setWotd] = useState(null)
   const [quizIdx, setQuizIdx] = useState(0)
   const [quizPick, setQuizPick] = useState(null)
   const [quizScore, setQuizScore] = useState(0)
@@ -182,6 +191,10 @@ export default function Dashboard({ onNavigate }) {
   const leaderPts = sortedRows[0]?.pts || 1
   const top5 = sortedRows.filter(r => !r.me).slice(0, 5)
   const pctOfLeader = pts => Math.max(4, Math.round((pts / leaderPts) * 100))
+
+  const wordQ = wotd
+    ? { word: wotd.question, lead: wotd.topic === 'antonyms' ? 'Choose the word opposite in meaning to "' : 'Choose the word closest in meaning to "', trail: '"', options: wotd.options || [], answer: wotd.answer_index, pts: 10 }
+    : { word: WORD_Q.word, lead: 'What does "', trail: '" mean?', options: WORD_Q.options, answer: WORD_Q.answer, pts: 10 }
 
   const pickWord = i => gate('Word of the Day', 'answer the word challenge', () => { if (wordPick === null) setWordPick(i) })
   const pickQuiz = i => gate('Subject Quiz', 'answer the quiz', () => {
@@ -233,19 +246,19 @@ export default function Dashboard({ onNavigate }) {
           {[['word', 'Word of the Day'], ['quiz', 'Subject Quiz'], ['rc', 'RC of the Day']].map(([id, label]) => (
             <button key={id} className={'ch-tab' + (chTab === id ? ' on' : '')} onClick={() => setChTab(id)}>{label}</button>
           ))}
-          <span className="ch-pts-total">+{chTab === 'word' ? WORD_Q.pts : chTab === 'quiz' ? 20 : RC.pts} pts</span>
+          <span className="ch-pts-total">+{chTab === 'word' ? wordQ.pts : chTab === 'quiz' ? 20 : RC.pts} pts</span>
         </div>
         {chTab === 'word' && (
           <div className="ch-panel">
-            <div className="ch-q">What does "<b>{WORD_Q.word}</b>" mean?</div>
+            <div className="ch-q">{wordQ.lead}<b>{wordQ.word}</b>{wordQ.trail}</div>
             <div className="ch-opts">
-              {WORD_Q.options.map((o, i) => {
+              {wordQ.options.map((o, i) => {
                 let cls = 'ch-opt'
-                if (wordPick !== null) { if (i === WORD_Q.answer) cls += ' c'; else if (i === wordPick) cls += ' w' }
+                if (wordPick !== null) { if (i === wordQ.answer) cls += ' c'; else if (i === wordPick) cls += ' w' }
                 return <button key={i} className={cls} onClick={() => pickWord(i)} disabled={wordPick !== null}>{o}</button>
               })}
             </div>
-            <div className="ch-pts">{wordPick === null ? 'Pick an answer.' : wordPick === WORD_Q.answer ? <span className="ok">+10 pts ✓ Correct!</span> : <span className="no">Correct answer: "{WORD_Q.options[WORD_Q.answer]}"</span>}</div>
+            <div className="ch-pts">{wordPick === null ? 'Pick an answer.' : wordPick === wordQ.answer ? <span className="ok">+10 pts ✓ Correct!</span> : <span className="no">Correct answer: "{wordQ.options[wordQ.answer]}"</span>}</div>
           </div>
         )}
         {chTab === 'quiz' && (

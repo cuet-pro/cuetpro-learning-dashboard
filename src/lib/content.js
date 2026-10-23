@@ -33,6 +33,18 @@ export async function fetchQuiz(topic = null, limit = 20) {
 }
 
 /* Flashcards by topic. */
+/* Word of the Day — one random synonym/antonym question for the daily challenge. */
+export async function fetchWordOfTheDay() {
+  const { data, error } = await supabase
+    .from('quiz_questions')
+    .select('id, topic, question, options, answer, answer_index, explanation')
+    .in('topic', ['synonyms', 'antonyms'])
+    .limit(200)
+  if (error || !data || data.length === 0) return { data: null, error }
+  const pick = data[Math.floor(Math.random() * data.length)]
+  return { data: pick, error: null }
+}
+
 export async function fetchFlashcards(topic = null, limit = 30) {
   let q = supabase.from('flashcards').select('id, topic, front, back, order_num')
   if (topic) q = q.eq('topic', topic)
