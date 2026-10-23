@@ -73,3 +73,35 @@ export async function fetchPassages(type = null, limit = 10) {
   const { data, error } = await q
   return { data, error }
 }
+
+/* Vocab bank — all vocab_words grouped into UI categories (word/root/prefix/suffix).
+   Mirrors the shape of the static VOCAB_CATEGORIES so the Word list modal drops it in
+   unchanged. Word-bank "meaning" is intentionally omitted until the space-stripping
+   from the source PDF is cleaned up (synonyms/antonyms are clean). */
+const VOCAB_BANK_DEFS = [
+  { id: 'word-bank', name: 'Word bank', icon: '🔤', color: '#00C97F', unit: 'words', cat: 'word',
+    cols: [{ h: 'Word', f: 'word', star: true }, { h: 'Synonyms', f: 'syn', join: true }, { h: 'Antonyms', f: 'ant', join: true }] },
+  { id: 'roots', name: 'Root words', icon: '🌱', color: '#2F6FDB', unit: 'roots', cat: 'root',
+    cols: [{ h: 'Root', f: 'word', star: true }, { h: 'Meaning', f: 'mean' }] },
+  { id: 'prefixes', name: 'Prefixes', icon: '🔗', color: '#7C5CFF', unit: 'prefixes', cat: 'prefix',
+    cols: [{ h: 'Prefix', f: 'word', star: true }, { h: 'Meaning', f: 'mean' }] },
+  { id: 'suffixes', name: 'Suffixes', icon: '🔚', color: '#F5A623', unit: 'suffixes', cat: 'suffix',
+    cols: [{ h: 'Suffix', f: 'word', star: true }, { h: 'Meaning', f: 'mean' }] },
+]
+
+export async function fetchVocabBank() {
+  const { data, error } = await supabase
+    .from('vocab_words')
+    .select('id, word, category, meaning, synonyms, antonyms, difficulty')
+    .limit(1000)
+  if (error || !data || data.length === 0) return { data: null, error }
+  const byCat = {}
+  for (const r of data) (byCat[r.category] ||= []).push(r)
+  const categories = VOCAB_BANK_DEFS.map(d => ({
+    id: d.id, name: d.name, icon: d.icon, color: d.color, unit: d.unit, cols: d.cols,
+    items: (byCat[d.cat] || []).map(r => ({
+      id: r.id, word: r.word, mean: r.meaning, syn: r.synonyms || [], ant: r.antonyms || [], pyq: false,
+    })),
+  })).filter(c => c.items.length > 0)
+  return { data: categories, error: null }
+}

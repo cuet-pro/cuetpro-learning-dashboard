@@ -5,6 +5,7 @@ import {
   Compass, Target, Timer, Trophy, Video, Sparkles, ArrowLeft, ChevronRight, ArrowRight,
 } from 'lucide-react'
 import { VOCAB_CATEGORIES } from '../data/vocab'
+import { fetchVocabBank } from '../lib/content'
 import { Modal, useToast } from '../components/shell/Shell.jsx'
 import { useGuestGate } from '../lib/guestGate'
 import './widgets.css'
@@ -221,7 +222,17 @@ export default function DashboardTiles({ onNavigate }) {
   const [wlOpen, setWlOpen] = useState(false)
   const [cat, setCat] = useState(null)
   const [q, setQ] = useState('')
-  const active = VOCAB_CATEGORIES.find(c => c.id === cat)
+  const [bank, setBank] = useState(null)
+
+  /* Word list — live from Supabase (static VOCAB_CATEGORIES is the fallback while loading) */
+  useEffect(() => {
+    let alive = true
+    fetchVocabBank().then(({ data }) => { if (alive && data && data.length) setBank(data) })
+    return () => { alive = false }
+  }, [])
+
+  const categories = bank || VOCAB_CATEGORIES
+  const active = categories.find(c => c.id === cat)
 
   const match = (it) => {
     if (!q) return true
@@ -229,7 +240,7 @@ export default function DashboardTiles({ onNavigate }) {
     return hay.toLowerCase().includes(q.toLowerCase())
   }
   const words = active ? active.items.filter(match) : []
-  const vocabCount = VOCAB_CATEGORIES.reduce((s, c) => s + c.items.length, 0)
+  const vocabCount = categories.reduce((s, c) => s + c.items.length, 0)
 
   /* grouped bento: Play / Learn / Plan (data + labels + handlers unchanged) */
   const groups = [
@@ -324,7 +335,7 @@ export default function DashboardTiles({ onNavigate }) {
           </div>
         ) : (
           <div className="wl-list">
-            {VOCAB_CATEGORIES.map(c => (
+            {categories.map(c => (
               <button type="button" className="wl-cat" key={c.id} onClick={() => { setCat(c.id); setQ('') }}>
                 <span className="wl-cat-ico" style={{ background: c.color + '1a' }}>{c.icon}</span>
                 <span className="wl-cat-t"><b>{c.name}</b><em>{c.items.length} {c.unit}</em></span>
