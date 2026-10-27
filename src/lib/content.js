@@ -178,3 +178,21 @@ export async function fetchCheatSheet(num) {
     .single()
   return { data, error }
 }
+
+/* Mock Tests — list (no questions) + full paper on demand. */
+export async function fetchMocks() {
+  const { data, error } = await supabase
+    .from('mock_tests')
+    .select('num, name, total_questions, duration_min, sections')
+    .order('num')
+  return { data, error }
+}
+
+export async function fetchMock(num) {
+  const { data, error } = await supabase
+    .from('mock_tests')
+    .select('id, num, name, total_questions, duration_min, sections, questions')
+    .eq('num', num)
+    .single()
+  return { data, error }
+}

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { NotebookText, Layers, Timer, FileQuestion, Archive, ArrowLeft, ArrowRight, PlayCircle, Video, Sigma, Zap, ChevronRight, ChevronDown, CheckSquare, Search, GraduationCap, Highlighter, FlaskConical, Settings, Sun, Moon, BookOpen, Lightbulb, AlertTriangle, RotateCcw } from 'lucide-react'
+import { NotebookText, Layers, Timer, FileQuestion, Archive, ArrowLeft, ArrowRight, PlayCircle, Video, Sigma, Zap, ChevronRight, ChevronDown, CheckSquare, Search, GraduationCap, Highlighter, FlaskConical, Settings, Sun, Moon, BookOpen, Lightbulb, AlertTriangle, RotateCcw, Clock, XCircle, Trophy, CheckCircle2 } from 'lucide-react'
 import { weakTopicNames } from '../lib/analysisData'
 import { ECON_UNITS } from '../data/econNotes'
 import { GEO_UNITS } from '../data/geoNotes'
@@ -7,7 +7,7 @@ import { useProfile, STREAMS } from '../lib/profile'
 import { notesDeepLink, readNotesProgress, writeNotesProgress, lastReadSubject } from '../lib/notesProgress'
 import { useGuestGate } from '../lib/guestGate'
 import { useToast } from '../components/shell/Shell'
-import { fetchFlashcards, fetchFlashcardTopics, fetchCheatSheets, fetchCheatSheet } from '../lib/content'
+import { fetchFlashcards, fetchFlashcardTopics, fetchCheatSheets, fetchCheatSheet, fetchMocks, fetchMock } from '../lib/content'
 import './studykit.css'
 
 const NOTES_BY_STREAM = {
@@ -1017,29 +1017,187 @@ function PyqView({ subject, stream, weakOnly, setWeakOnly }) {
   )
 }
 
+/* ── Mock Tests — live papers from Supabase ─────────────────────────── */
+
+const MK_CORRECT = 5
+const MK_WRONG = -1
+const LETTERS = 'ABCD'
+
+function fmtClock(s) {
+  const m = Math.floor(s / 60)
+  const sec = s % 60
+  return String(m).padStart(2, '0') + ':' + String(sec).padStart(2, '0')
+}
+
 function MockView({ examMode, setExamMode }) {
   const gate = useGuestGate()
   const toast = useToast()
-  return (
-    <div className="sk-subgrid">
-      <div className="sk-subcard">
-        <div className="sk-subhead"><b>Mock Test 7 — in progress</b><span className="sk-prog">60%</span></div>
-        <div className="sk-bar"><i style={{ width: '60%' }} /></div>
-        <p style={{ fontSize: 12.5, color: 'var(--text-secondary)', margin: '10px 0' }}>Section 3 of 5 left — Accountancy (20 Qs). You stopped at Q31.</p>
-        <div style={{ display: 'flex', gap: 8 }}>
-          <button className="btn btn-primary-sm" onClick={() => gate('Mock Tests', 'resume the mock test', () => toast('Mock resume — coming soon'))}>Resume mock</button>
-          <button className="btn btn-outline-sm" onClick={() => gate('Mock Tests', 'restart the mock test', () => toast('Mock restart — coming soon'))}>Restart</button>
+  const [list, setList] = useState([])
+  const [mock, setMock] = useState(null)
+  const [phase, setPhase] = useState('list')
+  const [answers, setAnswers] = useState({})
+  const [idx, setIdx] = useState(0)
+  const [left, setLeft] = useState(0)
+  const [busy, setBusy] = useState(false)
+
+  useEffect(() => {
+    let alive = true
+    fetchMocks().then(({ data }) => { if (alive && data) setList(data) })
+    return () => { alive = false }
+  }, [])
+
+  const tally = () => {
+    const qs = (mock && mock.questions) || []
+    let c = 0, w = 0, u = 0
+    qs.forEach(q => {
+      const a = answers[q.num]
+      if (!a) u++
+      else if (a === q.answer) c++
+      else w++
+    })
+    return { c, w, u, total: qs.length, marks: c * MK_CORRECT + w * MK_WRONG }
+  }
+
+  useEffect(() => {
+    if (phase !== 'test') return
+    if (left <= 0) { setPhase('result'); return }
+    const t = setTimeout(() => setLeft(s => s - 1), 1000)
+    return () => clearTimeout(t)
+  }, [phase, left])
+
+  const startMock = num => {
+    gate('Mock Tests', 'attempt the mock test', () => {
+      setBusy(true)
+      fetchMock(num).then(({ data }) => {
+        setBusy(false)
+        if (!data) { toast('Could not load this mock'); return }
+        setMock(data); setAnswers({}); setIdx(0)
+        setLeft((data.duration_min || 45) * 60); setPhase('test')
+      })
+    })
+  }
+
+  const backToList = () => { setPhase('list'); setMock(null); setAnswers({}); setIdx(0) }
+
+  if (phase === 'list') {
+    return (
+      <div className="sk-subgrid">
+        <div className="mk-top">
+          <div className="mk-top-t">
+            <b>CUET English mock tests</b>
+            <span>{list.length} full papers · +{MK_CORRECT} correct · {MK_WRONG} wrong · 45 min each</span>
+          </div>
+          <div className="sk-exam-mode">
+            <span>Exam mode</span>
+            <button className={'sk-toggle' + (examMode ? ' on' : '')} onClick={() => setExamMode(m => !m)} aria-label="Toggle exam mode"><i /></button>
+            <span className="sk-exam-hint">{examMode ? 'No pausing' : 'Timer strict'}</span>
+          </div>
         </div>
-        <div className="sk-exam-mode" style={{ marginTop: 14 }}>
-          <span>Exam mode</span>
-          <button className={'sk-toggle' + (examMode ? ' on' : '')} onClick={() => setExamMode(m => !m)} aria-label="Toggle exam mode"><i /></button>
-          <span className="sk-exam-hint">{examMode ? 'Fullscreen · timer cannot be paused' : 'Pause allowed'}</span>
+        <div className="mk-grid">
+          {list.map(m => (
+            <button key={m.num} className="mk-card" onClick={() => startMock(m.num)} disabled={busy}>
+              <span className="mk-card-top"><b>{m.name}</b><span className="mk-badge">{m.total_questions} Q</span></span>
+              <span className="mk-card-meta"><Clock size={12} /> {m.duration_min} min</span>
+              <span className="mk-card-secs">
+                {(m.sections || []).map(s => <em key={s.name}>{s.name} · {s.count}</em>)}
+              </span>
+              <span className="mk-card-cta">{busy ? 'Loading…' : 'Start test'} <ArrowRight size={13} /></span>
+            </button>
+          ))}
+          {list.length === 0 && <p className="muted-empty">Loading mock tests…</p>}
         </div>
       </div>
-      <div className="sk-subcard">
-        <div className="sk-subhead"><b>Completed mocks</b><span className="sk-prog">4 done</span></div>
-        <p style={{ fontSize: 12.5, color: 'var(--text-secondary)', margin: '6px 0' }}>Average percentile: <b style={{ color: 'var(--text-primary)' }}>71.8%ile</b></p>
-        <p style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>Mock 4 · 67.5%ile · Mock 5 · 60.8%ile · Mock 6 · 67.5%ile</p>
+    )
+  }
+
+  if (phase === 'result') {
+    const s = tally()
+    return (
+      <div className="sk-subgrid">
+        <div className="mk-result">
+          <div className="mk-score">
+            <Trophy size={20} />
+            <b>{s.marks}</b>
+            <span>/ {s.total * MK_CORRECT} marks</span>
+          </div>
+          <div className="mk-stats">
+            <div className="mk-stat ok"><CheckCircle2 size={14} /><b>{s.c}</b><span>Correct</span></div>
+            <div className="mk-stat no"><XCircle size={14} /><b>{s.w}</b><span>Wrong</span></div>
+            <div className="mk-stat sk"><b>{s.u}</b><span>Skipped</span></div>
+            <div className="mk-stat pct"><b>{s.total ? Math.round((s.c / s.total) * 100) : 0}%</b><span>Accuracy</span></div>
+          </div>
+          <button className="btn btn-primary-sm" onClick={backToList}><ArrowLeft size={13} /> Back to mock tests</button>
+        </div>
+        <div className="mk-review">
+          <b className="mk-review-h">Answer review</b>
+          {mock.questions.map(q => {
+            const a = answers[q.num]
+            const ok = a === q.answer
+            const cls = a ? (ok ? ' ok' : ' no') : ' sk'
+            return (
+              <div className={'mk-rev' + cls} key={q.num}>
+                <span className="mk-rev-n">Q{q.num}</span>
+                <div className="mk-rev-b">
+                  <p>{q.question}</p>
+                  <span className="mk-rev-a">
+                    Your answer: <b>{a ? a + ') ' + q.options[LETTERS.indexOf(a)] : 'not attempted'}</b>
+                    {!ok && <> · Correct: <b className="mk-rev-c">{q.answer}) {q.options[LETTERS.indexOf(q.answer)]}</b></>}
+                  </span>
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      </div>
+    )
+  }
+
+  const qs = mock.questions
+  const q = qs[idx]
+  const answered = Object.keys(answers).length
+  return (
+    <div className="mk-test">
+      <div className="mk-bar">
+        <div className="mk-bar-l"><b>{mock.name}</b><span>{answered}/{qs.length} answered</span></div>
+        <div className={'mk-timer' + (left < 300 ? ' low' : '')}><Clock size={13} /> {fmtClock(left)}</div>
+        <button className="btn btn-primary-sm" onClick={() => { if (window.confirm('Submit the test and see your score?')) setPhase('result') }}>Submit</button>
+      </div>
+      <div className="mk-palette">
+        {qs.map((qq, i) => (
+          <button key={qq.num}
+            className={'mk-pal' + (i === idx ? ' cur' : '') + (answers[qq.num] ? ' done' : '')}
+            onClick={() => setIdx(i)}>{qq.num}</button>
+        ))}
+      </div>
+      <div className="mk-q">
+        <div className="mk-q-head">
+          <span className="mk-q-num">Question {q.num}</span>
+          <span className="mk-q-sec">{q.section}</span>
+        </div>
+        {q.passage && (
+          <div className="mk-passage">
+            <b>{q.passage.title}</b>
+            <p>{q.passage.text}</p>
+          </div>
+        )}
+        <p className="mk-stem">{q.question}</p>
+        <div className="mk-opts">
+          {q.options.map((o, i) => {
+            const L = LETTERS[i]
+            const sel = answers[q.num] === L
+            return (
+              <button key={i} className={'mk-opt' + (sel ? ' sel' : '')} onClick={() => setAnswers(a => ({ ...a, [q.num]: L }))}>
+                <span className="mk-opt-l">{L}</span>
+                <span className="mk-opt-t">{o}</span>
+              </button>
+            )
+          })}
+        </div>
+        <div className="mk-nav">
+          <button className="btn btn-outline-sm" onClick={() => setIdx(i => Math.max(0, i - 1))} disabled={idx === 0}><ArrowLeft size={13} /> Previous</button>
+          <button className="btn btn-outline-sm" onClick={() => setAnswers(a => { const b = { ...a }; delete b[q.num]; return b })}>Clear</button>
+          <button className="btn btn-primary-sm" onClick={() => setIdx(i => Math.min(qs.length - 1, i + 1))} disabled={idx === qs.length - 1}>Next <ArrowRight size={13} /></button>
+        </div>
       </div>
     </div>
   )
