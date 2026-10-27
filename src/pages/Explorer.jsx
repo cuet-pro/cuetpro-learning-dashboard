@@ -1,15 +1,15 @@
 import { useEffect, useState } from 'react'
 import { ExternalLink, Loader2, Compass } from 'lucide-react'
+import { getExplorerRoute, setExplorerRoute } from '../lib/explorerRoute'
 import './explorer.css'
 
 /* The DU Admissions Explorer is a separate, already-built app (repo cuet-pro/Cuet-pro-du),
    deployed at its own Vercel URL. We embed it here, full-bleed, so it lives inside the
    dashboard. It posts its route (CUET_DASHBOARD_ROUTE_CHANGE) to the parent, so we remember
-   where the student was and restore that route if they switch tabs and come back. */
+   where the student was and restore that route if they switch tabs and come back.
+   Dashboard widgets can pre-set the route (via setExplorerRoute) to deep-link into a
+   specific tab — e.g. Cutoffs → /cutoffs, Eligibility → /subject-combination. */
 const DU_EXPLORER_URL = 'https://cuet-pro-du.vercel.app/'
-
-/* survives tab switches within this session (module scope resets only on full reload) */
-let lastRoute = '/'
 
 function duSrc(route) {
   const path = route && route !== '/' ? route.replace(/^\//, '') : ''
@@ -19,12 +19,12 @@ function duSrc(route) {
 export default function Explorer() {
   const [loaded, setLoaded] = useState(false)
   const [failed, setFailed] = useState(false)
-  const [src] = useState(() => duSrc(lastRoute))
+  const [src] = useState(() => duSrc(getExplorerRoute()))
 
   useEffect(() => {
     const onMsg = e => {
       if (e.data && e.data.type === 'CUET_DASHBOARD_ROUTE_CHANGE' && typeof e.data.path === 'string') {
-        lastRoute = e.data.path
+        setExplorerRoute(e.data.path)
       }
     }
     window.addEventListener('message', onMsg)

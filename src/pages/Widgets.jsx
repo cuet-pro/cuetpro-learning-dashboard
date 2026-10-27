@@ -6,6 +6,7 @@ import {
 } from 'lucide-react'
 import { VOCAB_CATEGORIES } from '../data/vocab'
 import { fetchVocabBank, fetchAllSyllabus } from '../lib/content'
+import { setExplorerRoute } from '../lib/explorerRoute'
 import { Modal, useToast } from '../components/shell/Shell.jsx'
 import { useGuestGate } from '../lib/guestGate'
 import './widgets.css'
@@ -284,8 +285,8 @@ export default function DashboardTiles({ onNavigate }) {
     {
       key: 'plan', label: 'Plan',
       tiles: [
-        { id: 'cutoffs', label: 'Cutoffs', tone: 'amber', icon: BarChart3, statText: '2025-26 data', nav: 'explorer' },
-        { id: 'eligibility', label: 'Eligibility', tone: 'green', icon: ListChecks, statText: 'check your course', gate: { feature: 'Eligibility Checker', action: 'check your eligibility' }, go: () => toast('Eligibility checker — coming soon') },
+        { id: 'cutoffs', label: 'Cutoffs', tone: 'amber', icon: BarChart3, statText: '2025-26 data', go: () => { setExplorerRoute('/cutoffs'); onNavigate('explorer') } },
+        { id: 'eligibility', label: 'Eligibility', tone: 'green', icon: ListChecks, statText: 'check your course', go: () => { setExplorerRoute('/subject-combination'); onNavigate('explorer') } },
         { id: 'sample-papers', label: 'Sample papers', tone: 'blue', icon: Files, stat: { n: 12, suffix: 'papers' }, gate: { feature: 'Sample Papers', action: 'open sample papers' }, go: () => toast('Sample papers — coming soon') },
       ],
     },
