@@ -330,3 +330,20 @@
   .bento-tile.featured::after { display: none; }
   .bt-live::before { animation: none; }
 }
+
+/* Syllabus modal — live from Supabase */
+.syl-wrap { display: flex; flex-direction: column; gap: 18px; }
+.syl-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.syl-badge { font: 700 13px var(--font-body); color: #fff; padding: 7px 14px; border-radius: var(--r-full); background: linear-gradient(120deg, var(--primary), var(--secondary)); letter-spacing: .02em; box-shadow: var(--shadow-sm); }
+.syl-meta { font: 500 12.5px var(--font-body); color: var(--text-muted); }
+.syl-secs { display: flex; flex-direction: column; gap: 14px; }
+.syl-sec { border: 1px solid var(--border); border-radius: var(--r-lg); padding: 18px; background: var(--surface); box-shadow: var(--shadow-sm); transition: box-shadow .2s, border-color .2s; }
+.syl-sec:hover { box-shadow: var(--shadow-md); border-color: var(--border-strong); }
+.syl-sec-head { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+.syl-sec-num { font: 700 12px var(--font-body); color: var(--primary); background: var(--primary-soft); padding: 5px 10px; border-radius: 8px; letter-spacing: .03em; }
+.syl-sec-name { font: 700 15.5px var(--font-body); color: var(--text); flex: 1; }
+.syl-sec-count { font: 500 12px var(--font-body); color: var(--text-muted); }
+.syl-topics { display: flex; flex-wrap: wrap; gap: 8px; }
+.syl-topic { display: inline-flex; align-items: center; gap: 8px; padding: 8px 13px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); font: 500 13px var(--font-body); color: var(--text); transition: transform .15s, border-color .15s, box-shadow .15s; }
+.syl-topic:hover { border-color: var(--violet); transform: translateY(-2px); box-shadow: 0 8px 18px -8px color-mix(in srgb, var(--violet) 40%, transparent); }
+.syl-topic i { font-style: normal; font: 700 11px var(--font-body); color: var(--violet); background: var(--violet-soft); padding: 3px 7px; border-radius: 6px; }
