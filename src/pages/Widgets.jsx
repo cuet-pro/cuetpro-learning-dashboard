@@ -5,7 +5,7 @@ import {
   Compass, Target, Timer, Trophy, Video, Sparkles, ArrowLeft, ChevronRight, ArrowRight,
 } from 'lucide-react'
 import { VOCAB_CATEGORIES } from '../data/vocab'
-import { fetchVocabBank, fetchSyllabus } from '../lib/content'
+import { fetchVocabBank, fetchAllSyllabus } from '../lib/content'
 import { Modal, useToast } from '../components/shell/Shell.jsx'
 import { useGuestGate } from '../lib/guestGate'
 import './widgets.css'
@@ -224,7 +224,8 @@ export default function DashboardTiles({ onNavigate }) {
   const [q, setQ] = useState('')
   const [bank, setBank] = useState(null)
   const [sylOpen, setSylOpen] = useState(false)
-  const [syl, setSyl] = useState(null)
+  const [syl, setSyl] = useState([])
+  const [curSubj, setCurSubj] = useState(null)
 
   /* Word list — live from Supabase (static VOCAB_CATEGORIES is the fallback while loading) */
   useEffect(() => {
@@ -236,7 +237,18 @@ export default function DashboardTiles({ onNavigate }) {
   /* Syllabus — live from Supabase */
   useEffect(() => {
     let alive = true
-    fetchSyllabus('english').then(({ data }) => { if (alive && data) setSyl(data) })
+    fetchAllSyllabus().then(({ data }) => {
+      if (alive && data && data.length) {
+        const sorted = data.map(s => ({
+          ...s,
+          sections: (s.sections || []).map(sec => ({
+            ...sec,
+            topics: [...(sec.topics || [])].sort((a, b) => (a.order_num || 0) - (b.order_num || 0)),
+          })).sort((a, b) => (a.order_num || 0) - (b.order_num || 0)),
+        }))
+        setSyl(sorted); setCurSubj(sorted[0])
+      }
+    })
     return () => { alive = false }
   }, [])
 
@@ -250,7 +262,8 @@ export default function DashboardTiles({ onNavigate }) {
   }
   const words = active ? active.items.filter(match) : []
   const vocabCount = categories.reduce((s, c) => s + c.items.length, 0)
-  const sylTopicCount = syl ? (syl.sections || []).reduce((s, x) => s + (x.topics?.length || 0), 0) : 0
+  const sylSubjCount = syl.length
+  const curSubjTopics = curSubj ? (curSubj.sections || []).reduce((s, x) => s + (x.topics?.length || 0), 0) : 0
 
   /* grouped bento: Play / Learn / Plan (data + labels + handlers unchanged) */
   const groups = [
@@ -265,7 +278,7 @@ export default function DashboardTiles({ onNavigate }) {
       tiles: [
         { id: 'word-list', label: 'Word list', tone: 'blue', icon: List, stat: { n: vocabCount, suffix: 'words' }, go: () => setWlOpen(true) },
         { id: 'flashcards', label: 'Flashcards', tone: 'green', icon: Layers, ring: 46, ringMeta: '230/500 mastered', recommended: true, nav: 'studykit', gate: { feature: 'Flashcards', action: 'flip your cards' } },
-        { id: 'syllabus', label: 'Syllabus', tone: 'blue', icon: FileText, stat: { n: sylTopicCount || 19, suffix: 'topics' }, go: () => setSylOpen(true) },
+        { id: 'syllabus', label: 'Syllabus', tone: 'blue', icon: FileText, stat: { n: sylSubjCount || 19, suffix: 'subjects' }, go: () => setSylOpen(true) },
       ],
     },
     {
@@ -355,29 +368,38 @@ export default function DashboardTiles({ onNavigate }) {
           </div>
         )}
       </Modal>
-      <Modal open={sylOpen} onClose={() => setSylOpen(false)} title="English Syllabus">
-        {syl ? (
+      <Modal open={sylOpen} onClose={() => setSylOpen(false)} title="CUET Syllabus" wide>
+        {syl.length ? (
           <div className="syl-wrap">
-            <div className="syl-head">
-              <span className="syl-badge">{syl.name} · CUET {syl.code}</span>
-              <span className="syl-meta">{syl.sections?.length || 0} sections · {sylTopicCount} topics</span>
-            </div>
-            <div className="syl-secs">
-              {(syl.sections || []).map((sec, i) => (
-                <div className="syl-sec" key={sec.id}>
-                  <div className="syl-sec-head">
-                    <span className="syl-sec-num">{String(i + 1).padStart(2, '0')}</span>
-                    <span className="syl-sec-name">{sec.name}</span>
-                    <span className="syl-sec-count">{sec.topics?.length || 0} topics</span>
-                  </div>
-                  <div className="syl-topics">
-                    {(sec.topics || []).map((t, j) => (
-                      <span className="syl-topic" key={t.id}><i>{i + 1}.{j + 1}</i>{t.name}</span>
-                    ))}
-                  </div>
-                </div>
+            <div className="syl-subs">
+              {syl.map(s => (
+                <button key={s.id} className={'syl-sub' + (curSubj?.id === s.id ? ' on' : '')} onClick={() => setCurSubj(s)}>{s.name}</button>
               ))}
             </div>
+            {curSubj && (
+              <>
+                <div className="syl-head">
+                  <span className="syl-badge">{curSubj.name} · CUET {curSubj.code}</span>
+                  <span className="syl-meta">{curSubj.sections?.length || 0} sections · {curSubjTopics} topics</span>
+                </div>
+                <div className="syl-secs">
+                  {(curSubj.sections || []).map((sec, i) => (
+                    <div className="syl-sec" key={sec.id}>
+                      <div className="syl-sec-head">
+                        <span className="syl-sec-num">{String(i + 1).padStart(2, '0')}</span>
+                        <span className="syl-sec-name">{sec.name}</span>
+                        <span className="syl-sec-count">{sec.topics?.length || 0} topics</span>
+                      </div>
+                      <div className="syl-topics">
+                        {(sec.topics || []).map((t, j) => (
+                          <span className="syl-topic" key={t.id}><i>{i + 1}.{j + 1}</i>{t.name}</span>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
           </div>
         ) : (
           <p className="muted-empty">Loading syllabus…</p>

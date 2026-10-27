@@ -347,3 +347,9 @@
 .syl-topic { display: inline-flex; align-items: center; gap: 8px; padding: 8px 13px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); font: 500 13px var(--font-body); color: var(--text); transition: transform .15s, border-color .15s, box-shadow .15s; }
 .syl-topic:hover { border-color: var(--violet); transform: translateY(-2px); box-shadow: 0 8px 18px -8px color-mix(in srgb, var(--violet) 40%, transparent); }
 .syl-topic i { font-style: normal; font: 700 11px var(--font-body); color: var(--violet); background: var(--violet-soft); padding: 3px 7px; border-radius: 6px; }
+
+/* Syllabus subject selector chips */
+.syl-subs { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
+.syl-sub { padding: 7px 14px; border: 1px solid var(--border); border-radius: var(--r-full); background: var(--surface); font: 500 13px var(--font-body); color: var(--text-secondary); cursor: pointer; transition: background .15s, border-color .15s, color .15s; }
+.syl-sub:hover { border-color: var(--primary); color: var(--primary); }
+.syl-sub.on { background: var(--primary); border-color: var(--primary); color: #fff; box-shadow: var(--shadow-sm); }

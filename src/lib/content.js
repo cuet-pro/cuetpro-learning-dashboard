@@ -14,6 +14,15 @@ export async function fetchSyllabus(subjectKey = 'english') {
   return { data, error }
 }
 
+/* All subjects with nested sections → topics, ordered by code. */
+export async function fetchAllSyllabus() {
+  const { data, error } = await supabase
+    .from('subjects')
+    .select('id, key, name, code, sections(id, key, name, order_num, topics(id, key, name, order_num))')
+    .order('code')
+  return { data, error }
+}
+
 /* Vocab words by category: word | root | prefix | suffix. */
 export async function fetchVocab(category = null, limit = 50) {
   let q = supabase.from('vocab_words').select('id, word, category, meaning, synonyms, antonyms, difficulty')
