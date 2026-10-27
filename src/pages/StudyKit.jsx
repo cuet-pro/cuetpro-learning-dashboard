@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { NotebookText, Layers, Timer, FileQuestion, Archive, ArrowLeft, ArrowRight, PlayCircle, Video, Sigma, Zap, ChevronRight, ChevronDown, CheckSquare, Search, GraduationCap, Highlighter, FlaskConical, Settings, Sun, Moon } from 'lucide-react'
+import { NotebookText, Layers, Timer, FileQuestion, Archive, ArrowLeft, ArrowRight, PlayCircle, Video, Sigma, Zap, ChevronRight, ChevronDown, CheckSquare, Search, GraduationCap, Highlighter, FlaskConical, Settings, Sun, Moon, BookOpen, Lightbulb, AlertTriangle, RotateCcw } from 'lucide-react'
 import { weakTopicNames } from '../lib/analysisData'
 import { ECON_UNITS } from '../data/econNotes'
 import { GEO_UNITS } from '../data/geoNotes'
@@ -7,7 +7,7 @@ import { useProfile, STREAMS } from '../lib/profile'
 import { notesDeepLink, readNotesProgress, writeNotesProgress, lastReadSubject } from '../lib/notesProgress'
 import { useGuestGate } from '../lib/guestGate'
 import { useToast } from '../components/shell/Shell'
-import { fetchFlashcards, fetchFlashcardTopics } from '../lib/content'
+import { fetchFlashcards, fetchFlashcardTopics, fetchCheatSheets, fetchCheatSheet } from '../lib/content'
 import './studykit.css'
 
 const NOTES_BY_STREAM = {
@@ -164,7 +164,8 @@ export default function StudyKit({ onNavigate }) {
             {selected === 'quizzes' && <QuizView />}
             {selected === 'pyqs' && <PyqView subject={subject} stream={stream} weakOnly={weakOnly} setWeakOnly={setWeakOnly} />}
             {selected === 'mocks' && <MockView examMode={examMode} setExamMode={setExamMode} />}
-            {(selected === 'videos' || selected === 'cheats') && (
+            {selected === 'cheats' && <CheatSheetView record={record} />}
+            {selected === 'videos' && (
               <div className="sk-placeholder">
                 <PlayCircle size={30} />
                 <p>Working content for this tool ships in the next iteration — design is ready, content pipeline is in progress.</p>
@@ -712,6 +713,159 @@ const QUICK_QS = [
   { q: 'What happens when the Repo Rate increases?', o: ['Loans get cheaper', 'Loans get costlier', 'Nothing', 'GDP rises'], a: 1 },
   { q: 'Current Ratio formula:', o: ['CA/CL', 'CL/CA', 'Sales/Profit', 'Debt/Equity'], a: 0 },
 ]
+
+/* ── Cheat Sheets — 28 quick-revision sheets, 3 pages each ─────────────── */
+
+const CHEAT_CATS = ['Reading Comprehension', 'Vocabulary', 'Grammar']
+
+function CheatCard({ cell }) {
+  const lines = (cell || '').split('\n').map(l => l.trim()).filter(Boolean)
+  if (lines.length === 0) return null
+  const title = lines[0]
+  const body = lines.slice(1)
+  return (
+    <div className="cs-card">
+      <b className="cs-card-t">{title}</b>
+      {body.map((l, i) => <span className="cs-card-l" key={i}>{l}</span>)}
+    </div>
+  )
+}
+
+function TrapTable({ rows }) {
+  return (
+    <table className="cs-trap">
+      <thead>
+        <tr><th className="w">WRONG</th><th className="r">RIGHT</th><th>WHY</th></tr>
+      </thead>
+      <tbody>
+        {rows.slice(1).map((r, i) => (
+          <tr key={i}>
+            <td className="w">{r[0]}</td>
+            <td className="r">{r[1]}</td>
+            <td>{r[2]}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  )
+}
+
+function CheatTable({ rows }) {
+  const isTrap = rows.length > 1 && rows[0].length === 3 && rows[0][0] === 'WRONG' && rows[0][1] === 'RIGHT'
+  if (isTrap) return <TrapTable rows={rows} />
+  const cells = rows.flat()
+  return (
+    <div className="cs-cards">
+      {cells.map((cell, i) => <CheatCard cell={cell} key={i} />)}
+    </div>
+  )
+}
+
+const BOX_META = {
+  'memory-hack': { icon: Lightbulb, cls: 'mem', label: 'Memory hack' },
+  'exam-trap': { icon: AlertTriangle, cls: 'trap', label: 'Exam traps' },
+  'recap': { icon: RotateCcw, cls: 'recap', label: '60-second recap' },
+}
+
+function CheatBox({ b }) {
+  const meta = BOX_META[b.kind] || BOX_META['recap']
+  const Icon = meta.icon
+  const lines = (b.text || '').split('\n').map(l => l.trim()).filter(Boolean)
+  return (
+    <div className={'cs-box ' + meta.cls}>
+      <div className="cs-box-head"><Icon size={14} /> <b>{b.title}</b></div>
+      <div className="cs-box-body">{lines.map((l, i) => <p key={i}>{l}</p>)}</div>
+    </div>
+  )
+}
+
+function CheatBlock({ b }) {
+  switch (b.t) {
+    case 'heading': return <h5 className="cs-head">{b.text}</h5>
+    case 'text': return <p className="cs-text">{b.text}</p>
+    case 'answers': return <p className="cs-answers"><b>Answers</b>{b.text.replace(/^answers:\s*/i, '')}</p>
+    case 'box': return <CheatBox b={b} />
+    case 'table': return <CheatTable rows={b.rows} />
+    default: return null
+  }
+}
+
+function CheatSheetDoc({ sheet, onBack }) {
+  return (
+    <div className="cs-doc">
+      <button className="sk-back" onClick={onBack}><ArrowLeft size={15} /> All cheat sheets</button>
+      <header className="cs-doc-head">
+        <span className="cs-doc-cat">{sheet.category}</span>
+        <h3>{sheet.num}. {sheet.title}</h3>
+        {sheet.tagline && <p className="cs-doc-tag">{sheet.tagline}</p>}
+        {sheet.intro && <p className="cs-doc-intro">{sheet.intro}</p>}
+      </header>
+      {sheet.pages.map(p => (
+        <section className="cs-page" key={p.n}>
+          <div className="cs-page-head">
+            <span className="cs-page-n">{p.n}</span>
+            <div>
+              <b>{p.title}</b>
+              {p.subtitle && <em>{p.subtitle}</em>}
+            </div>
+          </div>
+          <div className="cs-blocks">
+            {p.blocks.map((b, i) => <CheatBlock b={b} key={i} />)}
+          </div>
+        </section>
+      ))}
+    </div>
+  )
+}
+
+function CheatSheetView({ record }) {
+  const [sheets, setSheets] = useState([])
+  const [cat, setCat] = useState('Grammar')
+  const [open, setOpen] = useState(null)
+  const [busy, setBusy] = useState(false)
+
+  useEffect(() => {
+    let alive = true
+    fetchCheatSheets().then(({ data }) => { if (alive && data) setSheets(data) })
+    return () => { alive = false }
+  }, [])
+
+  const openSheet = num => {
+    setBusy(true)
+    fetchCheatSheet(num).then(({ data }) => {
+      setOpen(data || null)
+      setBusy(false)
+      if (data) record({ title: 'Cheat Sheets', detail: data.title, pct: 50 })
+    })
+  }
+
+  if (open) return <CheatSheetDoc sheet={open} onBack={() => setOpen(null)} />
+
+  const shown = sheets.filter(s => s.category === cat)
+  return (
+    <div className="cs">
+      <div className="cs-cats">
+        {CHEAT_CATS.map(c => (
+          <button key={c} className={'cs-cat' + (cat === c ? ' on' : '')} onClick={() => setCat(c)}>{c}</button>
+        ))}
+      </div>
+      <div className="cs-grid">
+        {shown.map(s => (
+          <button key={s.num} className="cs-sheet" onClick={() => openSheet(s.num)}>
+            <span className="cs-sheet-num">{s.num}</span>
+            <span className="cs-sheet-t">
+              <b>{s.title}</b>
+              {s.tagline && <em>{s.tagline}</em>}
+            </span>
+            <ChevronRight size={14} className="cs-sheet-arr" />
+          </button>
+        ))}
+      </div>
+      {shown.length === 0 && <p className="muted-empty">{busy ? 'Opening…' : 'Loading cheat sheets…'}</p>}
+    </div>
+  )
+}
+
 function QuizView() {
   const gate = useGuestGate()
   const [idx, setIdx] = useState(0)

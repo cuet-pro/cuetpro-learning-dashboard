@@ -158,3 +158,23 @@ export async function fetchVocabBank() {
   })).filter(c => c.items.length > 0)
   return { data: categories, error: null }
 }
+
+/* Cheat Sheets — 28 English quick-revision sheets (RC / Vocabulary / Grammar),
+   three pages each (rules → memory hacks → exam traps → practice → recap).
+   Lightweight list (no blocks) for the picker, full sheet on demand. */
+export async function fetchCheatSheets() {
+  const { data, error } = await supabase
+    .from('cheat_sheets')
+    .select('num, category, title, short, tagline')
+    .order('num')
+  return { data, error }
+}
+
+export async function fetchCheatSheet(num) {
+  const { data, error } = await supabase
+    .from('cheat_sheets')
+    .select('id, num, category, title, short, tagline, intro, pages')
+    .eq('num', num)
+    .single()
+  return { data, error }
+}

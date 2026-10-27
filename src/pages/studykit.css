@@ -482,3 +482,93 @@
 .fc-decks-sel { flex: 1; padding: 9px 12px; border-radius: 10px; border: 1px solid var(--border); background: var(--card, #fff); color: var(--text, #0f172a); font: 500 14px var(--font-body); cursor: pointer; outline: none; }
 .fc-decks-sel:focus { border-color: var(--primary); box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 18%, transparent); }
 .fc-count { font: 600 12.5px var(--font-body); color: var(--muted, #64748b); min-width: 44px; text-align: center; }
+
+/* ── Cheat Sheets (28 quick-revision sheets) ─────────────────────────── */
+.cs { display: flex; flex-direction: column; gap: 16px; }
+
+/* category chips */
+.cs-cats { display: flex; gap: 8px; flex-wrap: wrap; }
+.cs-cat { padding: 7px 14px; border-radius: var(--r-full); border: 1px solid var(--border);
+  background: var(--card, #fff); color: var(--text-secondary); font: 600 12.5px var(--font-body);
+  cursor: pointer; transition: all .15s ease; }
+.cs-cat:hover { border-color: var(--primary); color: var(--primary); transform: translateY(-1px); }
+.cs-cat.on { background: linear-gradient(120deg, var(--primary), var(--primary-hover)); color: #fff; border-color: var(--primary);
+  box-shadow: 0 6px 16px rgba(20,108,78,.28); }
+
+/* sheet picker grid */
+.cs-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px; }
+.cs-sheet { display: flex; align-items: center; gap: 12px; padding: 14px 16px; border-radius: var(--r-lg);
+  border: 1px solid var(--border); background: var(--card, #fff); text-align: left; cursor: pointer;
+  transition: transform .15s ease, box-shadow .2s ease, border-color .2s ease; }
+.cs-sheet:hover { transform: translateY(-2px); border-color: var(--primary); box-shadow: var(--shadow-md); }
+.cs-sheet-num { flex: 0 0 auto; width: 30px; height: 30px; border-radius: 9px; display: grid; place-items: center;
+  font: 700 13px var(--font-body); background: var(--secondary-soft); color: var(--secondary); }
+.cs-sheet-t { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1; }
+.cs-sheet-t b { font: 600 14px var(--font-body); color: var(--text); line-height: 1.3; }
+.cs-sheet-t em { font: 500 11.5px var(--font-body); color: var(--text-muted); font-style: normal;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cs-sheet-arr { flex: 0 0 auto; color: var(--text-muted); transition: transform .15s ease, color .15s ease; }
+.cs-sheet:hover .cs-sheet-arr { color: var(--primary); transform: translateX(3px); }
+
+/* document view */
+.cs-doc { display: flex; flex-direction: column; gap: 18px; }
+.cs-doc-head { display: flex; flex-direction: column; gap: 6px; padding: 18px 20px; border-radius: var(--r-lg);
+  background: linear-gradient(120deg, var(--primary), var(--secondary)); color: #fff;
+  box-shadow: 0 10px 26px rgba(20,108,78,.30); }
+.cs-doc-cat { align-self: flex-start; font: 700 10.5px var(--font-body); letter-spacing: .06em; text-transform: uppercase;
+  padding: 4px 10px; border-radius: var(--r-full); background: rgba(255,255,255,.18); color: #fff; }
+.cs-doc-head h3 { font: 700 20px var(--font-body); color: #fff; margin: 2px 0 0; }
+.cs-doc-tag { font: 500 13px var(--font-body); color: rgba(255,255,255,.9); margin: 0; }
+.cs-doc-intro { font: 400 13px var(--font-body); color: rgba(255,255,255,.82); margin: 4px 0 0; line-height: 1.55; }
+
+/* page section */
+.cs-page { border: 1px solid var(--border); border-radius: var(--r-lg); background: var(--card, #fff); overflow: hidden; }
+.cs-page-head { display: flex; align-items: center; gap: 12px; padding: 13px 18px;
+  background: var(--bg); border-bottom: 1px solid var(--border); }
+.cs-page-n { flex: 0 0 auto; width: 26px; height: 26px; border-radius: 8px; display: grid; place-items: center;
+  font: 700 13px var(--font-body); background: var(--primary); color: #fff; box-shadow: 0 3px 8px rgba(20,108,78,.28); }
+.cs-page-head b { font: 600 14.5px var(--font-body); color: var(--text); }
+.cs-page-head em { display: block; font: 500 11.5px var(--font-body); color: var(--text-muted); font-style: normal; margin-top: 1px; }
+
+/* blocks */
+.cs-blocks { display: flex; flex-direction: column; gap: 12px; padding: 18px; }
+.cs-head { font: 700 13.5px var(--font-body); color: var(--secondary); margin: 4px 0 0; }
+.cs-text { font: 400 13.5px var(--font-body); color: var(--text-secondary); line-height: 1.6; margin: 0; }
+.cs-answers { font: 500 13px var(--font-body); color: var(--text); line-height: 1.6; margin: 2px 0 0;
+  padding: 10px 14px; border-radius: var(--r-md); background: var(--primary-soft); border: 1px solid color-mix(in srgb, var(--primary) 22%, var(--border)); }
+.cs-answers b { color: var(--primary); margin-right: 6px; font: 700 12px var(--font-body); text-transform: uppercase; letter-spacing: .05em; }
+
+/* uniform card grid (rule tables) */
+.cs-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 12px; }
+.cs-card { display: flex; flex-direction: column; gap: 4px; padding: 13px 15px; border-radius: var(--r-md);
+  border: 1px solid var(--border); background: var(--bg); transition: transform .15s ease, box-shadow .2s ease, border-color .2s ease; }
+.cs-card:hover { transform: translateY(-2px); border-color: var(--primary); box-shadow: var(--shadow-sm); }
+.cs-card-t { font: 700 13px var(--font-body); color: var(--primary); line-height: 1.3; }
+.cs-card-l { font: 400 12.5px var(--font-body); color: var(--text-secondary); line-height: 1.5; }
+
+/* trap table (WRONG / RIGHT / WHY) */
+.cs-trap { width: 100%; border-collapse: collapse; border: 1px solid var(--border); border-radius: var(--r-md); overflow: hidden; }
+.cs-trap th { font: 700 10.5px var(--font-body); letter-spacing: .06em; text-transform: uppercase; padding: 9px 12px;
+  background: var(--bg); color: var(--text-secondary); text-align: left; border-bottom: 1px solid var(--border-strong); }
+.cs-trap th.w { color: var(--error); } .cs-trap th.r { color: var(--success); }
+.cs-trap td { font: 400 12.5px var(--font-body); padding: 9px 12px; border-bottom: 1px solid var(--border); vertical-align: top; line-height: 1.45; }
+.cs-trap tr:last-child td { border-bottom: none; }
+.cs-trap td.w { color: var(--error); text-decoration: line-through; text-decoration-color: color-mix(in srgb, var(--error) 45%, transparent); }
+.cs-trap td.r { color: var(--success); font-weight: 600; }
+.cs-trap td:last-child { color: var(--text-muted); }
+
+/* boxes: memory hack / exam traps / recap */
+.cs-box { border-radius: var(--r-md); border: 1px solid; padding: 12px 15px; display: flex; flex-direction: column; gap: 7px; }
+.cs-box-head { display: flex; align-items: center; gap: 7px; }
+.cs-box-head b { font: 700 12px var(--font-body); letter-spacing: .02em; }
+.cs-box-body { display: flex; flex-direction: column; gap: 5px; }
+.cs-box-body p { font: 400 12.5px var(--font-body); line-height: 1.55; margin: 0; }
+.cs-box.mem { background: var(--violet-soft); border-color: color-mix(in srgb, var(--violet) 28%, transparent); }
+.cs-box.mem .cs-box-head { color: var(--violet); }
+.cs-box.mem .cs-box-body p { color: color-mix(in srgb, var(--violet) 78%, #14171F); }
+.cs-box.trap { background: var(--error-soft); border-color: color-mix(in srgb, var(--error) 30%, transparent); }
+.cs-box.trap .cs-box-head { color: var(--error); }
+.cs-box.trap .cs-box-body p { color: color-mix(in srgb, var(--error) 80%, #14171F); }
+.cs-box.recap { background: var(--success-soft); border-color: color-mix(in srgb, var(--success) 28%, transparent); }
+.cs-box.recap .cs-box-head { color: var(--success); }
+.cs-box.recap .cs-box-body p { color: color-mix(in srgb, var(--success) 78%, #14171F); }
