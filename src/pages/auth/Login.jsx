@@ -1,7 +1,7 @@
 import { useState } from 'react'
-import { Mail, Lock, Eye, EyeOff, ArrowRight } from 'lucide-react'
+import { Mail, Lock, Eye, EyeOff, ArrowRight, ArrowLeft } from 'lucide-react'
 import { useToast } from '../../components/shell/Shell'
-import { signInWithEmail, signInWithGoogle, friendlyAuthError } from '../../lib/auth'
+import { signInWithEmail, signInWithGoogle, sendPasswordReset, friendlyAuthError } from '../../lib/auth'
 
 const isEmail = v => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)
 
@@ -27,6 +27,13 @@ export default function Login({ onSwitch, onAuthed }) {
   const [emailErr, setEmailErr] = useState('')
   const [pwErr, setPwErr] = useState('')
 
+  /* forgot-password sub-view */
+  const [forgot, setForgot] = useState(false)
+  const [sent, setSent] = useState(false)
+  const [resetEmail, setResetEmail] = useState('')
+  const [resetErr, setResetErr] = useState('')
+  const [resetLoading, setResetLoading] = useState(false)
+
   const submitEmail = async e => {
     e.preventDefault()
     const a = isEmail(email.trim()) ? '' : 'Enter a valid email address.'
@@ -46,6 +53,52 @@ export default function Login({ onSwitch, onAuthed }) {
     if (error) { setLoading(false); toast(friendlyAuthError(error)) }
   }
 
+  const submitReset = async e => {
+    e.preventDefault()
+    const a = isEmail(resetEmail.trim()) ? '' : 'Enter a valid email address.'
+    setResetErr(a)
+    if (a) return
+    setResetLoading(true)
+    const { error } = await sendPasswordReset(resetEmail.trim())
+    setResetLoading(false)
+    if (error) { setResetErr(friendlyAuthError(error)); return }
+    setSent(true)
+  }
+
+  const backToLogin = () => { setForgot(false); setSent(false); setResetErr('') }
+
+  /* ── Forgot password ── */
+  if (forgot) {
+    return (
+      <div>
+        <div className="head">
+          <h2>{sent ? 'Check your email' : 'Reset your password'}</h2>
+          <p>{sent ? `We sent a reset link to ${resetEmail.trim()}.` : 'Enter your email and we will email you a reset link.'}</p>
+        </div>
+
+        {sent ? (
+          <button className="btn btn-primary" type="button" onClick={backToLogin}><ArrowLeft size={18} /> Back to log in</button>
+        ) : (
+          <form onSubmit={submitReset} noValidate>
+            <div className="field">
+              <label htmlFor="rEmail">Email</label>
+              <div className="input-wrap">
+                <Mail className="ico" size={18} />
+                <input className={'input has-ico' + (resetErr ? ' invalid' : '')} id="rEmail" type="email" autoComplete="email" placeholder="you@example.com" value={resetEmail} onChange={e => setResetEmail(e.target.value)} />
+              </div>
+              {resetErr && <span className="err">{resetErr}</span>}
+            </div>
+            <button className="btn btn-primary" type="submit" disabled={resetLoading}>{resetLoading ? 'Sending…' : 'Send reset link'} <ArrowRight size={18} /></button>
+          </form>
+        )}
+
+        <p className="switch">
+          {!sent && <a href="#login" onClick={e => { e.preventDefault(); backToLogin() }}>Back to log in</a>}
+        </p>
+      </div>
+    )
+  }
+
   return (
     <div>
       <div className="head"><h2>Welcome back</h2><p>Log in to your CUET Pro dashboard.</p></div>
@@ -60,7 +113,7 @@ export default function Login({ onSwitch, onAuthed }) {
           {emailErr && <span className="err">{emailErr}</span>}
         </div>
         <div className="field">
-          <div className="label-row"><label htmlFor="lPw">Password</label><a href="#forgot" onClick={e => { e.preventDefault(); toast('A reset link would be emailed here.') }}>Forgot password?</a></div>
+          <div className="label-row"><label htmlFor="lPw">Password</label><a href="#forgot" onClick={e => { e.preventDefault(); setForgot(true) }}>Forgot password?</a></div>
           <div className="input-wrap">
             <Lock className="ico" size={18} />
             <input className={'input has-ico has-btn' + (pwErr ? ' invalid' : '')} id="lPw" type={showPw ? 'text' : 'password'} autoComplete="current-password" placeholder="Enter your password" value={pw} onChange={e => setPw(e.target.value)} />
