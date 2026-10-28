@@ -7,6 +7,7 @@ import {
 import { VOCAB_CATEGORIES } from '../data/vocab'
 import { fetchVocabBank, fetchAllSyllabus } from '../lib/content'
 import { setExplorerRoute } from '../lib/explorerRoute'
+import { setStudyKitTool } from '../lib/studyKitRoute'
 import { Modal, useToast } from '../components/shell/Shell.jsx'
 import { useGuestGate } from '../lib/guestGate'
 import './widgets.css'
@@ -278,7 +279,7 @@ export default function DashboardTiles({ onNavigate }) {
       key: 'learn', label: 'Learn',
       tiles: [
         { id: 'word-list', label: 'Word list', tone: 'blue', icon: List, stat: { n: vocabCount, suffix: 'words' }, go: () => setWlOpen(true) },
-        { id: 'flashcards', label: 'Flashcards', tone: 'green', icon: Layers, ring: 46, ringMeta: '230/500 mastered', recommended: true, nav: 'studykit', gate: { feature: 'Flashcards', action: 'flip your cards' } },
+        { id: 'flashcards', label: 'Flashcards', tone: 'green', icon: Layers, ring: 46, ringMeta: '230/500 mastered', recommended: true, gate: { feature: 'Flashcards', action: 'flip your cards' }, go: () => { setStudyKitTool('flashcards'); onNavigate('studykit') } },
         { id: 'syllabus', label: 'Syllabus', tone: 'blue', icon: FileText, stat: { n: sylSubjCount || 19, suffix: 'subjects' }, go: () => setSylOpen(true) },
       ],
     },

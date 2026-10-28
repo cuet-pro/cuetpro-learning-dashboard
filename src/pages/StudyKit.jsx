@@ -5,6 +5,7 @@ import { ECON_UNITS } from '../data/econNotes'
 import { GEO_UNITS } from '../data/geoNotes'
 import { useProfile, STREAMS } from '../lib/profile'
 import { notesDeepLink, readNotesProgress, writeNotesProgress, lastReadSubject } from '../lib/notesProgress'
+import { takeStudyKitTool } from '../lib/studyKitRoute'
 import { useGuestGate } from '../lib/guestGate'
 import { useToast } from '../components/shell/Shell'
 import { fetchFlashcards, fetchFlashcardTopics, fetchCheatSheets, fetchCheatSheet, fetchMocks, fetchMock, fetchQuiz, fetchDailyQuiz } from '../lib/content'
@@ -51,7 +52,11 @@ export default function StudyKit({ onNavigate }) {
     const dl = notesDeepLink()
     return (dl && (STREAMS[profile.stream] || []).includes(dl.subject)) ? dl.subject : 'all'
   })
-  const [selected, setSelected] = useState(() => (notesDeepLink() ? 'notes' : null))
+  const [selected, setSelected] = useState(() => {
+    const tool = takeStudyKitTool()
+    if (tool) return tool
+    return notesDeepLink() ? 'notes' : null
+  })
   const [query, setQuery] = useState('')
   const [weakOnly, setWeakOnly] = useState(false)
   const [examMode, setExamMode] = useState(false)
