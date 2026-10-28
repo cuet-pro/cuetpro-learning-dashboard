@@ -7,7 +7,7 @@ import { useProfile, STREAMS } from '../lib/profile'
 import { notesDeepLink, readNotesProgress, writeNotesProgress, lastReadSubject } from '../lib/notesProgress'
 import { useGuestGate } from '../lib/guestGate'
 import { useToast } from '../components/shell/Shell'
-import { fetchFlashcards, fetchFlashcardTopics, fetchCheatSheets, fetchCheatSheet, fetchMocks, fetchMock } from '../lib/content'
+import { fetchFlashcards, fetchFlashcardTopics, fetchCheatSheets, fetchCheatSheet, fetchMocks, fetchMock, fetchQuiz, fetchDailyQuiz } from '../lib/content'
 import './studykit.css'
 
 const NOTES_BY_STREAM = {
@@ -709,11 +709,6 @@ function FlashView({ record }) {
   )
 }
 
-const QUICK_QS = [
-  { q: 'What happens when the Repo Rate increases?', o: ['Loans get cheaper', 'Loans get costlier', 'Nothing', 'GDP rises'], a: 1 },
-  { q: 'Current Ratio formula:', o: ['CA/CL', 'CL/CA', 'Sales/Profit', 'Debt/Equity'], a: 0 },
-]
-
 /* ── Cheat Sheets — 28 quick-revision sheets, 3 pages each ─────────────── */
 
 const CHEAT_CATS = ['Reading Comprehension', 'Vocabulary', 'Grammar']
@@ -866,30 +861,130 @@ function CheatSheetView({ record }) {
   )
 }
 
+/* ── 5-Minute Quick Quizzes — live from Supabase ─────────────────────── */
+
+const QUIZ_TOPICS = [
+  { key: 'mixed', name: 'Mixed' },
+  { key: 'synonyms', name: 'Synonyms' },
+  { key: 'antonyms', name: 'Antonyms' },
+  { key: 'direct-indirect-speech', name: 'Direct & Indirect Speech' },
+]
+const QUIZ_LEN = 8
+
+/* what the question asks — the stem is just the word, so name the task */
+const QZ_TASK = {
+  'synonyms': 'Choose the SYNONYM',
+  'antonyms': 'Choose the ANTONYM',
+  'direct-indirect-speech': 'Choose the correct option',
+}
+
 function QuizView() {
   const gate = useGuestGate()
+  const toast = useToast()
+  const [topic, setTopic] = useState('mixed')
+  const [phase, setPhase] = useState('setup')
+  const [questions, setQuestions] = useState([])
   const [idx, setIdx] = useState(0)
   const [pick, setPick] = useState(null)
   const [score, setScore] = useState(0)
-  const q = QUICK_QS[idx]
-  const choose = i => gate('Quick Quizzes', 'answer the quiz', () => {
+  const [loading, setLoading] = useState(false)
+
+  const start = () => {
+    gate('Quick Quizzes', 'take a quick quiz', () => {
+      setLoading(true)
+      const p = topic === 'mixed' ? fetchDailyQuiz(QUIZ_LEN) : fetchQuiz(topic, 200)
+      p.then(({ data }) => {
+        setLoading(false)
+        if (!data || !data.length) { toast('No questions in this topic yet'); return }
+        const shuffled = [...data].sort(() => Math.random() - 0.5).slice(0, QUIZ_LEN)
+        setQuestions(shuffled); setIdx(0); setPick(null); setScore(0); setPhase('quiz')
+      })
+    })
+  }
+
+  const q = phase === 'quiz' ? questions[idx] : null
+  const correctIdx = q ? (q.answer_index != null ? q.answer_index : (q.options || []).indexOf(q.answer)) : -1
+
+  const choose = i => {
     if (pick !== null) return
     setPick(i)
-    if (i === q.a) setScore(s => s + 1)
-    setTimeout(() => { if (idx + 1 < QUICK_QS.length) { setIdx(idx + 1); setPick(null) } }, 800)
-  })
+    if (i === correctIdx) setScore(s => s + 1)
+  }
+  const next = () => {
+    if (idx + 1 < questions.length) { setIdx(idx + 1); setPick(null) }
+    else setPhase('done')
+  }
+
+  if (phase === 'setup') {
+    return (
+      <div className="sk-subgrid">
+        <div className="qz-setup">
+          <div className="qz-setup-t">
+            <b>Pick a topic</b>
+            <span>8 questions · instant feedback · repeat anytime</span>
+          </div>
+          <div className="qz-topics">
+            {QUIZ_TOPICS.map(t => (
+              <button key={t.key} className={'qz-topic' + (topic === t.key ? ' on' : '')} onClick={() => setTopic(t.key)}>{t.name}</button>
+            ))}
+          </div>
+          <button className="btn btn-primary-sm" onClick={start} disabled={loading}>{loading ? 'Loading…' : 'Start quiz'} <ArrowRight size={13} /></button>
+        </div>
+      </div>
+    )
+  }
+
+  if (phase === 'done') {
+    const acc = questions.length ? Math.round((score / questions.length) * 100) : 0
+    return (
+      <div className="sk-subgrid">
+        <div className="qz-done">
+          <Trophy size={22} />
+          <b>{score} / {questions.length}</b>
+          <span>{acc}% accuracy</span>
+          <p>{acc >= 75 ? 'Great job — you have this down.' : acc >= 50 ? 'Solid — review the misses and go again.' : 'Keep practising — run it back.'}</p>
+          <div className="qz-done-btns">
+            <button className="btn btn-outline-sm" onClick={() => setPhase('setup')}>Change topic</button>
+            <button className="btn btn-primary-sm" onClick={start}>Try again</button>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="sk-subgrid">
       <div className="sk-subcard">
-        <p style={{ fontWeight: 600, fontSize: 14, marginBottom: 12 }}>{idx + 1}. {q.q}</p>
-        <div className="ch-opts">
-          {q.o.map((o, i) => {
-            let cls = 'ch-opt'
-            if (pick !== null) { if (i === q.a) cls += ' c'; else if (i === pick) cls += ' w' }
-            return <button key={i} className={cls} onClick={() => choose(i)} disabled={pick !== null}>{o}</button>
+        <div className="qz-top">
+          <span className="qz-tag">{QUIZ_TOPICS.find(t => t.key === topic)?.name}</span>
+          <span className="qz-prog">{idx + 1} / {questions.length} · Score {score}</span>
+        </div>
+        <div className="qz-bar"><i style={{ width: (((idx + (pick !== null ? 1 : 0)) / questions.length) * 100) + '%' }} /></div>
+        <span className="qz-task">{QZ_TASK[q.topic] || 'Choose the correct option'}</span>
+        <p className="qz-q">{q.question}</p>
+        <div className="qz-opts">
+          {q.options.map((o, i) => {
+            let cls = 'qz-opt'
+            if (pick !== null) {
+              if (i === correctIdx) cls += ' c'
+              else if (i === pick) cls += ' w'
+            }
+            return (
+              <button key={i} className={cls} onClick={() => choose(i)} disabled={pick !== null}>
+                <span className="qz-opt-l">{'ABCD'[i]}</span>
+                <span className="qz-opt-t">{o}</span>
+              </button>
+            )
           })}
         </div>
-        <div className="ch-pts">{pick !== null ? (pick === q.a ? <span className="ok">✓ Correct!</span> : <span className="no">Wrong</span>) : `Q ${idx + 1}/2 · Score ${score}`}</div>
+        {pick !== null && (
+          <div className="qz-feedback">
+            <span className={pick === correctIdx ? 'qz-fb ok' : 'qz-fb no'}>{pick === correctIdx ? '✓ Correct!' : '✗ Wrong'}</span>
+            {pick !== correctIdx && <em>Correct answer: {q.options[correctIdx]}</em>}
+            {q.explanation && <p>{q.explanation}</p>}
+            <button className="btn btn-primary-sm" onClick={next}>{idx + 1 < questions.length ? 'Next question' : 'See results'} <ArrowRight size={13} /></button>
+          </div>
+        )}
       </div>
     </div>
   )

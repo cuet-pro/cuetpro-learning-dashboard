@@ -669,3 +669,60 @@
 .mk-rev-a { font: 400 11.5px var(--font-body); color: var(--text-secondary); }
 .mk-rev-a b { color: var(--text); }
 .mk-rev-c { color: var(--success) !important; }
+
+/* ── 5-Minute Quick Quizzes ──────────────────────────────────────────── */
+.qz-setup { display: flex; flex-direction: column; gap: 16px; padding: 18px; border-radius: var(--r-lg);
+  border: 1px solid var(--border); background: var(--card, #fff); }
+.qz-setup-t { display: flex; flex-direction: column; gap: 3px; }
+.qz-setup-t b { font: 700 15px var(--font-body); color: var(--text); }
+.qz-setup-t span { font: 500 12px var(--font-body); color: var(--text-muted); }
+.qz-topics { display: flex; flex-wrap: wrap; gap: 8px; }
+.qz-topic { padding: 8px 15px; border-radius: var(--r-full); border: 1px solid var(--border);
+  background: var(--bg); color: var(--text-secondary); font: 600 12.5px var(--font-body); cursor: pointer;
+  transition: all .14s ease; }
+.qz-topic:hover { border-color: var(--primary); color: var(--primary); transform: translateY(-1px); }
+.qz-topic.on { background: linear-gradient(120deg, var(--primary), var(--primary-hover)); color: #fff; border-color: var(--primary);
+  box-shadow: 0 6px 16px rgba(20,108,78,.26); }
+.qz-setup .btn { align-self: flex-start; }
+
+.qz-done { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 28px 20px;
+  border-radius: var(--r-lg); border: 1px solid var(--border); background: var(--card, #fff); text-align: center; }
+.qz-done svg { color: var(--warning); }
+.qz-done b { font: 800 30px var(--font-body); color: var(--text); }
+.qz-done span { font: 600 13px var(--font-body); color: var(--text-muted); }
+.qz-done p { font: 400 13px var(--font-body); color: var(--text-secondary); margin: 4px 0 8px; }
+.qz-done-btns { display: flex; gap: 8px; }
+
+.qz-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 10px; }
+.qz-tag { font: 600 10.5px var(--font-body); text-transform: uppercase; letter-spacing: .05em;
+  padding: 3px 10px; border-radius: var(--r-full); background: var(--secondary-soft); color: var(--secondary); }
+.qz-prog { font: 600 12px var(--font-body); color: var(--text-muted); }
+.qz-bar { height: 6px; border-radius: 999px; background: var(--bg); overflow: hidden; margin-bottom: 14px; border: 1px solid var(--border); }
+.qz-bar i { display: block; height: 100%; background: linear-gradient(120deg, var(--primary), var(--primary-hover));
+  border-radius: 999px; transition: width .3s ease; }
+.qz-q { font: 600 15px var(--font-body); color: var(--text); line-height: 1.5; margin: 0 0 14px; }
+.qz-task { display: inline-block; margin-bottom: 6px; font: 700 10.5px var(--font-body);
+  text-transform: uppercase; letter-spacing: .06em; color: var(--primary); }
+
+.qz-opts { display: flex; flex-direction: column; gap: 8px; }
+.qz-opt { display: flex; align-items: flex-start; gap: 10px; padding: 11px 14px; border-radius: var(--r-md);
+  border: 1px solid var(--border); background: var(--bg); text-align: left; cursor: pointer;
+  transition: all .12s ease; }
+.qz-opt:hover:not(:disabled) { border-color: var(--primary); background: var(--card, #fff); transform: translateX(2px); }
+.qz-opt:disabled { cursor: default; }
+.qz-opt.c { border-color: var(--success); background: var(--success-soft); }
+.qz-opt.w { border-color: var(--error); background: var(--error-soft); }
+.qz-opt-l { flex: 0 0 auto; width: 22px; height: 22px; border-radius: 6px; display: grid; place-items: center;
+  font: 700 11px var(--font-body); background: var(--card, #fff); border: 1px solid var(--border); color: var(--text-secondary); }
+.qz-opt.c .qz-opt-l { background: var(--success); border-color: var(--success); color: #fff; }
+.qz-opt.w .qz-opt-l { background: var(--error); border-color: var(--error); color: #fff; }
+.qz-opt-t { font: 400 13px var(--font-body); color: var(--text); line-height: 1.5; padding-top: 2px; }
+
+.qz-feedback { display: flex; flex-direction: column; align-items: flex-start; gap: 7px; margin-top: 14px;
+  padding: 12px 14px; border-radius: var(--r-md); background: var(--bg); border: 1px solid var(--border); }
+.qz-fb { font: 700 13px var(--font-body); }
+.qz-fb.ok { color: var(--success); }
+.qz-fb.no { color: var(--error); }
+.qz-feedback em { font: 500 12px var(--font-body); color: var(--text-secondary); font-style: normal; }
+.qz-feedback p { font: 400 12px var(--font-body); color: var(--text-secondary); line-height: 1.5; margin: 0; }
+.qz-feedback .btn { align-self: flex-end; }
