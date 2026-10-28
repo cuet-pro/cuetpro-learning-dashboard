@@ -59,8 +59,8 @@ export async function fetchDailyQuiz(count = 3) {
   const { data, error } = await supabase
     .from('quiz_questions')
     .select('id, topic, question, options, answer, answer_index, explanation')
-    .in('topic', ['synonyms', 'antonyms', 'direct-indirect-speech'])
-    .limit(200)
+    .in('topic', ['synonyms', 'antonyms', 'direct-indirect-speech', 'voice', 'tenses'])
+    .limit(500)
   if (error || !data || data.length < count) return { data: null, error }
   const shuffled = [...data].sort(() => Math.random() - 0.5)
   return { data: shuffled.slice(0, count), error: null }

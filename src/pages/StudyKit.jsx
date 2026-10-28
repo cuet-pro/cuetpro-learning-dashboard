@@ -867,6 +867,8 @@ const QUIZ_TOPICS = [
   { key: 'mixed', name: 'Mixed' },
   { key: 'synonyms', name: 'Synonyms' },
   { key: 'antonyms', name: 'Antonyms' },
+  { key: 'voice', name: 'Active & Passive Voice' },
+  { key: 'tenses', name: 'Tenses' },
   { key: 'direct-indirect-speech', name: 'Direct & Indirect Speech' },
 ]
 const QUIZ_LEN = 8
@@ -875,6 +877,8 @@ const QUIZ_LEN = 8
 const QZ_TASK = {
   'synonyms': 'Choose the SYNONYM',
   'antonyms': 'Choose the ANTONYM',
+  'voice': 'Choose the correct VOICE conversion',
+  'tenses': 'Choose the correct TENSE',
   'direct-indirect-speech': 'Choose the correct option',
 }
 
