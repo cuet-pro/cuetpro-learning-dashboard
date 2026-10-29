@@ -32,9 +32,12 @@ export default function Signup({ step, setStep, onSwitch, onAuthed }) {
   const [loading, setLoading] = useState(false)
 
   const [stream, setStream] = useState('Commerce')
+  const [subjects, setSubjects] = useState([...STREAMS.Commerce])
   const [dream, setDream] = useState('')
   const [target, setTarget] = useState(85)
   const [examDate, setExamDate] = useState('2027-05-15')
+
+  const toggleSubject = s => setSubjects(prev => prev.includes(s) ? prev.filter(x => x !== s) : [...prev, s])
 
   const pwStrong = pw.length >= 8 && /\d/.test(pw)
   const pwHint = !pw ? 'Use 8+ characters with a number.' : pwStrong ? 'Strong enough ✓' : 'Needs 8+ characters and at least one number.'
@@ -53,7 +56,7 @@ export default function Signup({ step, setStep, onSwitch, onAuthed }) {
   }
 
   const completeSignup = skipped => {
-    const base = { name: name.trim(), stream, subjects: [...STREAMS[stream]] }
+    const base = { name: name.trim(), stream, subjects }
     const extra = skipped ? {} : {
       ...(dream.trim() ? { dreamCollege: dream.trim() } : {}),
       targetPercentile: target,
@@ -77,7 +80,7 @@ export default function Signup({ step, setStep, onSwitch, onAuthed }) {
       name: name.trim(),
       mobile,
       stream,
-      subjects: [...STREAMS[stream]],
+      subjects,
       dreamCollege: dream.trim() || null,
       targetPercentile: target,
       examDate,
@@ -171,11 +174,21 @@ export default function Signup({ step, setStep, onSwitch, onAuthed }) {
             <legend className="legend" style={{ marginBottom: 8 }}>Stream</legend>
             <div className="pills">
               {Object.keys(STREAMS).map(n => (
-                <button key={n} type="button" className="pill" aria-pressed={stream === n} onClick={() => setStream(n)}>{n}</button>
+                <button key={n} type="button" className="pill" aria-pressed={stream === n} onClick={() => { setStream(n); setSubjects([...STREAMS[n]]) }}>{n}</button>
               ))}
             </div>
-            <div className="chips">{STREAMS[stream].map(s => <span key={s} className="chip">{s}</span>)}</div>
           </fieldset>
+
+          <div className="field">
+            <label>Select your subjects</label>
+            <div className="chips">
+              {STREAMS[stream].map(s => (
+                <button key={s} type="button" className={'chip' + (subjects.includes(s) ? '' : ' off')} aria-pressed={subjects.includes(s)} onClick={() => toggleSubject(s)}>{s}</button>
+              ))}
+            </div>
+            <span className="hint">Tap to select the subjects you&apos;re taking in CUET.</span>
+            {!subjects.length && <span className="err">Select at least one subject.</span>}
+          </div>
 
           <div className="field">
             <label htmlFor="sDream">Dream college</label>
