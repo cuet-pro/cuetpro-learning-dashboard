@@ -9,7 +9,7 @@ const FEATURES = [
 
 const STEPS = [
   { title: 'Create your account', sub: 'Name, email and mobile' },
-  { title: 'Set your goal', sub: 'Stream, dream college, target percentile' },
+  { title: 'Set your goal', sub: 'Stream, dream college, target score' },
   { title: 'Start your first plan', sub: "Your dashboard opens with today's focus" },
 ]
 

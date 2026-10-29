@@ -78,7 +78,7 @@ export async function syncProfile(profile) {
     stream: profile?.stream ?? null,
     subjects: profile?.subjects ?? [],
     dream_college: profile?.dreamCollege ?? null,
-    target_percentile: profile?.targetPercentile ?? null,
+    target_score: profile?.targetScore ?? null,
     exam_date: profile?.examDate ?? null,
     updated_at: new Date().toISOString(),
   })

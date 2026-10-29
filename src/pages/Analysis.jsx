@@ -122,7 +122,7 @@ export default function Analysis({ onNavigate }) {
         ))}
       </div>
 
-      {tab === 'overview' && <OverviewTab subject={scope} target={profile.targetPercentile} dt={dt} onNavigate={onNavigate} />}
+      {tab === 'overview' && <OverviewTab subject={scope} targetScore={profile.targetScore} dt={dt} onNavigate={onNavigate} />}
       {tab === 'swot' && <SwotTab subject={scope} />}
       {tab === 'mocks' && <MockPapersTab subject={scope} onNavigate={onNavigate} />}
       {tab === 'boost' && <BoostTab subject={scope} single={subjectsFor(scope).length === 1} />}
@@ -131,7 +131,7 @@ export default function Analysis({ onNavigate }) {
 }
 
 /* ═══════════ 1. Overview ═══════════ */
-function OverviewTab({ subject, target, dt, onNavigate }) {
+function OverviewTab({ subject, targetScore, dt, onNavigate }) {
   const subs = selectedSubjects(subject)
   const isAll = subs.length > 1
   const [showSkills, setShowSkills] = useState(false)
@@ -175,7 +175,7 @@ function OverviewTab({ subject, target, dt, onNavigate }) {
         <div className="metric-card">
           <span className="metric-label">Current percentile</span>
           <b className="metric-value">{pct1(isAll ? OVERALL.percentile : OVERALL.percentile - 8)}%ile</b>
-          <span className="metric-sub">target {target}%ile</span>
+          <span className="metric-sub">target {targetScore}/1000</span>
         </div>
         <div className="metric-card">
           <span className="metric-label">Avg time per question</span>

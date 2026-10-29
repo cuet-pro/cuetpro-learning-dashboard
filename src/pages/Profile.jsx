@@ -13,7 +13,7 @@ export default function Profile() {
   const [profile, save] = useProfile()
   const [draft, setDraft] = useState({
     dreamCollege: profile.dreamCollege,
-    targetPercentile: profile.targetPercentile,
+    targetScore: profile.targetScore,
     examDate: profile.examDate,
   })
   const [saved, setSaved] = useState(false)
@@ -71,8 +71,8 @@ export default function Profile() {
             <input value={draft.dreamCollege} onChange={e => setDraft(d => ({ ...d, dreamCollege: e.target.value }))} placeholder="e.g. Shri Ram College of Commerce (SRCC)" />
           </label>
           <label>
-            <span>Target percentile</span>
-            <input type="number" min="1" max="100" value={draft.targetPercentile} onChange={e => setDraft(d => ({ ...d, targetPercentile: Number(e.target.value) }))} />
+            <span>Target score (out of 1000)</span>
+            <input type="number" min="0" max="1000" value={draft.targetScore} onChange={e => setDraft(d => ({ ...d, targetScore: Number(e.target.value) }))} />
           </label>
           <label>
             <span>Exam date</span>
@@ -165,7 +165,7 @@ export default function Profile() {
         )}
       </section>
 
-      <p className="pf-foot">Stream · target college · target percentile · exam date are stored once here and read by Dashboard, Analysis and Study Kit.</p>
+      <p className="pf-foot">Stream · target college · target score · exam date are stored once here and read by Dashboard, Analysis and Study Kit.</p>
     </div>
   )
 }

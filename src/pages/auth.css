@@ -118,7 +118,7 @@
 .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
 .range-box { height: 44px; display: flex; align-items: center; gap: 12px; padding: 0 14px; border: 1px solid var(--border-strong); border-radius: var(--r-md); background: var(--surface); }
 .range-box input { flex: 1; accent-color: var(--primary); }
-.range-box output { font-family: var(--font-mono); font-weight: 600; font-size: 14px; min-width: 28px; text-align: right; }
+.range-box output { font-family: var(--font-mono); font-weight: 600; font-size: 14px; min-width: 44px; text-align: right; }
 .row-btns { display: flex; gap: 12px; }
 .row-btns .btn-outline { padding: 0 20px; }
 .row-btns .btn-primary { flex: 1; }

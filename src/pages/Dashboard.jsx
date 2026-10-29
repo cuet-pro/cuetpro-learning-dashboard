@@ -516,7 +516,7 @@ export default function Dashboard({ onNavigate }) {
         <div className="m-cols">
           <div><span className="m-label">DID YOU KNOW</span><p>One of DU's oldest commerce colleges — routinely posts the highest CUET cutoffs for B.Com (Hons) in the country.</p></div>
           <div><span className="m-label">IN-FLIGHT QUOTE</span><p><Quote size={12} /> "Your Class 12 board score is one input. Your consistency is the bigger one."</p></div>
-          <div><span className="m-label">TARGET SCORE</span><p>B.Com (Hons) · last year, Round 1<br /><b className="m-score">{profile.targetPercentile}%ile</b></p>
+          <div><span className="m-label">TARGET SCORE</span><p>B.Com (Hons) · last year, Round 1<br /><b className="m-score">{profile.targetScore}/1000</b></p>
             <button className="btn btn-outline-sm" onClick={() => { setShowManifest(false); onNavigate('explorer') }}>Explore colleges <ArrowRight size={13} /></button></div>
         </div>
       </Modal>

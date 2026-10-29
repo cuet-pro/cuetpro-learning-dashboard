@@ -1,4 +1,4 @@
-/* Profile store — SINGLE source of truth for stream, dream college, target percentile, exam date.
+/* Profile store — SINGLE source of truth for stream, subjects, dream college, target score (out of 1000), exam date.
  * Every tab reads from here (Study Kit stream, Smart Revision countdown, Analysis target line,
  * Dashboard manifestation board). Change once in Profile → propagates everywhere. */
 
@@ -19,7 +19,7 @@ const DEFAULTS = {
   gender: 'not-set',
   subjects: [...STREAMS.Commerce],
   dreamCollege: 'Shri Ram College of Commerce (SRCC)',
-  targetPercentile: 85,
+  targetScore: 700,
   examDate: '2027-05-15',
   notif: { streak: true, revision: true, mocks: true },
 }
@@ -27,7 +27,11 @@ const DEFAULTS = {
 export function loadProfile() {
   try {
     const raw = JSON.parse(localStorage.getItem(KEY) || '{}')
-    return { ...DEFAULTS, ...raw, notif: { ...DEFAULTS.notif, ...(raw.notif || {}) } }
+    /* migrate profiles saved before the switch from percentile → score out of 1000 */
+    const migrated = (raw.targetScore == null && raw.targetPercentile != null)
+      ? { ...raw, targetScore: Math.round(raw.targetPercentile * 10) }
+      : raw
+    return { ...DEFAULTS, ...migrated, notif: { ...DEFAULTS.notif, ...(migrated.notif || {}) } }
   } catch { return { ...DEFAULTS } }
 }
 

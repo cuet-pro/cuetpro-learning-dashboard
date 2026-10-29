@@ -34,8 +34,7 @@ export default function Signup({ step, setStep, onSwitch, onAuthed }) {
   const [stream, setStream] = useState('Commerce')
   const [subjects, setSubjects] = useState([...STREAMS.Commerce])
   const [dream, setDream] = useState('')
-  const [target, setTarget] = useState(85)
-  const [examDate, setExamDate] = useState('2027-05-15')
+  const [score, setScore] = useState(700)
 
   const toggleSubject = s => setSubjects(prev => prev.includes(s) ? prev.filter(x => x !== s) : [...prev, s])
 
@@ -59,8 +58,7 @@ export default function Signup({ step, setStep, onSwitch, onAuthed }) {
     const base = { name: name.trim(), stream, subjects }
     const extra = skipped ? {} : {
       ...(dream.trim() ? { dreamCollege: dream.trim() } : {}),
-      targetPercentile: target,
-      ...(examDate ? { examDate } : {}),
+      targetScore: score,
     }
     saveProfile({ ...loadProfile(), ...base, ...extra })
     /* signIn fires on "Go to my dashboard" — calling it here would un-gate the app
@@ -82,8 +80,7 @@ export default function Signup({ step, setStep, onSwitch, onAuthed }) {
       stream,
       subjects,
       dreamCollege: dream.trim() || null,
-      targetPercentile: target,
-      examDate,
+      targetScore: score,
     }
     // Create the Supabase account (auto-confirms email → session lands here)
     const res = await signUp({ email: email.trim(), password: pw, name: name.trim(), mobile })
@@ -199,15 +196,10 @@ export default function Signup({ step, setStep, onSwitch, onAuthed }) {
             <span className="hint">Suggestions come from the DU colleges in College Explorer.</span>
           </div>
 
-          <div className="grid2">
-            <div className="field">
-              <label htmlFor="sTarget">Target percentile</label>
-              <div className="range-box"><input id="sTarget" type="range" min="50" max="100" value={target} onChange={e => setTarget(+e.target.value)} /><output htmlFor="sTarget">{target}</output></div>
-            </div>
-            <div className="field">
-              <label htmlFor="sExam">Exam date</label>
-              <input className="input" id="sExam" type="date" value={examDate} onChange={e => setExamDate(e.target.value)} />
-            </div>
+          <div className="field">
+            <label htmlFor="sTarget">Target score <span style={{ fontWeight: 500, color: 'var(--text-secondary)' }}>(out of 1000)</span></label>
+            <div className="range-box"><input id="sTarget" type="range" min="0" max="1000" step="10" value={score} onChange={e => setScore(+e.target.value)} /><output htmlFor="sTarget">{score}</output></div>
+            <span className="hint">The score you&apos;re aiming for in CUET.</span>
           </div>
 
           <div className="row-btns">
