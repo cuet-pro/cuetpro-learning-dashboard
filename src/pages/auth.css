@@ -165,14 +165,3 @@ button:focus-visible, a:focus-visible, input:focus-visible { outline: 2px solid 
   .input { font-size: 16px; } /* stops iOS zoom on focus */
 }
 @media (max-width: 420px) { .grid2 { grid-template-columns: 1fr; } .pills { grid-template-columns: 1fr 1fr 1fr; } }
-/* ── Password reset — plain centered card (no brand panel) ── */
-.auth-reset { background: var(--bg); }
-.auth-reset .form-side { flex: 1 1 100%; }
-.auth-reset .form-wrap {
-  border: 1px solid var(--border);
-  background: var(--surface, #fff);
-  padding: 32px;
-  border-radius: var(--r-lg);
-  box-shadow: var(--shadow-md);
-}
-.auth-reset .head h2 { font-size: 24px; }

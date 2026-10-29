@@ -19,12 +19,8 @@ supabase.auth.getSession().then(({ data }) => {
   cachedSession = data.session || null
   window.dispatchEvent(new Event(EVENT))
 })
-/* Tracks the PASSWORD_RECOVERY event so App can show the "set new password"
-   screen instead of the shell while the recovery session is active. */
-let recoveryMode = false
-supabase.auth.onAuthStateChange((event, session) => {
+supabase.auth.onAuthStateChange((_event, session) => {
   cachedSession = session
-  if (event === 'PASSWORD_RECOVERY') recoveryMode = true
   window.dispatchEvent(new Event(EVENT))
 })
 
@@ -67,28 +63,6 @@ export async function signInWithGoogle() {
 export async function signOut() {
   await supabase.auth.signOut()
   localStorage.removeItem(GUEST_KEY)
-  window.dispatchEvent(new Event(EVENT))
-}
-
-/* ── Password reset ── */
-export async function sendPasswordReset(email) {
-  const { error } = await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: window.location.origin + '/',
-  })
-  return { error }
-}
-
-export async function updatePassword(password) {
-  const { error } = await supabase.auth.updateUser({ password })
-  return { error }
-}
-
-export function isPasswordRecovery() {
-  return recoveryMode
-}
-
-export function clearPasswordRecovery() {
-  recoveryMode = false
   window.dispatchEvent(new Event(EVENT))
 }
 
@@ -146,9 +120,8 @@ export function isGuest() {
 export function useAuth() {
   const [session, setSession] = useState(getSession)
   const [guest, setGuest] = useState(isGuest)
-  const [recovery, setRecovery] = useState(isPasswordRecovery)
   useEffect(() => {
-    const h = () => { setSession(getSession()); setGuest(isGuest()); setRecovery(isPasswordRecovery()) }
+    const h = () => { setSession(getSession()); setGuest(isGuest()) }
     window.addEventListener(EVENT, h)
     return () => window.removeEventListener(EVENT, h)
   }, [])
@@ -159,12 +132,8 @@ export function useAuth() {
     signOut,
     syncProfile,
     friendlyAuthError,
-    sendPasswordReset,
-    updatePassword,
-    clearPasswordRecovery,
     guest,
     enterGuest,
     exitGuest,
-    recovery,
   }]
 }

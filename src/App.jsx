@@ -9,7 +9,6 @@ import ChillZone from './pages/ChillZone.jsx'
 import Explorer from './pages/Explorer.jsx'
 import Profile from './pages/Profile.jsx'
 import Auth from './pages/Auth.jsx'
-import ResetPassword from './pages/auth/ResetPassword.jsx'
 import AppShell, { ToastProvider } from './components/shell/Shell.jsx'
 import './tokens.css'
 import './shell.css'
@@ -31,19 +30,10 @@ function bootPage() {
 }
 
 export default function App() {
-  const [session, { guest, enterGuest, recovery }] = useAuth()
+  const [session, { guest, enterGuest }] = useAuth()
   const [page, setPage] = useState(bootPage)
   const Page = PAGES[page]
   const navigate = p => { consumeNotesDeepLink(); setPage(p) }
-
-  /* Password reset (after the emailed link) → dedicated screen. */
-  if (recovery) {
-    return (
-      <ToastProvider>
-        <ResetPassword />
-      </ToastProvider>
-    )
-  }
 
   /* Neither session nor guest → full-screen Auth */
   if (!session && !guest) {
