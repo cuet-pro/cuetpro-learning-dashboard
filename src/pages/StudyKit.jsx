@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { NotebookText, Layers, Timer, FileQuestion, Archive, ArrowLeft, ArrowRight, PlayCircle, Video, Sigma, Zap, ChevronRight, ChevronDown, CheckSquare, Search, GraduationCap, Highlighter, FlaskConical, Settings, Sun, Moon, BookOpen, Lightbulb, AlertTriangle, RotateCcw, Clock, XCircle, Trophy, CheckCircle2 } from 'lucide-react'
+import { NotebookText, Layers, Timer, FileQuestion, Archive, ArrowLeft, ArrowRight, PlayCircle, Video, Sigma, Zap, ChevronRight, ChevronDown, CheckSquare, Search, GraduationCap, Highlighter, FlaskConical, Settings, Shuffle, Sun, Moon, BookOpen, Lightbulb, AlertTriangle, RotateCcw, Clock, XCircle, Trophy, CheckCircle2 } from 'lucide-react'
 import { weakTopicNames } from '../lib/analysisData'
 import { ECON_UNITS } from '../data/econNotes'
 import { GEO_UNITS } from '../data/geoNotes'
@@ -656,14 +656,30 @@ function NcertView({ stream, subject }) {
   )
 }
 
+/* Front prompt — vocab decks ("Antonym of ABATE") show the target word big and accent. */
+function FrontContent({ front }) {
+  const m = String(front || '').trim().match(/^(antonym|synonym)\s+of\s+(.+)$/i)
+  if (m) {
+    return (
+      <div className="q">
+        <span className="q-label">{m[1][0].toUpperCase() + m[1].slice(1).toLowerCase()} of</span>
+        <b className="q-word">{m[2].trim()}</b>
+      </div>
+    )
+  }
+  return <div className="q">{front}</div>
+}
+
 function FlashView({ record }) {
   const gate = useGuestGate()
   const toast = useToast()
   const [topics, setTopics] = useState([])
   const [topic, setTopic] = useState(null)
   const [cards, setCards] = useState([])
+  const [order, setOrder] = useState([])
   const [idx, setIdx] = useState(0)
   const [flip, setFlip] = useState(false)
+  const [learned, setLearned] = useState(() => new Set())
 
   useEffect(() => {
     let alive = true
@@ -676,39 +692,110 @@ function FlashView({ record }) {
   useEffect(() => {
     if (!topic) return
     let alive = true
-    fetchFlashcards(topic, 100).then(({ data }) => {
-      if (alive && data && data.length) { setCards(data); setIdx(0); setFlip(false) }
+    fetchFlashcards(topic, 200).then(({ data }) => {
+      if (alive && data && data.length) {
+        setCards(data)
+        setOrder(data.map((_, i) => i))
+        setIdx(0); setFlip(false); setLearned(new Set())
+      }
     })
     return () => { alive = false }
   }, [topic])
 
-  const c = cards[idx]
-  const total = cards.length
+  const total = order.length
+  const pos = order[idx]
+  const c = cards[pos]
+  const deckName = (topics.find(t => t.topic === topic) || {}).name || topic
+  const learnedCount = learned.size
+  const pct = total ? Math.round(learnedCount / total * 100) : 0
+  const done = total > 0 && learnedCount === total
+
+  const go = d => { if (!total) return; setFlip(false); setIdx(i => (i + d + total) % total) }
+  const doFlip = () => gate('Flashcards', 'reveal the answer', () => setFlip(f => !f))
+  const rate = know => gate('Flashcards', know ? 'mark a card learned' : 'mark a card to review', () => {
+    if (!c) return
+    setLearned(prev => { const s = new Set(prev); know ? s.add(c.id) : s.delete(c.id); return s })
+    if (know) { record({ title: 'Flashcards', detail: deckName + ' · card ' + (pos + 1), pct: 30 }); toast('Marked learned — saved to progress') }
+    setFlip(false)
+    setIdx(i => (i + 1) % total)
+  })
+  const shuffle = () => {
+    const o = [...order]
+    for (let i = o.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [o[i], o[j]] = [o[j], o[i]] }
+    setOrder(o); setIdx(0); setFlip(false)
+  }
+  const reset = () => { setLearned(new Set()); setIdx(0); setFlip(false); setOrder(cards.map((_, i) => i)) }
+
+  /* keyboard: ← → navigate, Space/Enter flip */
+  useEffect(() => {
+    if (!total) return
+    const h = e => {
+      if (e.target.closest('input, select, textarea, button')) return
+      if (e.key === 'ArrowRight') { setFlip(false); setIdx(i => (i + 1) % total) }
+      else if (e.key === 'ArrowLeft') { setFlip(false); setIdx(i => (i - 1 + total) % total) }
+      else if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); setFlip(f => !f) }
+    }
+    window.addEventListener('keydown', h)
+    return () => window.removeEventListener('keydown', h)
+  }, [total])
+
+  if (!topics.length) return <p className="muted-empty">Loading flashcards…</p>
 
   return (
-    <div className="sk-subgrid">
-      <div className="fc-decks">
-        <label className="fc-decks-lbl">Deck</label>
-        <select className="fc-decks-sel" value={topic || ''} onChange={e => setTopic(e.target.value)}>
-          {topics.map(t => <option key={t.topic} value={t.topic}>{t.name}{t.n ? ` (${t.n})` : ''}</option>)}
-        </select>
+    <div className="fc-wrap">
+      {/* Deck rail */}
+      <div className="fc-deckrail">
+        {topics.map(t => (
+          <button key={t.topic} className={'fc-deck' + (t.topic === topic ? ' on' : '')} onClick={() => setTopic(t.topic)}>
+            {t.name}<span className="n">{t.n || 0}</span>
+          </button>
+        ))}
       </div>
-      {c ? (
+
+      {/* Progress header */}
+      <div className="fc-head">
+        <span className="fc-count-badge"><b>{Math.min(idx + 1, total)}</b> / {total} cards</span>
+        <span className="fc-learned"><CheckCircle2 size={14} /> {learnedCount} learned</span>
+        <span className="fc-pct">{pct}%</span>
+        <button className="fc-nav fc-shuffle" onClick={shuffle} title="Shuffle deck"><Shuffle size={15} /> Shuffle</button>
+      </div>
+      <div className="fc-progress"><i style={{ width: pct + '%' }} /></div>
+
+      {done ? (
+        <div className="fc-done">
+          <div className="tick"><Trophy size={30} /></div>
+          <h4>Deck complete!</h4>
+          <p>You have marked all {total} cards as learned in {deckName}.</p>
+          <button className="btn btn-primary-sm" onClick={reset}><RotateCcw size={14} /> Review again</button>
+        </div>
+      ) : c ? (
         <>
-          <div className={`sk-flash ${flip ? 'flip' : ''}`} onClick={() => gate('Flashcards', 'flip the card', () => setFlip(f => !f))}>
-            <div className="sk-fc-inner">
-              <div className="sk-fc-face sk-fc-front"><b>{c.front}</b><span>tap to flip</span></div>
-              <div className="sk-fc-face sk-fc-back"><p>{c.back}</p><span>tap to flip back</span></div>
+          <div className={'fc-card' + (flip ? ' flip' : '')} onClick={doFlip}>
+            <div className="fc-inner">
+              <div className="fc-face fc-front">
+                <span className="tag">{deckName}</span>
+                <FrontContent front={c.front} />
+                <span className="hint"><Layers size={14} /> Tap to reveal</span>
+              </div>
+              <div className="fc-face fc-back">
+                <span className="tag">Answer</span>
+                {c.back && c.back.trim()
+                  ? <div className="a">{c.back}</div>
+                  : <div className="a muted">This card is a rule to read and review — no separate answer.</div>}
+                <span className="hint">Tap to flip back</span>
+              </div>
             </div>
           </div>
-          <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-            <span className="fc-count">{idx + 1} / {total}</span>
-            <button className="btn btn-outline-sm" onClick={() => gate('Flashcards', 'go to the next card', () => { setFlip(false); setIdx((idx + 1) % total) })}>Next card</button>
-            <button className="btn btn-primary-sm" onClick={() => gate('Flashcards', 'mark a card learned', () => { record({ title: 'Flashcards', detail: 'deck · card ' + (idx + 1), pct: 30 }); toast('Marked learned — saved to progress') })}>Mark learned</button>
+
+          <div className="fc-controls">
+            <button className="fc-nav" onClick={() => go(-1)} disabled={total <= 1}><ArrowLeft size={15} /> Prev</button>
+            <button className="fc-rate again" onClick={() => rate(false)}><RotateCcw size={15} /> Still learning</button>
+            <button className="fc-rate got" onClick={() => rate(true)}><CheckCircle2 size={15} /> Got it</button>
+            <button className="fc-nav" onClick={() => go(1)} disabled={total <= 1}>Next <ArrowRight size={15} /></button>
           </div>
         </>
       ) : (
-        <p className="muted-empty">Loading flashcards…</p>
+        <p className="muted-empty">No cards in this deck yet.</p>
       )}
     </div>
   )
