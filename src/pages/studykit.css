@@ -333,6 +333,78 @@
 .pq-meta { display: flex; gap: 6px; flex-wrap: wrap; }
 .pq-meta span { font: 700 10.5px var(--font-body); text-transform: uppercase; letter-spacing: .05em; color: var(--text-muted); background: var(--bg); border: 1px solid var(--border); border-radius: var(--r-full); padding: 3px 10px; }
 
+/* PYQ exam attempt — instructions */
+.pq-inst { display: flex; flex-direction: column; gap: 16px; padding: 22px; border-radius: var(--r-lg); border: 1px solid var(--border); background: var(--card, #fff); }
+.pq-inst h3 { font: 800 17px var(--font-display); color: var(--text); }
+.pq-inst-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 10px; }
+.pq-inst-cell { display: flex; flex-direction: column; gap: 2px; padding: 12px; border-radius: var(--r-md); border: 1px solid var(--border); background: var(--bg); text-align: center; }
+.pq-inst-cell b { font: 800 18px var(--font-body); color: var(--primary); }
+.pq-inst-cell span { font: 600 10.5px var(--font-body); text-transform: uppercase; letter-spacing: .05em; color: var(--text-muted); }
+.pq-inst-secs { display: flex; flex-wrap: wrap; gap: 7px; align-items: center; }
+.pq-inst-lbl { font: 700 11px var(--font-body); text-transform: uppercase; letter-spacing: .06em; color: var(--text-muted); margin-right: 2px; }
+.pq-inst-sec { font: 600 12px var(--font-body); color: var(--text-secondary); background: var(--secondary-soft); border-radius: var(--r-full); padding: 5px 12px; }
+.pq-rules { display: flex; flex-direction: column; gap: 6px; padding-left: 18px; }
+.pq-rules li { font: 400 13px var(--font-body); color: var(--text-secondary); line-height: 1.5; }
+.pq-inst .btn { align-self: flex-start; padding: 0 24px; }
+
+/* layout: sticky palette (left) + question */
+.pq-layout { display: grid; grid-template-columns: 200px minmax(0, 1fr); gap: 12px; align-items: start; }
+.pq-palette { display: flex; flex-wrap: wrap; gap: 6px; padding: 12px; border-radius: var(--r-md); border: 1px solid var(--border); background: var(--surface); position: sticky; top: 12px; max-height: 70vh; overflow-y: auto; }
+.pq-pal { width: 32px; height: 32px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); font: 700 11px var(--font-mono); color: var(--text-muted); position: relative; cursor: pointer; transition: all .12s; }
+.pq-pal:hover { border-color: var(--primary); color: var(--primary); }
+.pq-pal.visit { background: var(--surface); border-color: var(--error); color: var(--error); }
+.pq-pal.ans { background: var(--success-soft); border-color: var(--success); color: var(--success); }
+.pq-pal.mark { background: var(--violet-soft); border-color: var(--violet); color: var(--violet); }
+.pq-pal.ansmark { background: var(--violet-soft); border-color: var(--violet); color: var(--violet); }
+.pq-pal.cur { outline: 2px solid var(--primary); outline-offset: 1px; }
+.pq-dot { position: absolute; top: 3px; right: 3px; width: 7px; height: 7px; border-radius: 50%; background: var(--success); }
+
+/* submit modal */
+.pq-modal-backdrop { position: fixed; inset: 0; background: rgba(10, 14, 20, 0.5); display: grid; place-items: center; z-index: 1000; padding: 20px; }
+.pq-modal { width: 100%; max-width: 420px; background: var(--surface); border-radius: var(--r-lg); padding: 22px; display: flex; flex-direction: column; gap: 14px; box-shadow: var(--shadow-lg); }
+.pq-modal h4 { font: 800 17px var(--font-display); color: var(--text); }
+.pq-modal-sub { font: 400 13px var(--font-body); color: var(--text-secondary); }
+.pq-submit-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.pq-submit-cell { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 12px 8px; border-radius: var(--r-md); border: 1px solid var(--border); background: var(--bg); }
+.pq-submit-cell b { font: 800 20px var(--font-body); }
+.pq-submit-cell span { font: 600 10px var(--font-body); text-transform: uppercase; letter-spacing: .05em; color: var(--text-muted); }
+.pq-submit-cell.ans b { color: var(--success); }
+.pq-submit-cell.unans b { color: var(--error); }
+.pq-submit-cell.mark b { color: var(--violet); }
+.pq-submit-cell.nv b { color: var(--text-muted); }
+.pq-submit-btns { display: flex; gap: 8px; justify-content: flex-end; }
+
+/* result extras */
+.pq-result-btns { display: flex; gap: 8px; flex-wrap: wrap; }
+.pq-topics { display: flex; flex-direction: column; gap: 7px; padding: 16px; border-radius: var(--r-lg); border: 1px solid var(--border); background: var(--card, #fff); }
+.pq-topic-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(90px, 160px) 80px; gap: 10px; align-items: center; padding: 7px 0; border-bottom: 1px solid var(--border); }
+.pq-topic-row:last-child { border-bottom: 0; }
+.pq-topic-row.weak .pq-topic-name { color: var(--error); font-weight: 700; }
+.pq-topic-name { font: 500 12.5px var(--font-body); color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pq-topic-bar { height: 7px; border-radius: 999px; background: var(--bg); overflow: hidden; }
+.pq-topic-bar i { display: block; height: 100%; border-radius: 999px; background: linear-gradient(90deg, var(--primary), var(--primary-hover)); }
+.pq-topic-row.weak .pq-topic-bar i { background: linear-gradient(90deg, var(--error), #f09a90); }
+.pq-topic-acc { font: 700 11px var(--font-mono); color: var(--text-muted); text-align: right; }
+.pq-weak-hint { display: flex; align-items: center; gap: 6px; font: 500 12px var(--font-body); color: var(--warning); margin-top: 4px; }
+.pq-expl { font: 400 11.5px var(--font-body); color: var(--text-muted); line-height: 1.5; display: block; margin-top: 2px; }
+
+/* my attempts strip */
+.pq-attempts { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding: 10px 12px; border-radius: var(--r-md); border: 1px solid var(--border); background: var(--surface); }
+.pq-attempts-lbl { font: 700 11px var(--font-body); text-transform: uppercase; letter-spacing: .06em; color: var(--text-muted); margin-right: 2px; }
+.pq-attempt { display: inline-flex; align-items: center; gap: 8px; padding: 7px 12px; border-radius: var(--r-full); border: 1px solid var(--border); background: var(--bg); cursor: pointer; transition: all .14s; }
+.pq-attempt:hover { border-color: var(--primary); }
+.pq-attempt-name { font: 600 12px var(--font-body); color: var(--text); }
+.pq-attempt-score { font: 700 12px var(--font-mono); color: var(--primary); }
+.pq-attempt-date { font: 500 11px var(--font-body); color: var(--text-muted); }
+.pq-attempt-rev { font: 700 11px var(--font-body); color: var(--violet); }
+
+@media (max-width: 760px) {
+  .pq-layout { grid-template-columns: 1fr; }
+  .pq-palette { position: static; max-height: none; }
+  .pq-topic-row { grid-template-columns: minmax(0, 1fr) 70px; }
+  .pq-topic-bar { display: none; }
+}
+
 @media (max-width: 640px) {
   .pyq-row { grid-template-columns: 30px minmax(0, 1fr) auto; }
   .pyq-row-qs { display: none; }

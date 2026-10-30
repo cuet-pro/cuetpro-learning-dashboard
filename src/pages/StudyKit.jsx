@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { NotebookText, Layers, Timer, FileQuestion, Archive, ArrowLeft, ArrowRight, PlayCircle, Video, Sigma, Zap, ChevronRight, ChevronDown, Search, GraduationCap, Highlighter, FlaskConical, Settings, Shuffle, Sun, Moon, BookOpen, Lightbulb, AlertTriangle, RotateCcw, Clock, XCircle, Trophy, CheckCircle2 } from 'lucide-react'
 import { ECON_UNITS } from '../data/econNotes'
 import { GEO_UNITS } from '../data/geoNotes'
@@ -1087,13 +1087,25 @@ function QuizView() {
 
 /* ── PYQ: live papers from Supabase, grouped by year ── */
 
+const PQ_CORRECT = 5
+const PQ_WRONG = -1
+const PQ_LETTERS = 'ABCD'
+const PQ_ATTEMPTS_KEY = 'cp_pyq_attempts'
+
+function loadPyqAttempts() {
+  try { return JSON.parse(localStorage.getItem(PQ_ATTEMPTS_KEY) || '[]') } catch { return [] }
+}
+function savePyqAttempts(list) {
+  try { localStorage.setItem(PQ_ATTEMPTS_KEY, JSON.stringify(list)) } catch { /* ignore */ }
+}
+
 function PyqRow({ p, onAttempt }) {
   const ShiftIcon = p.shift === 1 ? Sun : Moon
   return (
     <div className="pyq-row">
       <span className={'pyq-row-shift ' + (p.shift === 1 ? 'day' : 'eve')}><ShiftIcon size={15} /></span>
       <span className="pyq-row-date">{p.date} · Shift {p.shift}</span>
-      <span className="pyq-row-qs">{p.total_questions} Qs</span>
+      <span className="pyq-row-qs">{p.total_questions} Qs · {p.duration_min} min · {p.total_marks} marks</span>
       <span className="pyq-row-action">
         <button className="btn btn-outline-sm" onClick={onAttempt}>Attempt</button>
       </span>
@@ -1101,80 +1113,277 @@ function PyqRow({ p, onAttempt }) {
   )
 }
 
-function PaperAttempt({ paper, onBack }) {
+function PyqResult({ paper, answers, summary, onBack, onRetry }) {
   const qs = paper.questions || []
+  const topicStats = useMemo(() => {
+    const m = new Map()
+    qs.forEach(q => {
+      if (!m.has(q.topic)) m.set(q.topic, { topic: q.topic, total: 0, correct: 0 })
+      const t = m.get(q.topic)
+      t.total++
+      const a = answers[q.num]
+      if (a && PQ_LETTERS.indexOf(a) === q.answer_index) t.correct++
+    })
+    return [...m.values()].map(t => ({ ...t, acc: t.total ? Math.round(t.correct / t.total * 100) : 0 })).sort((a, b) => a.acc - b.acc)
+  }, [qs, answers])
+  const weakest = topicStats.filter(t => t.acc < 60).slice(0, 3)
+
+  return (
+    <div className="sk-subgrid">
+      <div className="mk-result">
+        <div className="mk-score">
+          <Trophy size={20} />
+          <b>{summary.marks}</b>
+          <span>/ {summary.totalMarks} marks</span>
+        </div>
+        <div className="mk-stats">
+          <div className="mk-stat ok"><CheckCircle2 size={14} /><b>{summary.c}</b><span>Correct</span></div>
+          <div className="mk-stat no"><XCircle size={14} /><b>{summary.w}</b><span>Wrong</span></div>
+          <div className="mk-stat sk"><b>{summary.u}</b><span>Skipped</span></div>
+          <div className="mk-stat pct"><b>{summary.acc}%</b><span>Accuracy</span></div>
+          <div className="mk-stat"><b>{fmtClock(summary.timeTaken)}</b><span>Time</span></div>
+        </div>
+        <div className="pq-result-btns">
+          <button className="btn btn-primary-sm" onClick={onRetry}><RotateCcw size={13} /> Retry paper</button>
+          <button className="btn btn-outline-sm" onClick={onBack}><ArrowLeft size={13} /> Back to papers</button>
+        </div>
+      </div>
+
+      <div className="pq-topics">
+        <b className="mk-review-h">Topic-wise accuracy</b>
+        {topicStats.map(t => {
+          const weak = weakest.some(w => w.topic === t.topic)
+          return (
+            <div className={'pq-topic-row' + (weak ? ' weak' : '')} key={t.topic}>
+              <span className="pq-topic-name">{t.topic}</span>
+              <span className="pq-topic-bar"><i style={{ width: t.acc + '%' }} /></span>
+              <span className="pq-topic-acc">{t.correct}/{t.total} · {t.acc}%</span>
+            </div>
+          )
+        })}
+        {weakest.length > 0 && (
+          <p className="pq-weak-hint"><AlertTriangle size={13} /> Weakest: {weakest.map(t => t.topic).join(', ')} — practise these topics.</p>
+        )}
+      </div>
+
+      <div className="mk-review">
+        <b className="mk-review-h">Answer review</b>
+        {qs.map(q => {
+          const a = answers[q.num]
+          const ok = a && PQ_LETTERS.indexOf(a) === q.answer_index
+          const cls = a ? (ok ? ' ok' : ' no') : ' sk'
+          return (
+            <div className={'mk-rev' + cls} key={q.num}>
+              <span className="mk-rev-n">Q{q.num}</span>
+              <div className="mk-rev-b">
+                <p>{q.question}</p>
+                <span className="mk-rev-a">
+                  Your answer: <b>{a ? a + ') ' + q.options[PQ_LETTERS.indexOf(a)] : 'not attempted'}</b>
+                  {!ok && <> · Correct: <b className="mk-rev-c">{PQ_LETTERS[q.answer_index]}) {q.options[q.answer_index]}</b></>}
+                </span>
+                {q.explanation && <span className="pq-expl">{q.explanation}</span>}
+              </div>
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
+function PyqAttempt({ paper, onBack }) {
+  const qs = paper.questions || []
+  const [phase, setPhase] = useState('instructions')
+  const [answers, setAnswers] = useState({})
+  const [marked, setMarked] = useState(() => new Set())
+  const [visited, setVisited] = useState(() => new Set())
   const [idx, setIdx] = useState(0)
-  const [pick, setPick] = useState(null)
-  const [score, setScore] = useState(0)
-  const [phase, setPhase] = useState('quiz')
+  const [left, setLeft] = useState(paper.duration_min * 60)
+  const [showSubmit, setShowSubmit] = useState(false)
+  const [summary, setSummary] = useState(null)
 
-  const q = phase === 'quiz' ? qs[idx] : null
-  const correctIdx = q ? q.answer_index : -1
+  const sections = useMemo(() => {
+    const m = new Map()
+    qs.forEach(q => m.set(q.section, (m.get(q.section) || 0) + 1))
+    return [...m.entries()].map(([name, count]) => ({ name, count }))
+  }, [qs])
 
-  const choose = i => { if (pick !== null) return; setPick(i); if (i === correctIdx) setScore(s => s + 1) }
-  const next = () => { if (idx + 1 < qs.length) { setIdx(idx + 1); setPick(null) } else setPhase('done') }
+  const answered = Object.keys(answers).length
 
-  if (phase === 'done') {
-    const acc = qs.length ? Math.round(score / qs.length * 100) : 0
+  const computeSummary = (ans, timeLeft) => {
+    let c = 0, w = 0, u = 0
+    qs.forEach(q => {
+      const a = ans[q.num]
+      if (!a) u++
+      else if (PQ_LETTERS.indexOf(a) === q.answer_index) c++
+      else w++
+    })
+    return {
+      c, w, u,
+      marks: c * PQ_CORRECT + w * PQ_WRONG,
+      totalMarks: qs.length * PQ_CORRECT,
+      acc: qs.length ? Math.round(c / qs.length * 100) : 0,
+      timeTaken: paper.duration_min * 60 - timeLeft,
+    }
+  }
+
+  const start = () => {
+    setAnswers({}); setMarked(new Set()); setVisited(new Set()); setIdx(0)
+    setLeft(paper.duration_min * 60); setSummary(null); setShowSubmit(false)
+    setPhase('test')
+  }
+
+  const finish = () => {
+    const s = computeSummary(answers, left)
+    setSummary(s)
+    setPhase('result')
+    const list = loadPyqAttempts()
+    list.unshift({
+      id: Date.now(), paperId: paper.id, paperName: paper.name,
+      year: paper.year, date: paper.date, shift: paper.shift,
+      answers, marked: [...marked], summary: s, submittedAt: Date.now(),
+    })
+    savePyqAttempts(list.slice(0, 30))
+  }
+
+  useEffect(() => {
+    if (phase !== 'test') return
+    if (left <= 0) { finish(); return }
+    const t = setTimeout(() => setLeft(s => s - 1), 1000)
+    return () => clearTimeout(t)
+  }, [phase, left])
+
+  const go = i => { if (i < 0 || i >= qs.length) return; setIdx(i); setVisited(v => new Set(v).add(qs[i].num)) }
+  const setAns = L => { setAnswers(a => ({ ...a, [qs[idx].num]: L })); setVisited(v => new Set(v).add(qs[idx].num)) }
+  const clear = () => setAnswers(a => { const b = { ...a }; delete b[qs[idx].num]; return b })
+  const toggleMark = () => setMarked(m => { const n = new Set(m); const num = qs[idx].num; if (n.has(num)) n.delete(num); else n.add(num); return n })
+  const markAndNext = () => { toggleMark(); if (idx < qs.length - 1) go(idx + 1) }
+  const saveAndNext = () => { if (idx < qs.length - 1) go(idx + 1); else setShowSubmit(true) }
+
+  const stat = num => {
+    if (marked.has(num)) return answers[num] ? 'ansmark' : 'mark'
+    if (answers[num]) return 'ans'
+    if (visited.has(num)) return 'visit'
+    return 'unvisit'
+  }
+
+  if (phase === 'instructions') {
     return (
       <div className="pq-wrap">
-        <div className="qz-done">
-          <Trophy size={22} />
-          <b>{score} / {qs.length}</b>
-          <span>{acc}% accuracy · {paper.name}</span>
-          <p>{acc >= 75 ? 'Great job — you have this paper down.' : acc >= 50 ? 'Solid — review the misses and go again.' : 'Keep practising — run it back.'}</p>
-          <div className="qz-done-btns">
-            <button className="btn btn-outline-sm" onClick={onBack}>All papers</button>
-            <button className="btn btn-primary-sm" onClick={() => { setIdx(0); setPick(null); setScore(0); setPhase('quiz') }}>Retry</button>
+        <div className="pq-top">
+          <button className="pq-back" onClick={onBack}><ArrowLeft size={15} /> Papers</button>
+          <span className="pq-name">{paper.name}</span>
+        </div>
+        <div className="pq-inst">
+          <h3>{paper.name}</h3>
+          <div className="pq-inst-grid">
+            <div className="pq-inst-cell"><b>{qs.length}</b><span>Questions</span></div>
+            <div className="pq-inst-cell"><b>{paper.duration_min} min</b><span>Duration</span></div>
+            <div className="pq-inst-cell"><b>+{PQ_CORRECT} / {PQ_WRONG}</b><span>Marking</span></div>
+            <div className="pq-inst-cell"><b>{paper.total_marks}</b><span>Total marks</span></div>
           </div>
+          <div className="pq-inst-secs">
+            <span className="pq-inst-lbl">Sections</span>
+            {sections.map(s => <span key={s.name} className="pq-inst-sec">{s.name} · {s.count} Q</span>)}
+          </div>
+          <ul className="pq-rules">
+            <li>Each question has four options (A–D).</li>
+            <li>+{PQ_CORRECT} for a correct answer, {PQ_WRONG} for a wrong one, 0 for unattempted.</li>
+            <li>Answers and explanations are shown only after you submit.</li>
+            <li>The test auto-submits when the timer reaches 00:00.</li>
+          </ul>
+          <button className="btn btn-primary" onClick={start}>Start attempt <ArrowRight size={16} /></button>
         </div>
       </div>
     )
   }
 
+  if (phase === 'result') {
+    return <PyqResult paper={paper} answers={answers} summary={summary} onBack={onBack} onRetry={start} />
+  }
+
+  const q = qs[idx]
+  const sel = answers[q.num]
+  const notVisited = qs.filter(qq => !visited.has(qq.num)).length
+
   return (
-    <div className="pq-wrap">
-      <div className="pq-top">
-        <button className="pq-back" onClick={onBack}><ArrowLeft size={15} /> Papers</button>
-        <span className="pq-name">{paper.name}</span>
-        <span className="qz-prog">{idx + 1} / {qs.length} · Score {score}</span>
+    <div className="mk-test">
+      <div className="mk-bar">
+        <div className="mk-bar-l"><b>{paper.name}</b><span>{answered}/{qs.length} answered</span></div>
+        <div className={'mk-timer' + (left < 300 ? ' low' : '')}><Clock size={13} /> {fmtClock(left)}</div>
+        <button className="btn btn-primary-sm" onClick={() => setShowSubmit(true)}>Submit</button>
       </div>
-      <div className="qz-bar"><i style={{ width: (((idx + (pick !== null ? 1 : 0)) / qs.length) * 100) + '%' }} /></div>
-      <div className="pq-card">
-        {q.passage && <div className="pq-passage">{q.passage}</div>}
-        <div className="pq-meta"><span>{q.section}</span><span>{q.topic}</span><span>{q.difficulty}</span></div>
-        <p className="qz-q">{q.question}</p>
-        <div className="qz-opts">
-          {q.options.map((o, i) => {
-            let cls = 'qz-opt'
-            if (pick !== null) { if (i === correctIdx) cls += ' c'; else if (i === pick) cls += ' w' }
-            return (
-              <button key={i} className={cls} onClick={() => choose(i)} disabled={pick !== null}>
-                <span className="qz-opt-l">{'ABCD'[i]}</span>
-                <span className="qz-opt-t">{o}</span>
-              </button>
-            )
-          })}
+
+      <div className="pq-layout">
+        <div className="pq-palette">
+          {qs.map((qq, i) => (
+            <button key={qq.num} className={'pq-pal ' + stat(qq.num) + (i === idx ? ' cur' : '')} onClick={() => go(i)}>
+              {qq.num}
+              {stat(qq.num) === 'ansmark' && <i className="pq-dot" />}
+            </button>
+          ))}
         </div>
-        {pick !== null && (
-          <div className="qz-feedback">
-            <span className={pick === correctIdx ? 'qz-fb ok' : 'qz-fb no'}>{pick === correctIdx ? '✓ Correct!' : '✗ Wrong'}</span>
-            {pick !== correctIdx && <em>Correct answer: {q.options[correctIdx]}</em>}
-            {q.explanation && <p>{q.explanation}</p>}
-            <button className="btn btn-primary-sm" onClick={next}>{idx + 1 < qs.length ? 'Next question' : 'See results'} <ArrowRight size={13} /></button>
+
+        <div className="mk-q">
+          <div className="mk-q-head">
+            <span className="mk-q-num">Question {idx + 1}</span>
+            <span className="mk-q-sec">{q.section}</span>
           </div>
-        )}
+          {q.passage && <div className="mk-passage"><p>{q.passage}</p></div>}
+          <div className="pq-meta"><span>{q.topic}</span><span>{q.difficulty}</span></div>
+          <p className="mk-stem">{q.question}</p>
+          <div className="mk-opts">
+            {q.options.map((o, i) => {
+              const L = PQ_LETTERS[i]
+              const isSel = sel === L
+              return (
+                <button key={i} className={'mk-opt' + (isSel ? ' sel' : '')} onClick={() => setAns(L)}>
+                  <span className="mk-opt-l">{L}</span>
+                  <span className="mk-opt-t">{o}</span>
+                </button>
+              )
+            })}
+          </div>
+          <div className="mk-nav">
+            <button className="btn btn-outline-sm" onClick={() => go(idx - 1)} disabled={idx === 0}><ArrowLeft size={13} /> Previous</button>
+            <button className="btn btn-outline-sm" onClick={clear}>Clear response</button>
+            <button className="btn btn-outline-sm" onClick={markAndNext}>Mark &amp; Next</button>
+            <button className="btn btn-primary-sm" onClick={saveAndNext}>{idx < qs.length - 1 ? 'Save & Next' : 'Submit'} <ArrowRight size={13} /></button>
+          </div>
+        </div>
       </div>
+
+      {showSubmit && (
+        <div className="pq-modal-backdrop" onClick={() => setShowSubmit(false)}>
+          <div className="pq-modal" onClick={e => e.stopPropagation()}>
+            <h4>Submit test?</h4>
+            <p className="pq-modal-sub">Your score will be final once you submit.</p>
+            <div className="pq-submit-grid">
+              <div className="pq-submit-cell ans"><b>{answered}</b><span>Answered</span></div>
+              <div className="pq-submit-cell unans"><b>{qs.length - answered}</b><span>Unanswered</span></div>
+              <div className="pq-submit-cell mark"><b>{marked.size}</b><span>Marked</span></div>
+              <div className="pq-submit-cell nv"><b>{notVisited}</b><span>Not visited</span></div>
+            </div>
+            <div className="pq-submit-btns">
+              <button className="btn btn-outline-sm" onClick={() => setShowSubmit(false)}>Go back</button>
+              <button className="btn btn-primary-sm" onClick={finish}>Submit</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
 
 function PyqView() {
   const gate = useGuestGate()
+  const toast = useToast()
   const [papers, setPapers] = useState([])
+  const [attempts, setAttempts] = useState(loadPyqAttempts)
   const [year, setYear] = useState('all')
   const [openYears, setOpenYears] = useState(() => new Set())
   const [paper, setPaper] = useState(null)
+  const [review, setReview] = useState(null)
   const [loading, setLoading] = useState(false)
 
   useEffect(() => {
@@ -1196,7 +1405,24 @@ function PyqView() {
     })
   }
 
-  if (paper) return <PaperAttempt paper={paper} onBack={() => setPaper(null)} />
+  const reviewAttempt = a => {
+    gate('PYQ Papers', 'review this paper', () => {
+      setLoading(true)
+      fetchPyqPaper(a.paperId).then(({ data }) => {
+        setLoading(false)
+        if (!data) { toast('Could not load this paper'); return }
+        setReview({ paper: data, answers: a.answers, summary: a.summary })
+      })
+    })
+  }
+
+  if (review) {
+    return <PyqResult paper={review.paper} answers={review.answers} summary={review.summary}
+      onBack={() => setReview(null)}
+      onRetry={() => { setPaper(review.paper); setReview(null) }} />
+  }
+
+  if (paper) return <PyqAttempt paper={paper} onBack={() => { setPaper(null); setAttempts(loadPyqAttempts()) }} />
 
   const years = [...new Set(papers.map(p => p.year))].sort((a, b) => b - a)
   const yearsToShow = year === 'all' ? years : [year]
@@ -1204,6 +1430,20 @@ function PyqView() {
 
   return (
     <div className="sk-pyq-flow">
+      {attempts.length > 0 && (
+        <div className="pq-attempts">
+          <span className="pq-attempts-lbl">My attempts</span>
+          {attempts.slice(0, 5).map(a => (
+            <button key={a.id} className="pq-attempt" onClick={() => reviewAttempt(a)}>
+              <span className="pq-attempt-name">{a.paperName}</span>
+              <span className="pq-attempt-score">{a.summary.marks}/{a.summary.totalMarks} · {a.summary.acc}%</span>
+              <span className="pq-attempt-date">{new Date(a.submittedAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}</span>
+              <span className="pq-attempt-rev">Review</span>
+            </button>
+          ))}
+        </div>
+      )}
+
       <div className="pyq-years">
         <span className="pyq-years-lbl">Year</span>
         <button className={'pyq-yearpill' + (year === 'all' ? ' on' : '')} onClick={() => setYear('all')}>All</button>

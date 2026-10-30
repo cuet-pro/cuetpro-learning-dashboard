@@ -197,13 +197,22 @@ export async function fetchMock(num) {
   return { data, error }
 }
 
-/* PYQ papers — list (no questions) + full paper on demand. */
+/* PYQ papers — list (no questions) + full paper on demand.
+   Duration + marks are derived (CUET English: 50 Q in 45 min, +5 / −1). */
+const PYQ_DURATION_PER_Q = 0.9
+
+function decoratePyq(p) {
+  if (!p) return p
+  const q = p.total_questions || (p.questions ? p.questions.length : 0)
+  return { ...p, total_questions: q, duration_min: Math.round(q * PYQ_DURATION_PER_Q), total_marks: q * 5 }
+}
+
 export async function fetchPyqPapers() {
   const { data, error } = await supabase
     .from('pyq_papers')
     .select('id, year, shift, date, subject, name, total_questions')
     .order('year').order('date').order('shift')
-  return { data, error }
+  return { data: data ? data.map(decoratePyq) : data, error }
 }
 
 export async function fetchPyqPaper(id) {
@@ -212,5 +221,5 @@ export async function fetchPyqPaper(id) {
     .select('id, year, shift, date, subject, name, total_questions, questions')
     .eq('id', id)
     .single()
-  return { data, error }
+  return { data: decoratePyq(data), error }
 }
