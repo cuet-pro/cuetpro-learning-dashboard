@@ -288,7 +288,7 @@ export default function DashboardTiles({ onNavigate }) {
       tiles: [
         { id: 'cutoffs', label: 'Cutoffs', tone: 'amber', icon: BarChart3, statText: '2025-26 data', go: () => { setExplorerRoute('/cutoffs'); onNavigate('explorer') } },
         { id: 'eligibility', label: 'Eligibility', tone: 'green', icon: ListChecks, statText: 'check your course', go: () => { setExplorerRoute('/subject-combination'); onNavigate('explorer') } },
-        { id: 'sample-papers', label: 'Sample papers', tone: 'blue', icon: Files, stat: { n: 12, suffix: 'papers' }, gate: { feature: 'Sample Papers', action: 'open sample papers' }, go: () => toast('Sample papers — coming soon') },
+        { id: 'previous-year-questions', label: 'Previous Year Questions', tone: 'blue', icon: Files, stat: { n: 26, suffix: 'papers' }, gate: { feature: 'Previous Year Questions', action: 'attempt a paper' }, go: () => { setStudyKitTool('pyqs'); onNavigate('studykit') } },
       ],
     },
   ]
