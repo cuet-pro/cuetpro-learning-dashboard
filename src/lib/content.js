@@ -196,3 +196,21 @@ export async function fetchMock(num) {
     .single()
   return { data, error }
 }
+
+/* PYQ papers — list (no questions) + full paper on demand. */
+export async function fetchPyqPapers() {
+  const { data, error } = await supabase
+    .from('pyq_papers')
+    .select('id, year, shift, date, subject, name, total_questions')
+    .order('year').order('date').order('shift')
+  return { data, error }
+}
+
+export async function fetchPyqPaper(id) {
+  const { data, error } = await supabase
+    .from('pyq_papers')
+    .select('id, year, shift, date, subject, name, total_questions, questions')
+    .eq('id', id)
+    .single()
+  return { data, error }
+}

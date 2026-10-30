@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { NotebookText, Layers, Timer, FileQuestion, Archive, ArrowLeft, ArrowRight, PlayCircle, Video, Sigma, Zap, ChevronRight, ChevronDown, CheckSquare, Search, GraduationCap, Highlighter, FlaskConical, Settings, Shuffle, Sun, Moon, BookOpen, Lightbulb, AlertTriangle, RotateCcw, Clock, XCircle, Trophy, CheckCircle2 } from 'lucide-react'
-import { weakTopicNames } from '../lib/analysisData'
+import { NotebookText, Layers, Timer, FileQuestion, Archive, ArrowLeft, ArrowRight, PlayCircle, Video, Sigma, Zap, ChevronRight, ChevronDown, Search, GraduationCap, Highlighter, FlaskConical, Settings, Shuffle, Sun, Moon, BookOpen, Lightbulb, AlertTriangle, RotateCcw, Clock, XCircle, Trophy, CheckCircle2 } from 'lucide-react'
 import { ECON_UNITS } from '../data/econNotes'
 import { GEO_UNITS } from '../data/geoNotes'
 import { useProfile, STREAMS } from '../lib/profile'
@@ -8,7 +7,7 @@ import { notesDeepLink, readNotesProgress, writeNotesProgress, lastReadSubject }
 import { takeStudyKitTool } from '../lib/studyKitRoute'
 import { useGuestGate } from '../lib/guestGate'
 import { useToast } from '../components/shell/Shell'
-import { fetchFlashcards, fetchFlashcardTopics, fetchCheatSheets, fetchCheatSheet, fetchMocks, fetchMock, fetchQuiz, fetchDailyQuiz } from '../lib/content'
+import { fetchFlashcards, fetchFlashcardTopics, fetchCheatSheets, fetchCheatSheet, fetchMocks, fetchMock, fetchQuiz, fetchDailyQuiz, fetchPyqPapers, fetchPyqPaper } from '../lib/content'
 import './studykit.css'
 
 const NOTES_BY_STREAM = {
@@ -1086,124 +1085,157 @@ function QuizView() {
   )
 }
 
-/* ── PYQ: compact status-coded list, grouped by year accordion ── */
-const PYQ_YEARS = [2026, 2025, 2024, 2023, 2022]
-const PYQ_SCHEDULE = {
-  2022: [['15 Jul', 1], ['15 Jul', 2], ['16 Jul', 1], ['16 Jul', 2]],
-  2023: [['21 May', 1], ['21 May', 2], ['22 May', 1], ['22 May', 2]],
-  2024: [['15 May', 1], ['15 May', 2], ['16 May', 1], ['16 May', 2]],
-  2025: [['08 May', 1], ['08 May', 2], ['09 May', 1], ['09 May', 2]],
-  2026: [['11 May', 1], ['11 May', 2], ['12 May', 1], ['12 May', 2]],
-}
-/* per-paper attempt state — same shape as mock/attempt tracking elsewhere:
-   key absent = not attempted · {status:'progress'} = in progress · {status:'done',score} = completed */
-const PYQ_ATTEMPTS = {
-  '2026-0': { status: 'progress' },
-  '2024-0': { status: 'done', score: 82 },
-  '2024-1': { status: 'done', score: 74 },
-  '2023-0': { status: 'done', score: 68 },
-  '2022-0': { status: 'done', score: 71 },
-}
-const scoreTone = s => (s >= 75 ? 'good' : s >= 50 ? 'mid' : 'low')
+/* ── PYQ: live papers from Supabase, grouped by year ── */
 
-function PyqRow({ p, attempt }) {
-  const gate = useGuestGate()
-  const toast = useToast()
+function PyqRow({ p, onAttempt }) {
   const ShiftIcon = p.shift === 1 ? Sun : Moon
   return (
     <div className="pyq-row">
       <span className={'pyq-row-shift ' + (p.shift === 1 ? 'day' : 'eve')}><ShiftIcon size={15} /></span>
       <span className="pyq-row-date">{p.date} · Shift {p.shift}</span>
-      <span className="pyq-row-qs">{p.qs} Qs</span>
+      <span className="pyq-row-qs">{p.total_questions} Qs</span>
       <span className="pyq-row-action">
-        {!attempt ? (
-          <button className="btn btn-outline-sm" onClick={() => gate('PYQ Papers', 'attempt this paper', () => toast('PYQ attempt — coming soon'))}>Attempt</button>
-        ) : attempt.status === 'progress' ? (
-          <button className="pyq-resume" onClick={() => gate('PYQ Papers', 'resume this paper', () => toast('PYQ resume — coming soon'))}>Resume</button>
-        ) : (
-          <>
-            <span className={'pyq-score ' + scoreTone(attempt.score)}>{attempt.score}%</span>
-            <button className="pyq-review" onClick={() => gate('PYQ Papers', 'review this paper', () => toast('PYQ review — coming soon'))}>Review</button>
-          </>
-        )}
+        <button className="btn btn-outline-sm" onClick={onAttempt}>Attempt</button>
       </span>
     </div>
   )
 }
 
-function PyqView({ subject, stream, weakOnly, setWeakOnly }) {
-  const scope = subject === 'all' ? stream : subject
+function PaperAttempt({ paper, onBack }) {
+  const qs = paper.questions || []
+  const [idx, setIdx] = useState(0)
+  const [pick, setPick] = useState(null)
+  const [score, setScore] = useState(0)
+  const [phase, setPhase] = useState('quiz')
+
+  const q = phase === 'quiz' ? qs[idx] : null
+  const correctIdx = q ? q.answer_index : -1
+
+  const choose = i => { if (pick !== null) return; setPick(i); if (i === correctIdx) setScore(s => s + 1) }
+  const next = () => { if (idx + 1 < qs.length) { setIdx(idx + 1); setPick(null) } else setPhase('done') }
+
+  if (phase === 'done') {
+    const acc = qs.length ? Math.round(score / qs.length * 100) : 0
+    return (
+      <div className="pq-wrap">
+        <div className="qz-done">
+          <Trophy size={22} />
+          <b>{score} / {qs.length}</b>
+          <span>{acc}% accuracy · {paper.name}</span>
+          <p>{acc >= 75 ? 'Great job — you have this paper down.' : acc >= 50 ? 'Solid — review the misses and go again.' : 'Keep practising — run it back.'}</p>
+          <div className="qz-done-btns">
+            <button className="btn btn-outline-sm" onClick={onBack}>All papers</button>
+            <button className="btn btn-primary-sm" onClick={() => { setIdx(0); setPick(null); setScore(0); setPhase('quiz') }}>Retry</button>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="pq-wrap">
+      <div className="pq-top">
+        <button className="pq-back" onClick={onBack}><ArrowLeft size={15} /> Papers</button>
+        <span className="pq-name">{paper.name}</span>
+        <span className="qz-prog">{idx + 1} / {qs.length} · Score {score}</span>
+      </div>
+      <div className="qz-bar"><i style={{ width: (((idx + (pick !== null ? 1 : 0)) / qs.length) * 100) + '%' }} /></div>
+      <div className="pq-card">
+        {q.passage && <div className="pq-passage">{q.passage}</div>}
+        <div className="pq-meta"><span>{q.section}</span><span>{q.topic}</span><span>{q.difficulty}</span></div>
+        <p className="qz-q">{q.question}</p>
+        <div className="qz-opts">
+          {q.options.map((o, i) => {
+            let cls = 'qz-opt'
+            if (pick !== null) { if (i === correctIdx) cls += ' c'; else if (i === pick) cls += ' w' }
+            return (
+              <button key={i} className={cls} onClick={() => choose(i)} disabled={pick !== null}>
+                <span className="qz-opt-l">{'ABCD'[i]}</span>
+                <span className="qz-opt-t">{o}</span>
+              </button>
+            )
+          })}
+        </div>
+        {pick !== null && (
+          <div className="qz-feedback">
+            <span className={pick === correctIdx ? 'qz-fb ok' : 'qz-fb no'}>{pick === correctIdx ? '✓ Correct!' : '✗ Wrong'}</span>
+            {pick !== correctIdx && <em>Correct answer: {q.options[correctIdx]}</em>}
+            {q.explanation && <p>{q.explanation}</p>}
+            <button className="btn btn-primary-sm" onClick={next}>{idx + 1 < qs.length ? 'Next question' : 'See results'} <ArrowRight size={13} /></button>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+function PyqView() {
+  const gate = useGuestGate()
+  const [papers, setPapers] = useState([])
   const [year, setYear] = useState('all')
-  const [openYears, setOpenYears] = useState(() => new Set([2026]))
-  const weak = weakTopicNames(scope)
+  const [openYears, setOpenYears] = useState(() => new Set())
+  const [paper, setPaper] = useState(null)
+  const [loading, setLoading] = useState(false)
 
-  const shiftsFor = y => {
-    const qs = scope === 'General Test' ? 50 : 45
-    return (PYQ_SCHEDULE[y] || []).map(([d, s], i) => ({ date: d, shift: s, qs, id: `${y}-${i}`, year: y }))
+  useEffect(() => {
+    let alive = true
+    fetchPyqPapers().then(({ data }) => {
+      if (alive && data) {
+        setPapers(data)
+        const yrs = [...new Set(data.map(p => p.year))].sort((a, b) => b - a)
+        if (yrs.length) setOpenYears(new Set([yrs[0]]))
+      }
+    })
+    return () => { alive = false }
+  }, [])
+
+  const openPaper = p => {
+    gate('PYQ Papers', 'attempt this paper', () => {
+      setLoading(true)
+      fetchPyqPaper(p.id).then(({ data }) => { setPaper(data || null); setLoading(false) })
+    })
   }
-  const papers = PYQ_YEARS.flatMap(y => shiftsFor(y))
-  const attempted = papers.filter(p => PYQ_ATTEMPTS[p.id]?.status === 'done')
-  const avg = attempted.length ? Math.round(attempted.reduce((s, p) => s + PYQ_ATTEMPTS[p.id].score, 0) / attempted.length) : null
 
-  const meta = y => {
-    const ps = shiftsFor(y)
-    const done = ps.filter(p => PYQ_ATTEMPTS[p.id]?.status === 'done').length
-    const prog = ps.filter(p => PYQ_ATTEMPTS[p.id]?.status === 'progress').length
-    return { done, prog, pct: ps.length ? Math.round(done / ps.length * 100) : 0 }
-  }
+  if (paper) return <PaperAttempt paper={paper} onBack={() => setPaper(null)} />
 
-  const toggleYear = y => setOpenYears(s => {
-    const n = new Set(s)
-    if (n.has(y)) n.delete(y)
-    else n.add(y)
-    return n
-  })
-
-  const yearsToShow = year === 'all' ? PYQ_YEARS : [year]
+  const years = [...new Set(papers.map(p => p.year))].sort((a, b) => b - a)
+  const yearsToShow = year === 'all' ? years : [year]
+  const toggleYear = y => setOpenYears(s => { const n = new Set(s); if (n.has(y)) n.delete(y); else n.add(y); return n })
 
   return (
     <div className="sk-pyq-flow">
-      {/* year filter */}
       <div className="pyq-years">
         <span className="pyq-years-lbl">Year</span>
         <button className={'pyq-yearpill' + (year === 'all' ? ' on' : '')} onClick={() => setYear('all')}>All</button>
-        {PYQ_YEARS.map(y => (
+        {years.map(y => (
           <button key={y} className={'pyq-yearpill' + (year === y ? ' on' : '')} onClick={() => setYear(y)}>{y}</button>
         ))}
       </div>
 
       <div className="pyq-summary">
-        <span className="pyq-summary-num">{attempted.length}/{papers.length}</span>
-        <span className="pyq-summary-lbl">papers attempted</span>
-        {avg != null && <span className="pyq-summary-avg">· {avg}% avg score</span>}
-        <label className="sk-weak-only">
-          <input type="checkbox" checked={weakOnly} onChange={e => setWeakOnly(e.target.checked)} />
-          <CheckSquare size={13} /> Only show my weak topics
-          {weakOnly && <span>· {weak.join(', ')}</span>}
-        </label>
+        <span className="pyq-summary-num">{papers.length}</span>
+        <span className="pyq-summary-lbl">papers · CUET English · {years.join(' · ')}</span>
       </div>
 
       {yearsToShow.map(y => {
-        const m = meta(y)
+        const ps = papers.filter(p => p.year === y)
         const open = year !== 'all' ? true : openYears.has(y)
-        const badge = m.done === 0 && m.prog === 0 ? { t: 'Not started', c: 'empty' } : m.done > 0 ? { t: m.pct + '% done', c: 'done' } : { t: 'In progress', c: 'prog' }
         return (
           <div className={'pyq-yearblock' + (open ? ' open' : '')} key={y}>
             <button type="button" className="pyq-yearhead" aria-expanded={open} onClick={() => { if (year === 'all') toggleYear(y) }}>
               <span className="pyq-year">{y}</span>
-              <span className={'pyq-year-badge ' + badge.c}>{badge.t}</span>
+              <span className="pyq-year-badge">{ps.length} papers</span>
               <ChevronDown size={16} className="pyq-year-chev" />
             </button>
             {open && (
               <div className="pyq-rows">
-                {shiftsFor(y).map(p => <PyqRow key={p.id} p={p} attempt={PYQ_ATTEMPTS[p.id]} />)}
-                {shiftsFor(y).length === 0 && <p className="muted-empty">No papers for this year yet.</p>}
+                {ps.map(p => <PyqRow key={p.id} p={p} onAttempt={() => openPaper(p)} />)}
               </div>
             )}
           </div>
         )
       })}
-      {weakOnly && weak.length === 0 && <p className="muted-empty">No weak topics for {scope}.</p>}
+      {!papers.length && <p className="muted-empty">{loading ? 'Loading papers…' : 'No PYQ papers yet.'}</p>}
     </div>
   )
 }

@@ -294,7 +294,7 @@
   background: linear-gradient(120deg, var(--primary-soft), var(--surface));
   border: 0; cursor: pointer; text-align: left; font: inherit; color: inherit; }
 .pyq-year { font: 800 15px var(--font-display); color: var(--text); }
-.pyq-year-badge { font: 700 10.5px var(--font-body); border-radius: 999px; padding: 3px 10px; border: 1px solid; }
+.pyq-year-badge { font: 700 10.5px var(--font-body); border-radius: 999px; padding: 3px 10px; border: 1px solid var(--border); color: var(--text-secondary); background: var(--bg); }
 .pyq-year-badge.empty { color: var(--text-muted); background: var(--bg); border-color: var(--border); }
 .pyq-year-badge.done { color: var(--success); background: var(--success-soft); border-color: color-mix(in srgb, var(--success) 30%, transparent); }
 .pyq-year-badge.prog { color: var(--warning); background: var(--warning-soft); border-color: color-mix(in srgb, var(--warning) 30%, transparent); }
@@ -321,6 +321,17 @@
 .pyq-resume { font: 600 12px var(--font-body); color: var(--warning); background: var(--warning-soft);
   border: 1px solid color-mix(in srgb, var(--warning) 35%, transparent); border-radius: 999px; padding: 6px 14px; cursor: pointer; transition: all .15s; }
 .pyq-resume:hover { filter: brightness(.97); }
+
+/* Paper attempt (live questions) */
+.pq-wrap { display: flex; flex-direction: column; gap: var(--sp-4); }
+.pq-top { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.pq-back { display: inline-flex; align-items: center; gap: 6px; font: 600 13px var(--font-body); color: var(--primary); padding: 6px 10px; border-radius: var(--r-sm); cursor: pointer; }
+.pq-back:hover { background: var(--primary-soft); }
+.pq-name { font: 700 13.5px var(--font-body); color: var(--text); flex: 1; min-width: 0; }
+.pq-card { display: flex; flex-direction: column; gap: 12px; }
+.pq-passage { font: 400 13px var(--font-body); color: var(--text-secondary); line-height: 1.65; background: var(--secondary-soft); border: 1px solid var(--border); border-radius: var(--r-md); padding: 14px 16px; max-height: 220px; overflow-y: auto; }
+.pq-meta { display: flex; gap: 6px; flex-wrap: wrap; }
+.pq-meta span { font: 700 10.5px var(--font-body); text-transform: uppercase; letter-spacing: .05em; color: var(--text-muted); background: var(--bg); border: 1px solid var(--border); border-radius: var(--r-full); padding: 3px 10px; }
 
 @media (max-width: 640px) {
   .pyq-row { grid-template-columns: 30px minmax(0, 1fr) auto; }
