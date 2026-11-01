@@ -9,6 +9,7 @@
    session — signing in immediately promotes them out of guest mode. */
 import { useEffect, useState } from 'react'
 import { supabase, setSessionStorageMode, GOOGLE_AUTH_ENABLED } from './supabase'
+import { loadProfile, saveProfile } from './profile'
 
 const GUEST_KEY = 'cp_guest'
 const EVENT = 'cp-auth-change'
@@ -17,10 +18,12 @@ const EVENT = 'cp-auth-change'
 let cachedSession = null
 supabase.auth.getSession().then(({ data }) => {
   cachedSession = data.session || null
+  hydrateProfileName(cachedSession)
   window.dispatchEvent(new Event(EVENT))
 })
 supabase.auth.onAuthStateChange((_event, session) => {
   cachedSession = session
+  hydrateProfileName(session)
   window.dispatchEvent(new Event(EVENT))
 })
 
@@ -55,7 +58,13 @@ export async function signInWithGoogle() {
   }
   const { error } = await supabase.auth.signInWithOAuth({
     provider: 'google',
-    options: { redirectTo: window.location.origin },
+    options: {
+      redirectTo: window.location.origin,
+      // Force the Google account chooser every time. Without this, Google
+      // silently reuses the browser's existing session and skips the picker,
+      // so the user never gets to select which Gmail to sign in with.
+      queryParams: { prompt: 'select_account' },
+    },
   })
   return { error }
 }
@@ -64,6 +73,33 @@ export async function signOut() {
   await supabase.auth.signOut()
   localStorage.removeItem(GUEST_KEY)
   window.dispatchEvent(new Event(EVENT))
+}
+
+/* ── Session → local profile name ──
+   The dashboard/shell read the name from the local `cp_profile` store, which
+   now defaults to empty. After a real sign-in (email or Google) the account's
+   name lives in the Supabase user metadata (email signup stores `name`; Google
+   maps the display name to `name`/`full_name`). Mirror it into the local store
+   so the UI shows the actual student instead of a stale/hardcoded name. Falls
+   back to public.profiles for accounts created outside the app. */
+export function hydrateProfileName(session) {
+  const user = session?.user
+  if (!user) return
+  const meta = user.user_metadata || {}
+  const name = meta.name || meta.full_name || meta.user_name || ''
+  if (name) {
+    const cur = loadProfile()
+    if ((cur.name || '') !== name) saveProfile({ ...cur, name })
+    return
+  }
+  supabase.from('profiles').select('name').eq('id', user.id).maybeSingle()
+    .then(({ data }) => {
+      if (data?.name) {
+        const cur = loadProfile()
+        if ((cur.name || '') !== data.name) saveProfile({ ...cur, name: data.name })
+      }
+    })
+    .catch(() => {})
 }
 
 /* ── Profile → Supabase (public.profiles) ── */

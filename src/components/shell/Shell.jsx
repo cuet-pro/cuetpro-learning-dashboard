@@ -133,7 +133,7 @@ function Topbar({ onNavigate, setMenuOpen, theme, setTheme, guest }) {
       <div style={{ position: 'relative' }}>
         <button className="tb-user" onClick={e => { e.stopPropagation(); setDd(dd === 'user' ? null : 'user') }}>
           <span className="tb-user-av">{initials}</span>
-          <b>{guest ? 'Guest' : (profile.name || 'Ananya Verma').split(' ')[0]}</b>
+          <b>{guest ? 'Guest' : (profile.name || 'CUET Pro').split(' ')[0]}</b>
           <ChevronDown size={14} />
         </button>
         {dd === 'user' && (
