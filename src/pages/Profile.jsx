@@ -48,9 +48,9 @@ export default function Profile() {
 
       {/* A. Account header */}
       <section className="pf-account">
-        <div className="pf-avatar">AV</div>
+        <div className="pf-avatar">{(profile.name || 'CUET Pro').split(/\s+/).map(w => w[0]).slice(0, 2).join('').toUpperCase()}</div>
         <div className="pf-account-info">
-          <b>{profile.name || 'Ananya Verma'}</b>
+          <b>{profile.name || 'CUET Pro'}</b>
           <span>{profile.stream} · CUET 2027</span>
         </div>
         <button className="btn btn-outline-sm" onClick={signOut}><LogOut size={13} /> Sign out</button>

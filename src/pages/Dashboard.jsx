@@ -268,7 +268,7 @@ export default function Dashboard({ onNavigate }) {
         <div className="hero-id">
           <div className="av-float"><div className="dash-avatar"><Avatar gender={profile.gender} blink={blink} /></div></div>
           <div className="hero-id-t">
-            <h1>Welcome back, {(profile.name || 'Ananya').split(' ')[0]}</h1>
+            <h1>Welcome back, {(profile.name || 'Student').split(' ')[0]}</h1>
             <p>CUET 2027 · {profile.stream} · keep the streak alive</p>
           </div>
         </div>
