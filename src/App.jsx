@@ -10,6 +10,8 @@ import Explorer from './pages/Explorer.jsx'
 import Profile from './pages/Profile.jsx'
 import Auth from './pages/Auth.jsx'
 import AppShell, { ToastProvider } from './components/shell/Shell.jsx'
+import { useExam } from './lib/examSession'
+import PyqExam from './pages/PyqExam.jsx'
 import './tokens.css'
 import './shell.css'
 
@@ -30,10 +32,16 @@ function bootPage() {
 }
 
 export default function App() {
+  const exam = useExam()
   const [session, { guest, enterGuest }] = useAuth()
   const [page, setPage] = useState(bootPage)
   const Page = PAGES[page]
   const navigate = p => { consumeNotesDeepLink(); setPage(p) }
+
+  /* Full-screen exam: hide the shell entirely during an attempt. */
+  if (exam) {
+    return <PyqExam paper={exam.paper} />
+  }
 
   /* Neither session nor guest → full-screen Auth */
   if (!session && !guest) {
