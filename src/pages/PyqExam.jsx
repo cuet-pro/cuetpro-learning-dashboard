@@ -5,7 +5,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import {
   ChevronLeft, ChevronRight, X, Flag, Maximize, Minimize,
-  FileText, ListChecks, LogOut, Keyboard, AlertTriangle, BookOpen, Check,
+  FileText, ListChecks, LogOut, Keyboard, AlertTriangle, BookOpen,
 } from 'lucide-react'
 import { useProfile } from '../lib/profile'
 import { endExam } from '../lib/examSession'
@@ -473,10 +473,8 @@ export default function PyqExam({ paper }) {
           <footer className="ex-footer">
             <button className="ex-fbtn" onClick={() => go(idx - 1)} disabled={idx === 0}><ChevronLeft size={15} /> Previous</button>
             <button className="ex-fbtn" onClick={clearCurrent}>Clear response</button>
-            <button className="ex-fbtn warn" onClick={markAndNext}><Flag size={15} /> Mark &amp; next</button>
-            <button className="ex-fbtn primary" onClick={saveAndNext}>
-              {idx < qs.length - 1 ? <>Save &amp; next <ChevronRight size={15} /></> : <>Last question <Check size={15} /></>}
-            </button>
+            <button className="ex-fbtn warn" onClick={markAndNext}><Flag size={15} /> Mark for review &amp; next</button>
+            <button className="ex-fbtn primary" onClick={saveAndNext}>Save &amp; next <ChevronRight size={15} /></button>
             {lastHint && <span className="ex-last-hint">This is the last question</span>}
             <span className="ex-shortcuts"><Keyboard size={13} /> <kbd>A–D</kbd>/<kbd>1–4</kbd> select · <kbd>N</kbd> next · <kbd>P</kbd> prev · <kbd>M</kbd> mark · <kbd>C</kbd> clear</span>
           </footer>

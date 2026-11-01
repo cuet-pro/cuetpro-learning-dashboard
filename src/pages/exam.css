@@ -45,6 +45,7 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
+  white-space: nowrap;
   font: 600 12.5px var(--font-body);
   color: #fff;
   padding: 7px 11px;
@@ -229,6 +230,7 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
+  white-space: nowrap;
   font: 600 12.5px var(--font-body);
   padding: 9px 15px;
   border-radius: var(--r-md);
@@ -302,12 +304,12 @@
 .ex-legend-item { display: flex; align-items: center; gap: 8px; }
 .ex-legend-item.span2 { grid-column: 1 / -1; }
 .ex-legend-shape { width: 18px; height: 18px; flex: 0 0 auto; position: relative; border-radius: 5px; }
-.ex-legend-shape.unvisited { background: var(--surface); border: 1.5px solid var(--border-strong); border-radius: 5px; }
-.ex-legend-shape.notanswered { background: var(--error); clip-path: polygon(0 0, 100% 0, 100% 100%, 60% 100%, 50% 86%, 40% 100%, 0 100%); }
+.ex-legend-shape.not_visited { background: var(--surface); border: 1.5px solid var(--border-strong); border-radius: 5px; }
+.ex-legend-shape.not_answered { background: var(--error); clip-path: polygon(0 0, 100% 0, 100% 100%, 60% 100%, 50% 86%, 40% 100%, 0 100%); }
 .ex-legend-shape.answered { background: var(--success); clip-path: polygon(0 0, 40% 0, 50% 14%, 60% 0, 100% 0, 100% 100%, 0 100%); }
 .ex-legend-shape.marked { background: var(--violet); border-radius: 50%; }
-.ex-legend-shape.answeredmarked { background: var(--violet); border-radius: 50%; }
-.ex-legend-shape.answeredmarked::after { content: '✓'; position: absolute; top: -3px; right: -4px; width: 11px; height: 11px; border-radius: 50%; background: var(--success); color: #fff; font: 700 7px/11px var(--font-body); text-align: center; border: 1.5px solid var(--surface); }
+.ex-legend-shape.answered_marked { background: var(--violet); border-radius: 50%; }
+.ex-legend-shape.answered_marked::after { content: '✓'; position: absolute; top: -3px; right: -4px; width: 11px; height: 11px; border-radius: 50%; background: var(--success); color: #fff; font: 700 7px/11px var(--font-body); text-align: center; border: 1.5px solid var(--surface); }
 .ex-legend-item label { flex: 1; font: 600 11px var(--font-body); color: var(--text-secondary); line-height: 1.25; }
 .ex-legend-item b { font: 800 13px var(--font-mono); color: var(--text); }
 .ex-legend-note { grid-column: 1 / -1; font: 500 10px var(--font-body); color: var(--text-muted); }
@@ -347,12 +349,12 @@
 }
 .ex-shape:hover { filter: brightness(1.07); }
 .ex-shape:focus-visible { outline: 2px solid var(--info); outline-offset: 2px; }
-.ex-shape.unvisited { background: var(--surface); border: 1.5px solid var(--border-strong); color: var(--text-muted); border-radius: 7px; }
-.ex-shape.notanswered { background: var(--error); color: #fff; clip-path: polygon(0 0, 100% 0, 100% 100%, 61% 100%, 50% 87%, 39% 100%, 0 100%); }
+.ex-shape.not_visited { background: var(--surface); border: 1.5px solid var(--border-strong); color: var(--text-muted); border-radius: 7px; }
+.ex-shape.not_answered { background: var(--error); color: #fff; clip-path: polygon(0 0, 100% 0, 100% 100%, 61% 100%, 50% 87%, 39% 100%, 0 100%); }
 .ex-shape.answered { background: var(--success); color: #fff; clip-path: polygon(0 0, 39% 0, 50% 13%, 61% 0, 100% 0, 100% 100%, 0 100%); }
 .ex-shape.marked { background: var(--violet); color: #fff; border-radius: 50%; }
-.ex-shape.answeredmarked { background: var(--violet); color: #fff; border-radius: 50%; }
-.ex-shape.answeredmarked::after {
+.ex-shape.answered_marked { background: var(--violet); color: #fff; border-radius: 50%; }
+.ex-shape.answered_marked::after {
   content: '✓';
   position: absolute;
   top: -2px;
@@ -421,7 +423,7 @@
 
 /* submit summary table */
 .ex-sum-tbl { display: flex; flex-direction: column; gap: 0; border: 1px solid var(--border); border-radius: var(--r-md); overflow: hidden; }
-.ex-sum-row { display: grid; grid-template-columns: 1fr auto auto auto auto auto; gap: 8px; padding: 9px 12px; font: 500 12px var(--font-body); color: var(--text-secondary); border-bottom: 1px solid var(--border); }
+.ex-sum-row { display: grid; grid-template-columns: minmax(58px, 1.4fr) repeat(6, minmax(0, 1fr)); gap: 6px; padding: 9px 12px; font: 500 11.5px var(--font-body); color: var(--text-secondary); border-bottom: 1px solid var(--border); }
 .ex-sum-row:last-child { border-bottom: 0; }
 .ex-sum-row.head { background: var(--secondary-soft); font-weight: 700; color: var(--text); }
 .ex-sum-row span { text-align: center; }
