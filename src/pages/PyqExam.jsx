@@ -27,7 +27,7 @@ const LEGEND_ORDER = [
   STATUS.ANSWERED_MARKED,
 ]
 
-export default function PyqExam({ paper }) {
+export default function PyqExam({ paper, onFinish }) {
   const [profile] = useProfile()
   const qs = paper?.questions || []
   const scheme = useMemo(() => markingScheme(paper), [paper])
@@ -178,18 +178,25 @@ export default function PyqExam({ paper }) {
     }
     const s = computeSummary(qs, answers, scheme)
     const summary = { ...s, timeTaken: Math.min(duration, Math.max(0, startedAt ? Math.floor((at - startedAt) / 1000) : duration)) }
+    const attempt = {
+      id: Date.now(), paperId: paper.id, paperName: paper.name, year: paper.year, date: paper.date, shift: paper.shift,
+      answers, marked, timeTaken: finalTime, summary, submittedAt: at,
+    }
     const list = loadPyqAttempts()
-    list.unshift({ id: Date.now(), paperId: paper.id, paperName: paper.name, year: paper.year, date: paper.date, shift: paper.shift, answers, marked, timeTaken: finalTime, summary, submittedAt: at })
+    list.unshift(attempt)
     savePyqAttempts(list.slice(0, 30))
     clearAttemptState(paper.id)
     setShowSubmit(false)
+    const done = () => {
+      if (onFinish) onFinish({ ...attempt, paper })
+      else { setSubmitted(summary); setPhase('result'); setTimeUp(false) }
+    }
     if (auto) {
       // short "time is up, submitting" state before the result renders
       setTimeUp(true)
-      setTimeout(() => { setSubmitted(summary); setPhase('result'); setTimeUp(false) }, 1500)
+      setTimeout(done, 1500)
     } else {
-      setSubmitted(summary)
-      setPhase('result')
+      done()
     }
   }
   finishRef.current = finish

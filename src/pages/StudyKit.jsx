@@ -9,7 +9,9 @@ import { useGuestGate } from '../lib/guestGate'
 import { useToast } from '../components/shell/Shell'
 import { fetchFlashcards, fetchFlashcardTopics, fetchCheatSheets, fetchCheatSheet, fetchMocks, fetchMock, fetchQuiz, fetchDailyQuiz, fetchPyqPapers, fetchPyqPaper } from '../lib/content'
 import { startExam } from '../lib/examSession'
-import { loadPyqAttempts, fmtClock } from '../lib/examEngine'
+import { loadPyqAttempts, fmtClock, markingScheme, PQ_LETTERS } from '../lib/examEngine'
+import { useResult, clearResult } from '../lib/resultStore'
+import { addMistakes } from '../lib/mistakes'
 import PyqResult from './PyqResult'
 import './studykit.css'
 
@@ -102,6 +104,49 @@ export default function StudyKit({ onNavigate }) {
     else run()
   }
 
+  /* ── Fresh submission → analytics page (replaces the whole Study Kit) ── */
+  const result = useResult()
+  const handledRef = useRef(null)
+  useEffect(() => {
+    if (!result || !result.paper || handledRef.current === result.id) return
+    handledRef.current = result.id
+    const wrongQs = (result.paper.questions || []).filter(q => {
+      const a = result.answers?.[q.num]
+      return a != null && PQ_LETTERS.indexOf(a) !== q.answer_index
+    })
+    if (wrongQs.length) {
+      const added = addMistakes(wrongQs.map(q => ({
+        paperId: result.paper.id, paperName: result.paper.name, num: q.num, topic: q.topic,
+        section: q.section, question: q.question, options: q.options,
+        answer_index: q.answer_index, explanation: q.explanation, difficulty: q.difficulty,
+        selected: result.answers[q.num],
+      })))
+      if (added > 0) toast(`${added} mistake${added === 1 ? '' : 's'} added to Smart Revision`)
+    }
+  }, [result, toast])
+
+  if (result) {
+    return (
+      <PyqResult
+        paper={result.paper}
+        attempt={{ answers: result.answers, timeTaken: result.timeTaken, summary: result.summary, submittedAt: result.submittedAt }}
+        scheme={markingScheme(result.paper)}
+        onBack={() => { clearResult(); setSelected('pyqs') }}
+        onRetry={() => { const p = result.paper; clearResult(); startExam({ paper: p }) }}
+        onRetryWrong={() => {
+          const qs = (result.paper.questions || []).filter(q => {
+            const a = result.answers?.[q.num]
+            return a == null || PQ_LETTERS.indexOf(a) !== q.answer_index
+          })
+          if (!qs.length) { toast('Nothing to retry — all correct!'); return }
+          clearResult()
+          startExam({ paper: { ...result.paper, name: result.paper.name + ' · Retry (wrong & skipped)', questions: qs } })
+        }}
+        onNavigate={onNavigate}
+      />
+    )
+  }
+
   return (
     <div className="page">
       {!selected && (<>
@@ -169,7 +214,7 @@ export default function StudyKit({ onNavigate }) {
             {selected === 'ncert' && <NcertView stream={stream} subject={subject} />}
             {selected === 'flashcards' && <FlashView record={record} />}
             {selected === 'quizzes' && <QuizView />}
-            {selected === 'pyqs' && <PyqView subject={subject} stream={stream} weakOnly={weakOnly} setWeakOnly={setWeakOnly} />}
+            {selected === 'pyqs' && <PyqView subject={subject} stream={stream} weakOnly={weakOnly} setWeakOnly={setWeakOnly} onNavigate={onNavigate} />}
             {selected === 'mocks' && <MockView examMode={examMode} setExamMode={setExamMode} />}
             {selected === 'cheats' && <CheatSheetView record={record} />}
             {selected === 'videos' && (
@@ -1104,7 +1149,7 @@ function PyqRow({ p, onAttempt }) {
   )
 }
 
-function PyqView() {
+function PyqView({ onNavigate }) {
   const gate = useGuestGate()
   const toast = useToast()
   const [papers, setPapers] = useState([])
@@ -1139,15 +1184,28 @@ function PyqView() {
       fetchPyqPaper(a.paperId).then(({ data }) => {
         setLoading(false)
         if (!data) { toast('Could not load this paper'); return }
-        setReview({ paper: data, answers: a.answers, summary: a.summary })
+        setReview({
+          paper: data,
+          attempt: { answers: a.answers, timeTaken: a.timeTaken || {}, summary: a.summary, submittedAt: a.submittedAt },
+        })
       })
     })
   }
 
   if (review) {
-    return <PyqResult paper={review.paper} answers={review.answers} summary={review.summary}
+    return <PyqResult paper={review.paper} attempt={review.attempt} scheme={markingScheme(review.paper)}
       onBack={() => setReview(null)}
-      onRetry={() => { setReview(null); startExam({ paper: review.paper }) }} />
+      onRetry={() => { setReview(null); startExam({ paper: review.paper }) }}
+      onRetryWrong={() => {
+        const qs = (review.paper.questions || []).filter(q => {
+          const a = review.attempt.answers[q.num]
+          return a == null || PQ_LETTERS.indexOf(a) !== q.answer_index
+        })
+        if (!qs.length) { toast('Nothing to retry — all correct!'); return }
+        setReview(null)
+        startExam({ paper: { ...review.paper, name: review.paper.name + ' · Retry (wrong & skipped)', questions: qs } })
+      }}
+      onNavigate={onNavigate} />
   }
 
 
@@ -1163,7 +1221,7 @@ function PyqView() {
           {attempts.slice(0, 5).map(a => (
             <button key={a.id} className="pq-attempt" onClick={() => reviewAttempt(a)}>
               <span className="pq-attempt-name">{a.paperName}</span>
-              <span className="pq-attempt-score">{a.summary.marks}/{a.summary.totalMarks} · {a.summary.acc}%</span>
+              <span className="pq-attempt-score">{a.summary.marks}/{a.summary.totalMarks} · {Math.round(a.summary.c / (a.summary.c + a.summary.w || 1) * 100)}%</span>
               <span className="pq-attempt-date">{new Date(a.submittedAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}</span>
               <span className="pq-attempt-rev">Review</span>
             </button>

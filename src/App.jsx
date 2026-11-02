@@ -10,7 +10,8 @@ import Explorer from './pages/Explorer.jsx'
 import Profile from './pages/Profile.jsx'
 import Auth from './pages/Auth.jsx'
 import AppShell, { ToastProvider } from './components/shell/Shell.jsx'
-import { useExam } from './lib/examSession'
+import { useExam, endExam } from './lib/examSession'
+import { showResult } from './lib/resultStore'
 import PyqExam from './pages/PyqExam.jsx'
 import './tokens.css'
 import './shell.css'
@@ -38,9 +39,17 @@ export default function App() {
   const Page = PAGES[page]
   const navigate = p => { consumeNotesDeepLink(); setPage(p) }
 
+  /* Submit → end the full-screen exam shell and open the analytics page inside
+     the normal app shell (under Study Kit). */
+  const handleFinish = attempt => {
+    showResult(attempt)
+    endExam()
+    setPage('studykit')
+  }
+
   /* Full-screen exam: hide the shell entirely during an attempt. */
   if (exam) {
-    return <PyqExam paper={exam.paper} />
+    return <PyqExam paper={exam.paper} onFinish={handleFinish} />
   }
 
   /* Neither session nor guest → full-screen Auth */

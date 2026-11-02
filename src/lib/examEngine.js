@@ -53,12 +53,16 @@ export function computeSummary(questions, answers, scheme) {
     if (PQ_LETTERS.indexOf(a) === q.answer_index) c++
     else w++
   })
+  const attempted = c + w
   return {
-    c, w, u,
+    c, w, u, attempted,
     total: questions.length,
     marks: c * scheme.correct + w * scheme.wrong,
     totalMarks: questions.length * scheme.correct,
-    acc: questions.length ? Math.round((c / questions.length) * 100) : 0,
+    /* Accuracy = correct ÷ attempted (not ÷ total). Attempt rate is a separate
+       metric (attempted ÷ total). Attempted = 0 → accuracy is undefined. */
+    acc: attempted ? Math.round((c / attempted) * 100) : 0,
+    attemptRate: questions.length ? Math.round((attempted / questions.length) * 100) : 0,
   }
 }
 
