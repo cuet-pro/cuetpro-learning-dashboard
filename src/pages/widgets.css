@@ -194,6 +194,13 @@
 .wl-card-head { display: flex; align-items: center; gap: 7px; flex-wrap: wrap; }
 .wl-card-head b { font: 500 14px var(--font-body); color: var(--text); }
 .wl-star { color: var(--warning, #F5A623); font-size: 12px; line-height: 1; }
+.wl-bookmark { background: none; border: none; cursor: pointer; color: var(--text-muted); font-size: 16px; line-height: 1; padding: 0 2px; margin-left: auto; }
+.wl-bookmark:hover { color: var(--warning, #F5A623); }
+.wl-bookmark.on { color: var(--warning, #F5A623); }
+.wl-filters { display: flex; gap: 6px; margin-left: auto; }
+.wl-fchip { font: 600 11px var(--font-body); padding: 5px 11px; border-radius: 999px; border: 1px solid var(--border); background: var(--surface); color: var(--text-muted); cursor: pointer; transition: all .12s; }
+.wl-fchip:hover { border-color: var(--primary); color: var(--primary); }
+.wl-fchip.on { background: var(--primary); border-color: var(--primary); color: #fff; }
 .wl-table thead th.wl-sno-h { text-align: center; width: 46px; }
 .wl-table td.wl-sno { text-align: center; font-family: var(--font-mono); font-size: 11px; color: var(--text-muted); white-space: nowrap; vertical-align: top; }
 .wl-pyq { display: inline-block; font-size: 9px; font-weight: 700; letter-spacing: .04em; color: var(--info); background: var(--info-soft); border-radius: 999px; padding: 2px 7px; margin-left: 7px; vertical-align: middle; }

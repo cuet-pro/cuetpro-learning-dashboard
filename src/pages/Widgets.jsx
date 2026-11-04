@@ -218,6 +218,37 @@ export function BadgesTile() {
   )
 }
 
+/* ── Word-list card (one word per card) with PYQ tag + bookmark + level + syn/ant ── */
+function WlCard({ it, bookmarked, onToggle }) {
+  const word = it.word || it.front
+  const meaning = it.mean || it.back
+  const syn = it.syn || []
+  const ant = it.ant || []
+  return (
+    <div className="wl-card">
+      <div className="wl-card-head">
+        <b>{word}</b>
+        {it.pyq && <span className="wl-tag pyq">PYQ</span>}
+        {it.diff && <span className="wl-level">{it.diff}</span>}
+        <button
+          type="button"
+          className={'wl-bookmark' + (bookmarked ? ' on' : '')}
+          onClick={onToggle}
+          aria-label={bookmarked ? 'Remove bookmark' : 'Bookmark this word'}
+          title={bookmarked ? 'Remove bookmark' : 'Bookmark this word'}
+        >{bookmarked ? '★' : '☆'}</button>
+      </div>
+      {meaning && <p className="wl-meaning">{meaning}</p>}
+      {it.wrong && <div className="wl-line"><em>mix-up</em><span>{it.wrong}</span></div>}
+      {it.tip && <div className="wl-line"><em>tip</em><span>{it.tip}</span></div>}
+      {it.origin && <div className="wl-line"><em>origin</em><span>{it.origin}</span></div>}
+      {it.example && <div className="wl-line"><em>example</em><span>{it.example}</span></div>}
+      {syn.length > 0 && <div className="wl-line"><em className="wl-syn">syn</em><span>{syn.join(', ')}</span></div>}
+      {ant.length > 0 && <div className="wl-line"><em className="wl-ant">ant</em><span>{ant.join(', ')}</span></div>}
+    </div>
+  )
+}
+
 export default function DashboardTiles({ onNavigate }) {
   const gate = useGuestGate()
   const toast = useToast()
@@ -228,6 +259,11 @@ export default function DashboardTiles({ onNavigate }) {
   const [sylOpen, setSylOpen] = useState(false)
   const [syl, setSyl] = useState([])
   const [curSubj, setCurSubj] = useState(null)
+  const [bookmarks, setBookmarks] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('cp_wl_bookmarks') || '{}') } catch { return {} }
+  })
+  const [fpyq, setFpyq] = useState(false)
+  const [fbm, setFbm] = useState(false)
 
   /* Word list — live from Supabase (static VOCAB_CATEGORIES is the fallback while loading) */
   useEffect(() => {
@@ -254,10 +290,24 @@ export default function DashboardTiles({ onNavigate }) {
     return () => { alive = false }
   }, [])
 
-  const categories = bank || VOCAB_CATEGORIES
+  /* Merge the static curated lists (antonyms, synonyms, idioms, spelling, foreign,
+     phrasal, literary) with the live Supabase bank (word/root/prefix/suffix) so
+     the word list shows every category at once. */
+  const categories = [...VOCAB_CATEGORIES, ...(bank || [])]
   const active = categories.find(c => c.id === cat)
 
+  const itemKey = it => it.id || it.word || it.front || ''
+  const toggleBookmark = key => {
+    setBookmarks(b => {
+      const n = { ...b, [key]: !b[key] }
+      try { localStorage.setItem('cp_wl_bookmarks', JSON.stringify(n)) } catch { /* ignore */ }
+      return n
+    })
+  }
+
   const match = (it) => {
+    if (fpyq && !it.pyq) return false
+    if (fbm && !bookmarks[itemKey(it)]) return false
     if (!q) return true
     const hay = Object.values(it).map(v => Array.isArray(v) ? v.join(' ') : String(v)).join(' ')
     return hay.toLowerCase().includes(q.toLowerCase())
@@ -328,35 +378,24 @@ export default function DashboardTiles({ onNavigate }) {
         {active ? (
           <div className="wl-words">
             <div className="wl-top">
-              <button type="button" className="wl-back" onClick={() => { setCat(null); setQ('') }}><ArrowLeft size={14} /> All categories</button>
+              <button type="button" className="wl-back" onClick={() => { setCat(null); setQ(''); setFpyq(false); setFbm(false) }}><ArrowLeft size={14} /> All categories</button>
               <input className="wl-search" type="text" placeholder={'Search ' + active.name.toLowerCase() + '…'} value={q} onChange={e => setQ(e.target.value)} />
+              <div className="wl-filters">
+                <button type="button" className={'wl-fchip' + (fpyq ? ' on' : '')} onClick={() => setFpyq(v => !v)}>PYQ</button>
+                <button type="button" className={'wl-fchip' + (fbm ? ' on' : '')} onClick={() => setFbm(v => !v)}>★ Bookmarked</button>
+              </div>
             </div>
-            <div className="wl-table-wrap">
-              <table className="wl-table">
-                <thead>
-                  <tr><th className="wl-sno-h">S.No.</th>{active.cols.map(c => <th key={c.h}>{c.h}</th>)}</tr>
-                </thead>
-                <tbody>
-                  {words.map((it, i) => (
-                    <tr key={it.id || i}>
-                      <td className="wl-sno">{i + 1}</td>
-                      {active.cols.map(c => {
-                        let v = it[c.f]
-                        if (c.join) v = (v || []).join(', ')
-                        const cls = c.pill ? 'wl-pill-cell' : (c.f === 'word' || c.f === 'front' ? 'wl-tword' : '')
-                        return (
-                          <td key={c.h} className={cls}>
-                            {c.pill ? <span className={'wl-diff ' + String(v || '').toLowerCase()}>{v}</span> : v}
-                            {c.star && it.pyq ? <span className="wl-pyq">PYQ</span> : null}
-                          </td>
-                        )
-                      })}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+            <div className="wl-group">
+              {words.map((it, i) => (
+                <WlCard
+                  key={itemKey(it) || i}
+                  it={it}
+                  bookmarked={!!bookmarks[itemKey(it)]}
+                  onToggle={() => toggleBookmark(itemKey(it))}
+                />
+              ))}
             </div>
-            {words.length === 0 && <p className="wl-empty">No matches — try a different search.</p>}
+            {words.length === 0 && <p className="wl-empty">No matches — try a different search or clear a filter.</p>}
           </div>
         ) : (
           <div className="wl-list">
