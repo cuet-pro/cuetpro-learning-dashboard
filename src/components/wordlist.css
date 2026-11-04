@@ -1,0 +1,119 @@
+/* ── Word List / Word Bank modal (categories → tabs → table/PYQ) ── */
+.wlx { display: flex; flex-direction: column; gap: 12px; }
+
+.wlx-head { display: flex; align-items: center; justify-content: space-between; }
+.wlx-title { font: 600 18px var(--font-display); color: var(--text); margin: 0; }
+.wlx-close { background: none; border: none; cursor: pointer; color: var(--text-muted); display: grid; place-items: center; width: 32px; height: 32px; border-radius: 8px; }
+.wlx-close:hover { background: var(--bg); color: var(--text); }
+
+.wlx-searchrow { display: flex; align-items: center; gap: 10px; }
+.wlx-search { flex: 1; display: flex; align-items: center; gap: 8px; padding: 8px 12px; background: var(--bg); border: 1px solid var(--border); border-radius: var(--r-sm); color: var(--text-muted); }
+.wlx-search input { flex: 1; border: none; background: none; outline: none; font: 500 13px var(--font-body); color: var(--text); }
+.wlx-bmlink { display: inline-flex; align-items: center; gap: 6px; background: none; border: 1px solid var(--border); border-radius: var(--r-full); padding: 7px 12px; font: 600 12px var(--font-body); color: var(--text-secondary); cursor: pointer; }
+.wlx-bmlink:hover { border-color: var(--primary); color: var(--primary); }
+
+/* categories grid */
+.wlx-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 10px; }
+.wlx-card { position: relative; display: flex; flex-direction: column; gap: 6px; text-align: left; padding: 13px 14px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-md); cursor: pointer; transition: transform .13s, border-color .13s, box-shadow .13s; }
+.wlx-card:hover { transform: translateY(-2px); border-color: var(--primary); box-shadow: var(--shadow-sm); }
+.wlx-card-ico { width: 36px; height: 36px; border-radius: var(--r-sm); display: grid; place-items: center; font-size: 18px; }
+.wlx-card-t { display: flex; align-items: baseline; gap: 8px; }
+.wlx-card-t b { font: 600 14px var(--font-body); color: var(--text); }
+.wlx-card-t em { font: 500 11px var(--font-body); color: var(--text-muted); font-style: normal; }
+.wlx-card-meta { display: flex; flex-wrap: wrap; gap: 5px; min-height: 18px; }
+.wlx-chip { display: inline-flex; align-items: center; font: 700 9.5px var(--font-body); padding: 2px 7px; border-radius: 999px; letter-spacing: .03em; }
+.wlx-chip.pyq { color: var(--info); background: var(--info-soft); }
+.wlx-chip.learned { color: var(--success); background: var(--success-soft); }
+.wlx-chip.bm { color: var(--warning); background: var(--warning-soft); }
+.wlx-card-bar { height: 5px; border-radius: 999px; background: var(--bg); overflow: hidden; }
+.wlx-card-bar i { display: block; height: 100%; background: var(--primary); border-radius: 999px; }
+.wlx-card-arrow { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); color: var(--text-muted); }
+.wlx-card.pyqonly { border-style: dashed; }
+
+/* back + category head + tabs */
+.wlx-back { display: inline-flex; align-items: center; gap: 6px; align-self: flex-start; background: none; border: none; cursor: pointer; color: var(--primary); font: 600 13px var(--font-body); padding: 0; }
+.wlx-back:hover { text-decoration: underline; }
+.wlx-cathead { display: flex; align-items: center; gap: 10px; }
+.wlx-tabs { display: flex; gap: 6px; border-bottom: 1px solid var(--border); }
+.wlx-tabs button { padding: 8px 14px; background: none; border: none; border-bottom: 2px solid transparent; cursor: pointer; font: 600 13px var(--font-body); color: var(--text-muted); }
+.wlx-tabs button.on { color: var(--primary); border-bottom-color: var(--primary); }
+
+/* word bank table */
+.wlx-bank { display: flex; flex-direction: column; gap: 10px; }
+.wlx-bank-stats { display: flex; flex-wrap: wrap; gap: 8px; }
+.wlx-stat { font: 500 12px var(--font-body); color: var(--text-secondary); padding: 4px 10px; border: 1px solid var(--border); border-radius: 999px; cursor: pointer; }
+.wlx-stat:hover { border-color: var(--primary); color: var(--primary); }
+.wlx-bank-ctrl { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.wlx-select { padding: 7px 10px; font: 500 12.5px var(--font-body); color: var(--text); background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-sm); outline: none; }
+.wlx-table-wrap { overflow-x: auto; max-height: 480px; overflow-y: auto; }
+.wlx-table { width: 100%; border-collapse: collapse; font-size: 12.5px; min-width: 640px; }
+.wlx-table thead th { position: sticky; top: 0; z-index: 1; background: var(--surface); text-align: left; padding: 8px 10px; font-size: 10.5px; text-transform: uppercase; letter-spacing: .04em; color: var(--text-muted); border-bottom: 2px solid var(--border); white-space: nowrap; font-weight: 600; }
+.wlx-table tbody tr { border-bottom: 1px solid var(--border); }
+.wlx-table tbody tr:hover { background: var(--bg); }
+.wlx-table td { padding: 8px 10px; vertical-align: top; color: var(--text-secondary); }
+.wlx-sno { color: var(--text-muted) !important; font-family: var(--font-mono); font-size: 11px; }
+.wlx-hy { color: var(--warning); }
+.wlx-term { font-weight: 600; color: var(--text) !important; white-space: nowrap; }
+.wlx-mean { max-width: 260px; }
+.wlx-origin { color: var(--text-muted); font-style: normal; font-size: 11px; }
+.wlx-wrong { color: var(--error); text-decoration: line-through; }
+.wlx-level { font: 600 10px var(--font-body); padding: 1px 7px; border-radius: 999px; border: 1px solid var(--border); text-transform: capitalize; }
+.wlx-level.easy { color: #0F6E56; border-color: #0F6E56; }
+.wlx-level.medium { color: #BA7517; border-color: #BA7517; }
+.wlx-level.hard { color: #A32D2D; border-color: #A32D2D; }
+.wlx-actions { display: flex; gap: 4px; }
+.wlx-act { display: grid; place-items: center; width: 28px; height: 28px; border-radius: 7px; border: 1px solid var(--border); background: none; color: var(--text-muted); cursor: pointer; }
+.wlx-act:hover { border-color: var(--primary); color: var(--primary); }
+.wlx-act.on { color: var(--success); border-color: var(--success); background: var(--success-soft); }
+td.emph { font-weight: 600; color: var(--text); }
+
+/* PYQ practice */
+.wlx-pyq { display: flex; flex-direction: column; gap: 10px; }
+.wlx-chips { display: flex; gap: 6px; }
+.wlx-chips button { padding: 5px 11px; border-radius: 999px; border: 1px solid var(--border); background: var(--surface); color: var(--text-muted); font: 600 11.5px var(--font-body); cursor: pointer; }
+.wlx-chips button.on { background: var(--primary); border-color: var(--primary); color: #fff; }
+.wlx-mode { display: flex; gap: 4px; border: 1px solid var(--border); border-radius: 999px; padding: 3px; }
+.wlx-mode button { padding: 4px 11px; border: none; background: none; border-radius: 999px; font: 600 11.5px var(--font-body); color: var(--text-muted); cursor: pointer; }
+.wlx-mode button.on { background: var(--primary); color: #fff; }
+.wlx-pyq-count { font: 500 12px var(--font-body); color: var(--text-muted); }
+
+.wlx-pcard { border: 1px solid var(--border); border-left: 3px solid var(--info); border-radius: var(--r-md); padding: 12px 14px; display: flex; flex-direction: column; gap: 10px; background: var(--surface); }
+.wlx-pcard-q { font: 500 14px/1.5 var(--font-body); color: var(--text); }
+.wlx-pcard-opts { display: flex; flex-direction: column; gap: 7px; }
+.wlx-pcard-opt { display: flex; align-items: flex-start; gap: 9px; padding: 8px 11px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); font: 500 13px/1.45 var(--font-body); color: var(--text); cursor: pointer; text-align: left; }
+.wlx-pcard-opt:not(:disabled):hover { border-color: var(--primary); }
+.wlx-pcard-opt.correct { border-color: var(--success); background: var(--success-soft); color: var(--success); }
+.wlx-pcard-opt.wrong { border-color: var(--error); background: var(--error-soft); color: var(--error); }
+.wlx-pcard-k { flex: none; width: 22px; height: 22px; display: grid; place-items: center; border-radius: 50%; background: var(--bg); border: 1px solid var(--border); font: 700 12px var(--font-body); color: var(--text-secondary); }
+.wlx-pcard-opt.correct .wlx-pcard-k { background: var(--success); border-color: var(--success); color: #fff; }
+.wlx-pcard-opt.wrong .wlx-pcard-k { background: var(--error); border-color: var(--error); color: #fff; }
+.wlx-pcard-tick { flex: none; color: var(--success); font-weight: 800; }
+.wlx-pcard-meta { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.wlx-pcard-src { font: 500 11px var(--font-body); color: var(--text-muted); }
+.wlx-explain-toggle { background: none; border: none; cursor: pointer; color: var(--primary); font: 600 12px var(--font-body); padding: 0; }
+.wlx-pcard-explain { font: 500 13px/1.6 var(--font-body); color: var(--text-secondary); margin: 0; border-top: 1px solid var(--border); padding-top: 10px; }
+
+.wlx-pager { display: flex; align-items: center; justify-content: center; gap: 12px; }
+.wlx-pager button { display: grid; place-items: center; width: 32px; height: 32px; border-radius: 8px; border: 1px solid var(--border); background: none; color: var(--text-secondary); cursor: pointer; }
+.wlx-pager button:disabled { opacity: .4; cursor: not-allowed; }
+.wlx-pager span { font: 500 12.5px var(--font-body); color: var(--text-muted); }
+
+/* bookmarks */
+.wlx-bm { display: flex; flex-direction: column; gap: 8px; }
+.wlx-bm-head { display: flex; align-items: center; gap: 6px; font: 700 12px var(--font-body); color: var(--info); text-transform: uppercase; letter-spacing: .04em; margin-top: 6px; }
+.wlx-bm-row { display: flex; gap: 10px; padding: 9px 12px; border: 1px solid var(--border); border-radius: var(--r-sm); background: var(--surface); }
+.wlx-bm-row b { flex: none; font: 600 13px var(--font-body); color: var(--text); }
+.wlx-bm-row span { font: 500 12.5px var(--font-body); color: var(--text-muted); }
+.wlx-bm-actions { display: flex; gap: 8px; margin-top: 10px; }
+.wlx-empty { font: 500 13px var(--font-body); color: var(--text-muted); text-align: center; padding: 18px 0; }
+
+/* mobile: table → cards */
+@media (max-width: 768px) {
+  .wlx-table-wrap { overflow-x: hidden; max-height: none; }
+  .wlx-table thead { display: none; }
+  .wlx-table, .wlx-table tbody, .wlx-table tr, .wlx-table td { display: block; width: 100%; }
+  .wlx-table tr { border: 1px solid var(--border); border-radius: var(--r-md); margin-bottom: 8px; padding: 10px 12px; }
+  .wlx-table td { border: none; padding: 3px 0; }
+  .wlx-actions { margin-top: 4px; }
+  .wlx-card-arrow { display: none; }
+}

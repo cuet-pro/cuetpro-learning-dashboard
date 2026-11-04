@@ -4,12 +4,13 @@ import {
   FileText, BarChart3, ListChecks, Files, CheckCircle2, Users, Flame, Award, Zap,
   Compass, Target, Timer, Trophy, Video, Sparkles, ArrowLeft, ChevronRight, ArrowRight,
 } from 'lucide-react'
-import { VOCAB_CATEGORIES } from '../data/vocab'
-import { fetchVocabBank, fetchAllSyllabus, fetchPyqVocabQuestions } from '../lib/content'
+import { fetchVocabEntries, fetchAllSyllabus } from '../lib/content'
 import { setExplorerRoute } from '../lib/explorerRoute'
 import { setStudyKitTool } from '../lib/studyKitRoute'
 import { Modal, useToast } from '../components/shell/Shell.jsx'
 import { useGuestGate } from '../lib/guestGate'
+import WordListModal from '../components/WordListModal.jsx'
+import { loadBookmarks } from '../lib/vocabProgress'
 import './widgets.css'
 
 /* ── motion helpers (respect prefers-reduced-motion) ── */
@@ -218,110 +219,26 @@ export function BadgesTile() {
   )
 }
 
-/* ── Word-list card (one word per card) with PYQ tag + bookmark + level + syn/ant ── */
-function WlCard({ it, bookmarked, onToggle }) {
-  const word = it.word || it.front
-  const meaning = it.mean || it.back
-  const syn = it.syn || []
-  const ant = it.ant || []
-  return (
-    <div className="wl-card">
-      <div className="wl-card-head">
-        <b>{word}</b>
-        {it.pyq && <span className="wl-tag pyq">PYQ</span>}
-        {it.diff && <span className="wl-level">{it.diff}</span>}
-        <button
-          type="button"
-          className={'wl-bookmark' + (bookmarked ? ' on' : '')}
-          onClick={onToggle}
-          aria-label={bookmarked ? 'Remove bookmark' : 'Bookmark this word'}
-          title={bookmarked ? 'Remove bookmark' : 'Bookmark this word'}
-        >{bookmarked ? '★' : '☆'}</button>
-      </div>
-      {meaning && <p className="wl-meaning">{meaning}</p>}
-      {it.wrong && <div className="wl-line"><em>mix-up</em><span>{it.wrong}</span></div>}
-      {it.tip && <div className="wl-line"><em>tip</em><span>{it.tip}</span></div>}
-      {it.origin && <div className="wl-line"><em>origin</em><span>{it.origin}</span></div>}
-      {it.example && <div className="wl-line"><em>example</em><span>{it.example}</span></div>}
-      {syn.length > 0 && <div className="wl-line"><em className="wl-syn">syn</em><span>{syn.join(', ')}</span></div>}
-      {ant.length > 0 && <div className="wl-line"><em className="wl-ant">ant</em><span>{ant.join(', ')}</span></div>}
-    </div>
-  )
-}
-
-/* ── PYQ question card (real previous-year question with options + answer) ── */
-function PyqCard({ it, bookmarked, onToggle }) {
-  const [show, setShow] = useState(false)
-  const PQ = 'ABCD'
-  return (
-    <div className="wl-card pyq">
-      <div className="wl-card-head"><b className="wl-q">Q. {it.q}</b></div>
-      <div className="wl-pyq-opts">
-        {(it.opts || []).map((o, i) => {
-          const correct = i === it.answer
-          return (
-            <div key={i} className={'wl-pyq-opt' + (correct ? ' correct' : '')}>
-              <span className="wl-pyq-k">{PQ[i]}</span>
-              <span className="wl-pyq-t">{o}</span>
-              {correct && <span className="wl-pyq-ans">✓</span>}
-            </div>
-          )
-        })}
-      </div>
-      <div className="wl-pyq-meta">
-        <span className="wl-tag pyq">PYQ</span>
-        {it.diff && <span className="wl-level">{it.diff}</span>}
-        {it.source && <span className="wl-pyq-src">{it.source}</span>}
-        <button
-          type="button"
-          className={'wl-bookmark' + (bookmarked ? ' on' : '')}
-          onClick={onToggle}
-          aria-label={bookmarked ? 'Remove bookmark' : 'Bookmark this question'}
-          title={bookmarked ? 'Remove bookmark' : 'Bookmark this question'}
-        >{bookmarked ? '★' : '☆'}</button>
-      </div>
-      {it.explain && (
-        <>
-          <button type="button" className="wl-explain-toggle" onClick={() => setShow(v => !v)}>
-            {show ? 'Hide explanation' : 'Explanation'}
-          </button>
-          {show && <p className="wl-meaning">{it.explain}</p>}
-        </>
-      )}
-    </div>
-  )
-}
-
 export default function DashboardTiles({ onNavigate }) {
   const gate = useGuestGate()
   const toast = useToast()
   const [wlOpen, setWlOpen] = useState(false)
-  const [cat, setCat] = useState(null)
-  const [q, setQ] = useState('')
-  const [bank, setBank] = useState(null)
+  const [entryCount, setEntryCount] = useState(0)
+  const [bmCount, setBmCount] = useState(0)
   const [sylOpen, setSylOpen] = useState(false)
   const [syl, setSyl] = useState([])
   const [curSubj, setCurSubj] = useState(null)
-  const [bookmarks, setBookmarks] = useState(() => {
-    try { return JSON.parse(localStorage.getItem('cp_wl_bookmarks') || '{}') } catch { return {} }
-  })
-  const [fpyq, setFpyq] = useState(false)
-  const [fbm, setFbm] = useState(false)
-  const [pyqBank, setPyqBank] = useState(null)
 
-  /* Word list — live from Supabase (static VOCAB_CATEGORIES is the fallback while loading) */
+  /* Word list tile: total entries + live bookmark count */
   useEffect(() => {
     let alive = true
-    fetchVocabBank().then(({ data }) => { if (alive && data && data.length) setBank(data) })
+    fetchVocabEntries().then(({ data }) => { if (alive) setEntryCount((data || []).length) })
     return () => { alive = false }
   }, [])
-
-  /* PYQ vocab questions — real previous-year questions, tagged PYQ */
   useEffect(() => {
-    let alive = true
-    fetchPyqVocabQuestions().then(({ data }) => { if (alive && data && data.length) setPyqBank(data) })
-    return () => { alive = false }
-  }, [])
+    const bm = loadBookmarks()
+    setBmCount(Object.keys(bm.entry || {}).length + Object.keys(bm.question || {}).length)
+  }, [wlOpen])
 
   /* Syllabus — live from Supabase */
   useEffect(() => {
@@ -341,30 +258,6 @@ export default function DashboardTiles({ onNavigate }) {
     return () => { alive = false }
   }, [])
 
-  /* Merge the static curated lists (antonyms, synonyms, idioms, spelling, foreign,
-     phrasal, literary) with the live Supabase bank (word/root/prefix/suffix) and
-     the PYQ question bank so the word list shows every category at once. */
-  const categories = [...VOCAB_CATEGORIES, ...(bank || []), ...(pyqBank || [])]
-  const active = categories.find(c => c.id === cat)
-
-  const itemKey = it => it.id || it.word || it.front || ''
-  const toggleBookmark = key => {
-    setBookmarks(b => {
-      const n = { ...b, [key]: !b[key] }
-      try { localStorage.setItem('cp_wl_bookmarks', JSON.stringify(n)) } catch { /* ignore */ }
-      return n
-    })
-  }
-
-  const match = (it) => {
-    if (fpyq && !(it.pyq || (active && active.pyq))) return false
-    if (fbm && !bookmarks[itemKey(it)]) return false
-    if (!q) return true
-    const hay = Object.values(it).map(v => Array.isArray(v) ? v.join(' ') : String(v)).join(' ')
-    return hay.toLowerCase().includes(q.toLowerCase())
-  }
-  const words = active ? active.items.filter(match) : []
-  const vocabCount = categories.reduce((s, c) => s + c.items.length, 0)
   const sylSubjCount = syl.length
   const curSubjTopics = curSubj ? (curSubj.sections || []).reduce((s, x) => s + (x.topics?.length || 0), 0) : 0
 
@@ -379,7 +272,7 @@ export default function DashboardTiles({ onNavigate }) {
     {
       key: 'learn', label: 'Learn',
       tiles: [
-        { id: 'word-list', label: 'Word list', tone: 'blue', icon: List, stat: { n: vocabCount, suffix: 'words' }, go: () => setWlOpen(true) },
+        { id: 'word-list', label: 'Word list', tone: 'blue', icon: List, stat: { n: entryCount || bmCount, suffix: bmCount > 0 ? 'words · ' + bmCount + ' ★' : 'words' }, go: () => setWlOpen(true) },
         { id: 'flashcards', label: 'Flashcards', tone: 'green', icon: Layers, ring: 46, ringMeta: '230/500 mastered', recommended: true, gate: { feature: 'Flashcards', action: 'flip your cards' }, go: () => { setStudyKitTool('flashcards'); onNavigate('studykit') } },
         { id: 'syllabus', label: 'Syllabus', tone: 'blue', icon: FileText, stat: { n: sylSubjCount || 19, suffix: 'subjects' }, go: () => setSylOpen(true) },
       ],
@@ -425,37 +318,8 @@ export default function DashboardTiles({ onNavigate }) {
           </div>
         ))}
       </div>
-      <Modal open={wlOpen} onClose={() => { setWlOpen(false); setCat(null); setQ('') }} title={active ? active.name : 'Word list'} wide>
-        {active ? (
-          <div className="wl-words">
-            <div className="wl-top">
-              <button type="button" className="wl-back" onClick={() => { setCat(null); setQ(''); setFpyq(false); setFbm(false) }}><ArrowLeft size={14} /> All categories</button>
-              <input className="wl-search" type="text" placeholder={'Search ' + active.name.toLowerCase() + '…'} value={q} onChange={e => setQ(e.target.value)} />
-              <div className="wl-filters">
-                <button type="button" className={'wl-fchip' + (fpyq ? ' on' : '')} onClick={() => setFpyq(v => !v)}>PYQ</button>
-                <button type="button" className={'wl-fchip' + (fbm ? ' on' : '')} onClick={() => setFbm(v => !v)}>★ Bookmarked</button>
-              </div>
-            </div>
-            <div className="wl-group">
-              {words.map((it, i) => (
-                active && active.pyq
-                  ? <PyqCard key={itemKey(it) || i} it={it} bookmarked={!!bookmarks[itemKey(it)]} onToggle={() => toggleBookmark(itemKey(it))} />
-                  : <WlCard key={itemKey(it) || i} it={it} bookmarked={!!bookmarks[itemKey(it)]} onToggle={() => toggleBookmark(itemKey(it))} />
-              ))}
-            </div>
-            {words.length === 0 && <p className="wl-empty">No matches — try a different search or clear a filter.</p>}
-          </div>
-        ) : (
-          <div className="wl-list">
-            {categories.map(c => (
-              <button type="button" className="wl-cat" key={c.id} onClick={() => { setCat(c.id); setQ('') }}>
-                <span className="wl-cat-ico" style={{ background: c.color + '1a' }}>{c.icon}</span>
-                <span className="wl-cat-t"><b>{c.name}{c.pyq && <span className="wl-tag pyq">PYQ</span>}</b><em>{c.items.length} {c.unit}</em></span>
-                <ChevronRight size={15} className="wl-cat-arrow" />
-              </button>
-            ))}
-          </div>
-        )}
+      <Modal open={wlOpen} onClose={() => setWlOpen(false)} wide>
+        <WordListModal onClose={() => setWlOpen(false)} />
       </Modal>
       <Modal open={sylOpen} onClose={() => setSylOpen(false)} title="CUET Syllabus" wide>
         {syl.length ? (

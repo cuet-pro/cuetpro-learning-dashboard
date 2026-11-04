@@ -191,13 +191,30 @@ export async function fetchPyqVocabQuestions() {
   const byTopic = {}
   for (const r of all) (byTopic[r.topic] ||= []).push(r)
   const categories = PYQ_VOCAB_TOPICS.map(d => ({
-    id: d.id, name: d.name, icon: d.icon, color: d.color, unit: d.unit, pyq: true,
+    id: d.id, name: d.name, icon: d.icon, color: d.color, unit: d.unit, pyq: true, topic: d.topic,
     items: (byTopic[d.topic] || []).map(r => ({
       id: r.id, q: r.question, opts: r.options || [], answer: r.answer_index,
       diff: r.difficulty, source: r.source, explain: r.explanation,
     })),
   })).filter(c => c.items.length > 0)
   return { data: categories, error: null }
+}
+
+/* ── Word/term bank (vocab_entries: 842 entries across 9 categories) ── */
+export async function fetchVocabEntries() {
+  let all = []
+  let from = 0
+  for (;;) {
+    const { data, error } = await supabase
+      .from('vocab_entries')
+      .select('id, category, term, meaning, synonyms, antonyms, example, wrong_spelling, tip, level, is_high_yield, pyq_in, origin')
+      .range(from, from + 999)
+    if (error || !data || data.length === 0) break
+    all = all.concat(data)
+    if (data.length < 1000) break
+    from += 1000
+  }
+  return { data: all, error: null }
 }
 
 /* Cheat Sheets — 28 English quick-revision sheets (RC / Vocabulary / Grammar),
