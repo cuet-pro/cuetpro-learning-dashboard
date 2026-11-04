@@ -207,7 +207,7 @@ export async function fetchVocabEntries() {
   for (;;) {
     const { data, error } = await supabase
       .from('vocab_entries')
-      .select('id, category, term, meaning, synonyms, antonyms, example, wrong_spelling, tip, level, is_high_yield, pyq_in, origin')
+      .select('id, category, term, meaning, synonyms, antonyms, example, wrong_spelling, tip, level, is_high_yield, pyq_in, origin, type, examples')
       .range(from, from + 999)
     if (error || !data || data.length === 0) break
     all = all.concat(data)

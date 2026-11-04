@@ -1,7 +1,6 @@
-/* ── Word List / Vocabulary — simple, structured table view ──
-   Category tabs → one word bank table per category.
-   Columns: # | Word | Meaning | Synonyms | Antonyms | Level | Action.
-   Star (★) = important word, PYQ chip = asked in a real paper. */
+/* ── Word List / Vocabulary — premium table view ──
+   Category tabs → one word bank table per category. Columns are dynamic per
+   topic schema. Star (★) = important word, PYQ chip = asked in a real paper. */
 import { useEffect, useMemo, useState } from 'react'
 import { Search, X, Bookmark, Check, Star } from 'lucide-react'
 import { fetchVocabEntries } from '../lib/content'
@@ -12,17 +11,40 @@ import {
 import './wordlist.css'
 
 const WORD_CATEGORIES = [
-  { id: 'synonyms', name: 'Synonyms', source: 'word', emphasize: 'synonyms', unit: 'words' },
-  { id: 'antonyms', name: 'Antonyms', source: 'word', emphasize: 'antonyms', unit: 'words' },
-  { id: 'idioms', name: 'Idioms', source: 'idioms', unit: 'idioms' },
-  { id: 'spelling', name: 'Spelling', source: 'spelling', unit: 'words' },
-  { id: 'phrasal-verbs', name: 'Phrasal verbs', source: 'phrasal-verbs', unit: 'verbs' },
-  { id: 'foreign-words', name: 'Foreign words', source: 'foreign-words', unit: 'phrases' },
-  { id: 'literary-devices', name: 'Literary devices', source: 'literary-devices', unit: 'devices' },
-  { id: 'prefix-suffix', name: 'Prefix / Suffix', sources: ['prefix', 'suffix'], unit: 'affixes' },
-  { id: 'root-words', name: 'Root words', source: 'root', unit: 'roots' },
+  { id: 'synonyms', name: 'Synonyms', source: 'word' },
+  { id: 'antonyms', name: 'Antonyms', source: 'word' },
+  { id: 'idioms', name: 'Idioms', source: 'idioms' },
+  { id: 'spelling', name: 'Spelling', source: 'spelling' },
+  { id: 'phrasal-verbs', name: 'Phrasal verbs', source: 'phrasal-verbs' },
+  { id: 'foreign-words', name: 'Foreign words', source: 'foreign-words' },
+  { id: 'literary-devices', name: 'Literary devices', source: 'literary-devices' },
+  { id: 'prefix-suffix', name: 'Prefix / Suffix', sources: ['prefix', 'suffix'] },
+  { id: 'root-words', name: 'Root words', source: 'root' },
 ]
 const FILTERS = ['All', 'Easy', 'Medium', 'Hard', 'PYQ']
+
+/* Column spec per topic: key → header label (term label is per-topic). */
+const COLS = {
+  'synonyms': ['num', 'term', 'meaning', 'syn', 'ant', 'level', 'action'],
+  'antonyms': ['num', 'term', 'meaning', 'syn', 'ant', 'level', 'action'],
+  'idioms': ['num', 'term', 'meaning', 'example', 'action'],
+  'spelling': ['num', 'term', 'mixup', 'tip', 'action'],
+  'phrasal-verbs': ['num', 'term', 'meaning', 'action'],
+  'foreign-words': ['num', 'term', 'meaning', 'action'],
+  'literary-devices': ['num', 'term', 'meaning', 'example', 'action'],
+  'prefix-suffix': ['num', 'term', 'meaning', 'type', 'origin', 'examples', 'action'],
+  'root-words': ['num', 'term', 'meaning', 'origin', 'examples', 'action'],
+}
+const TERM_LABEL = {
+  'synonyms': 'Word', 'antonyms': 'Word', 'idioms': 'Idiom', 'spelling': 'Word',
+  'phrasal-verbs': 'Phrasal verb', 'foreign-words': 'Expression',
+  'literary-devices': 'Device', 'prefix-suffix': 'Affix', 'root-words': 'Root',
+}
+const HEADER = {
+  num: '#', term: 'Word', meaning: 'Meaning', syn: 'Synonyms', ant: 'Antonyms',
+  level: 'Level', example: 'Example', mixup: 'Common mix-up', tip: 'Tip',
+  type: 'Type', origin: 'Origin', examples: 'Examples', action: 'Action',
+}
 
 export default function WordListModal({ onClose }) {
   const [entries, setEntries] = useState(null)
@@ -42,14 +64,16 @@ export default function WordListModal({ onClose }) {
   }, [entries])
 
   const cat = WORD_CATEGORIES.find(c => c.id === catId)
-  const entriesFor = cat ? (cat.sources ? cat.sources.flatMap(s => bySource[s] || []) : (bySource[cat.source] || [])) : []
+  const entriesFor = cat
+    ? (cat.sources ? cat.sources.flatMap(s => bySource[s] || []) : (bySource[cat.source] || []))
+        .sort((a, b) => (a.term || '').toLowerCase().localeCompare((b.term || '').toLowerCase()))
+    : []
+  const cols = COLS[catId]
+  const isSyn = catId === 'synonyms'
+  const isAnt = catId === 'antonyms'
 
   const toggleBm = (type, id) => setBookmarks(b => toggleBookmark(b, type, id))
   const toggleLn = id => setLearned(l => toggleLearned(l, id))
-
-  const isWordBank = cat && (cat.source === 'word')
-  const isSyn = catId === 'synonyms'
-  const isAnt = catId === 'antonyms'
 
   const filtered = entriesFor.filter(e => {
     if (filter === 'Easy' && e.level !== 'Easy') return false
@@ -57,7 +81,7 @@ export default function WordListModal({ onClose }) {
     if (filter === 'Hard' && e.level !== 'Hard') return false
     if (filter === 'PYQ' && !(e.pyq_in && e.pyq_in.length)) return false
     if (q) {
-      const hay = [e.term, e.meaning, ...(e.synonyms || []), ...(e.antonyms || [])].join(' ').toLowerCase()
+      const hay = [e.term, e.meaning, ...(e.synonyms || []), ...(e.antonyms || []), ...(e.examples || [])].join(' ').toLowerCase()
       if (!hay.includes(q.toLowerCase())) return false
     }
     return true
@@ -96,18 +120,17 @@ export default function WordListModal({ onClose }) {
         <button className="wlx-close" onClick={onClose} aria-label="Close"><X size={18} /></button>
       </div>
 
-      {/* search + filters */}
       <div className="wlx-ctrl">
         <div className="wlx-search"><Search size={15} /><input placeholder="Search word, meaning, synonym or antonym…" value={q} onChange={e => setQ(e.target.value)} /></div>
         <button className="wlx-bmlink" onClick={() => setShowBm(true)}><Bookmark size={14} /> Saved</button>
       </div>
+
       <div className="wlx-chips">
         {FILTERS.map(f => (
           <button key={f} className={filter === f ? 'on' : ''} onClick={() => setFilter(f)}>{f}</button>
         ))}
       </div>
 
-      {/* category tabs */}
       <div className="wlx-tabs">
         {WORD_CATEGORIES.map(c => (
           <button key={c.id} className={catId === c.id ? 'on' : ''} onClick={() => setCatId(c.id)}>
@@ -116,55 +139,79 @@ export default function WordListModal({ onClose }) {
         ))}
       </div>
 
-      {/* word bank table */}
-      <div className="wlx-table-wrap">
-        <table className="wlx-table">
-          <thead>
-            <tr>
-              <th className="wlx-num-h">#</th>
-              <th>Word</th>
-              <th>Meaning</th>
-              {isWordBank && <th className={isAnt ? 'emph' : ''}>Synonyms</th>}
-              {isWordBank && <th className={isSyn ? 'emph' : ''}>Antonyms</th>}
-              {catId === 'idioms' && <th>Example</th>}
-              {catId === 'spelling' && <th>Common mix-up</th>}
-              {catId === 'spelling' && <th>Tip</th>}
-              {catId === 'literary-devices' && <th>Example</th>}
-              {isWordBank && <th>Level</th>}
-              <th>Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filtered.map((e, i) => (
-              <tr key={e.id}>
-                <td className="wlx-sno">{i + 1}</td>
-                <td className="wlx-term">
-                  {e.term}
-                  {e.is_high_yield && <Star size={12} className="wlx-star" />}
-                  {e.pyq_in && e.pyq_in.length > 0 && <span className="wlx-chip pyq" title="Asked in a real CUET paper">PYQ</span>}
-                </td>
-                <td className="wlx-mean">{e.meaning || ''}{e.origin ? <i className="wlx-origin"> ({e.origin})</i> : ''}</td>
-                {isWordBank && <td className={isAnt ? 'emph' : ''}>{(e.synonyms || []).join(', ')}</td>}
-                {isWordBank && <td className={isSyn ? 'emph' : ''}>{(e.antonyms || []).join(', ')}</td>}
-                {catId === 'idioms' && <td className="wlx-mean">{e.example || ''}</td>}
-                {catId === 'spelling' && <td className="wlx-wrong">{e.wrong_spelling || ''}</td>}
-                {catId === 'spelling' && <td className="wlx-mean">{e.tip || ''}</td>}
-                {catId === 'literary-devices' && <td className="wlx-mean">{e.example || ''}</td>}
-                {isWordBank && <td>{e.level && <span className={'wlx-level ' + e.level.toLowerCase()}>{e.level}</span>}</td>}
-                <td className="wlx-actions">
-                  <button className={'wlx-btn' + (isLearned(learned, e.id) ? ' on' : '')} onClick={() => toggleLn(e.id)}>
-                    <Check size={13} /> Learned
-                  </button>
-                  <button className={'wlx-btn' + (isBookmarked(bookmarks, 'entry', e.id) ? ' on' : '')} onClick={() => toggleBm('entry', e.id)}>
-                    <Bookmark size={13} /> Save
-                  </button>
-                </td>
+      <div className="wlx-table-card">
+        <div className="wlx-table-wrap">
+          <table className="wlx-table">
+            <thead>
+              <tr>
+                {cols.map(k => (
+                  <th key={k} className={k === 'num' ? 'num' : ''}>{k === 'term' ? TERM_LABEL[catId] : HEADER[k]}</th>
+                ))}
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {filtered.map((e, i) => (
+                <tr key={e.id}>
+                  {cols.map(k => (
+                    <Cell key={k} k={k} e={e} i={i} isSyn={isSyn} isAnt={isAnt}
+                      learned={isLearned(learned, e.id)} saved={isBookmarked(bookmarks, 'entry', e.id)}
+                      onLearned={() => toggleLn(e.id)} onSave={() => toggleBm('entry', e.id)} />
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        {filtered.length === 0 && <p className="wlx-empty">No words match this search or filter.</p>}
       </div>
-      {filtered.length === 0 && <p className="wlx-empty">No words match this search or filter.</p>}
     </div>
   )
+}
+
+function Cell({ k, e, i, isSyn, isAnt, learned, saved, onLearned, onSave }) {
+  const ex = (e.examples || []).filter(Boolean)
+  switch (k) {
+    case 'num': return <td className="wlx-sno">{i + 1}</td>
+    case 'term':
+      return (
+        <td className="wlx-term">
+          <span className="wlx-term-word">{e.term}</span>
+          {e.is_high_yield && <Star size={12} className="wlx-star" aria-label="Important" />}
+          {e.pyq_in && e.pyq_in.length > 0 && <span className="wlx-chip pyq" title="Asked in a real CUET paper">PYQ</span>}
+        </td>
+      )
+    case 'meaning':
+      return (
+        <td className="wlx-mean">
+          {e.meaning || '—'}
+        </td>
+      )
+    case 'syn': return <td className={isAnt ? '' : 'emph'}>{e.synonyms && e.synonyms.length ? e.synonyms.join(', ') : '—'}</td>
+    case 'ant': return <td className={isSyn ? '' : 'emph'}>{e.antonyms && e.antonyms.length ? e.antonyms.join(', ') : '—'}</td>
+    case 'level':
+      return <td>{e.level ? <span className={'wlx-level ' + e.level.toLowerCase()}>{e.level}</span> : '—'}</td>
+    case 'example': return <td className="wlx-mean">{e.example || '—'}</td>
+    case 'mixup': return <td className="wlx-wrong">{e.wrong_spelling || '—'}</td>
+    case 'tip': return <td className="wlx-mean">{e.tip || '—'}</td>
+    case 'type': return <td>{e.type ? <span className="wlx-type">{e.type}</span> : '—'}</td>
+    case 'origin': return <td className="wlx-origin-cell">{e.origin || '—'}</td>
+    case 'examples':
+      return (
+        <td className="wlx-examples" title={ex.join(', ')}>
+          {ex.length ? ex.join(', ') : '—'}
+        </td>
+      )
+    case 'action':
+      return (
+        <td className="wlx-actions">
+          <button className={'wlx-btn' + (learned ? ' on' : '')} onClick={onLearned} aria-pressed={learned}>
+            <Check size={13} /> Learned
+          </button>
+          <button className={'wlx-btn save' + (saved ? ' on' : '')} onClick={onSave} aria-pressed={saved}>
+            <Bookmark size={13} /> Save
+          </button>
+        </td>
+      )
+    default: return <td />
+  }
 }
