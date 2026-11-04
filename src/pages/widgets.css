@@ -201,6 +201,19 @@
 .wl-fchip { font: 600 11px var(--font-body); padding: 5px 11px; border-radius: 999px; border: 1px solid var(--border); background: var(--surface); color: var(--text-muted); cursor: pointer; transition: all .12s; }
 .wl-fchip:hover { border-color: var(--primary); color: var(--primary); }
 .wl-fchip.on { background: var(--primary); border-color: var(--primary); color: #fff; }
+.wl-card.pyq { border-left: 3px solid var(--info); }
+.wl-q { font-weight: 600 !important; white-space: normal !important; line-height: 1.45; }
+.wl-pyq-opts { display: flex; flex-direction: column; gap: 6px; }
+.wl-pyq-opt { display: flex; align-items: flex-start; gap: 8px; padding: 8px 10px; border: 1px solid var(--border); border-radius: 8px; font: 500 13px/1.45 var(--font-body); color: var(--text); }
+.wl-pyq-opt.correct { border-color: var(--success); background: var(--success-soft); }
+.wl-pyq-k { flex: none; width: 20px; height: 20px; display: grid; place-items: center; border-radius: 50%; background: var(--bg); border: 1px solid var(--border); font: 700 11px var(--font-body); color: var(--text-secondary); }
+.wl-pyq-opt.correct .wl-pyq-k { background: var(--success); border-color: var(--success); color: #fff; }
+.wl-pyq-t { flex: 1; }
+.wl-pyq-ans { flex: none; color: var(--success); font-weight: 800; }
+.wl-pyq-meta { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.wl-pyq-src { font: 500 11px var(--font-body); color: var(--text-muted); }
+.wl-explain-toggle { align-self: flex-start; background: none; border: none; cursor: pointer; color: var(--primary); font: 600 12px var(--font-body); padding: 0; }
+.wl-explain-toggle:hover { text-decoration: underline; }
 .wl-table thead th.wl-sno-h { text-align: center; width: 46px; }
 .wl-table td.wl-sno { text-align: center; font-family: var(--font-mono); font-size: 11px; color: var(--text-muted); white-space: nowrap; vertical-align: top; }
 .wl-pyq { display: inline-block; font-size: 9px; font-weight: 700; letter-spacing: .04em; color: var(--info); background: var(--info-soft); border-radius: 999px; padding: 2px 7px; margin-left: 7px; vertical-align: middle; }

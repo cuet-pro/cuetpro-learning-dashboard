@@ -5,7 +5,7 @@ import {
   Compass, Target, Timer, Trophy, Video, Sparkles, ArrowLeft, ChevronRight, ArrowRight,
 } from 'lucide-react'
 import { VOCAB_CATEGORIES } from '../data/vocab'
-import { fetchVocabBank, fetchAllSyllabus } from '../lib/content'
+import { fetchVocabBank, fetchAllSyllabus, fetchPyqVocabQuestions } from '../lib/content'
 import { setExplorerRoute } from '../lib/explorerRoute'
 import { setStudyKitTool } from '../lib/studyKitRoute'
 import { Modal, useToast } from '../components/shell/Shell.jsx'
@@ -249,6 +249,49 @@ function WlCard({ it, bookmarked, onToggle }) {
   )
 }
 
+/* ── PYQ question card (real previous-year question with options + answer) ── */
+function PyqCard({ it, bookmarked, onToggle }) {
+  const [show, setShow] = useState(false)
+  const PQ = 'ABCD'
+  return (
+    <div className="wl-card pyq">
+      <div className="wl-card-head"><b className="wl-q">Q. {it.q}</b></div>
+      <div className="wl-pyq-opts">
+        {(it.opts || []).map((o, i) => {
+          const correct = i === it.answer
+          return (
+            <div key={i} className={'wl-pyq-opt' + (correct ? ' correct' : '')}>
+              <span className="wl-pyq-k">{PQ[i]}</span>
+              <span className="wl-pyq-t">{o}</span>
+              {correct && <span className="wl-pyq-ans">✓</span>}
+            </div>
+          )
+        })}
+      </div>
+      <div className="wl-pyq-meta">
+        <span className="wl-tag pyq">PYQ</span>
+        {it.diff && <span className="wl-level">{it.diff}</span>}
+        {it.source && <span className="wl-pyq-src">{it.source}</span>}
+        <button
+          type="button"
+          className={'wl-bookmark' + (bookmarked ? ' on' : '')}
+          onClick={onToggle}
+          aria-label={bookmarked ? 'Remove bookmark' : 'Bookmark this question'}
+          title={bookmarked ? 'Remove bookmark' : 'Bookmark this question'}
+        >{bookmarked ? '★' : '☆'}</button>
+      </div>
+      {it.explain && (
+        <>
+          <button type="button" className="wl-explain-toggle" onClick={() => setShow(v => !v)}>
+            {show ? 'Hide explanation' : 'Explanation'}
+          </button>
+          {show && <p className="wl-meaning">{it.explain}</p>}
+        </>
+      )}
+    </div>
+  )
+}
+
 export default function DashboardTiles({ onNavigate }) {
   const gate = useGuestGate()
   const toast = useToast()
@@ -264,11 +307,19 @@ export default function DashboardTiles({ onNavigate }) {
   })
   const [fpyq, setFpyq] = useState(false)
   const [fbm, setFbm] = useState(false)
+  const [pyqBank, setPyqBank] = useState(null)
 
   /* Word list — live from Supabase (static VOCAB_CATEGORIES is the fallback while loading) */
   useEffect(() => {
     let alive = true
     fetchVocabBank().then(({ data }) => { if (alive && data && data.length) setBank(data) })
+    return () => { alive = false }
+  }, [])
+
+  /* PYQ vocab questions — real previous-year questions, tagged PYQ */
+  useEffect(() => {
+    let alive = true
+    fetchPyqVocabQuestions().then(({ data }) => { if (alive && data && data.length) setPyqBank(data) })
     return () => { alive = false }
   }, [])
 
@@ -291,9 +342,9 @@ export default function DashboardTiles({ onNavigate }) {
   }, [])
 
   /* Merge the static curated lists (antonyms, synonyms, idioms, spelling, foreign,
-     phrasal, literary) with the live Supabase bank (word/root/prefix/suffix) so
-     the word list shows every category at once. */
-  const categories = [...VOCAB_CATEGORIES, ...(bank || [])]
+     phrasal, literary) with the live Supabase bank (word/root/prefix/suffix) and
+     the PYQ question bank so the word list shows every category at once. */
+  const categories = [...VOCAB_CATEGORIES, ...(bank || []), ...(pyqBank || [])]
   const active = categories.find(c => c.id === cat)
 
   const itemKey = it => it.id || it.word || it.front || ''
@@ -306,7 +357,7 @@ export default function DashboardTiles({ onNavigate }) {
   }
 
   const match = (it) => {
-    if (fpyq && !it.pyq) return false
+    if (fpyq && !(it.pyq || (active && active.pyq))) return false
     if (fbm && !bookmarks[itemKey(it)]) return false
     if (!q) return true
     const hay = Object.values(it).map(v => Array.isArray(v) ? v.join(' ') : String(v)).join(' ')
@@ -387,12 +438,9 @@ export default function DashboardTiles({ onNavigate }) {
             </div>
             <div className="wl-group">
               {words.map((it, i) => (
-                <WlCard
-                  key={itemKey(it) || i}
-                  it={it}
-                  bookmarked={!!bookmarks[itemKey(it)]}
-                  onToggle={() => toggleBookmark(itemKey(it))}
-                />
+                active && active.pyq
+                  ? <PyqCard key={itemKey(it) || i} it={it} bookmarked={!!bookmarks[itemKey(it)]} onToggle={() => toggleBookmark(itemKey(it))} />
+                  : <WlCard key={itemKey(it) || i} it={it} bookmarked={!!bookmarks[itemKey(it)]} onToggle={() => toggleBookmark(itemKey(it))} />
               ))}
             </div>
             {words.length === 0 && <p className="wl-empty">No matches — try a different search or clear a filter.</p>}
@@ -402,7 +450,7 @@ export default function DashboardTiles({ onNavigate }) {
             {categories.map(c => (
               <button type="button" className="wl-cat" key={c.id} onClick={() => { setCat(c.id); setQ('') }}>
                 <span className="wl-cat-ico" style={{ background: c.color + '1a' }}>{c.icon}</span>
-                <span className="wl-cat-t"><b>{c.name}</b><em>{c.items.length} {c.unit}</em></span>
+                <span className="wl-cat-t"><b>{c.name}{c.pyq && <span className="wl-tag pyq">PYQ</span>}</b><em>{c.items.length} {c.unit}</em></span>
                 <ChevronRight size={15} className="wl-cat-arrow" />
               </button>
             ))}

@@ -159,6 +159,47 @@ export async function fetchVocabBank() {
   return { data: categories, error: null }
 }
 
+/* ── PYQ vocab questions (real CUET previous-year questions, tagged PYQ) ── */
+const PYQ_VOCAB_TOPICS = [
+  { id: 'pyq-analogies', topic: 'vocab-analogies', name: 'Analogies', icon: '🧩', color: '#7C5CFF', unit: 'questions' },
+  { id: 'pyq-antonyms', topic: 'vocab-antonyms', name: 'Antonyms', icon: '🔁', color: '#2F6FDB', unit: 'questions' },
+  { id: 'pyq-synonyms', topic: 'vocab-synonyms', name: 'Synonyms', icon: '🔄', color: '#00C97F', unit: 'questions' },
+  { id: 'pyq-idioms', topic: 'vocab-idioms', name: 'Idioms', icon: '💬', color: '#7C5CFF', unit: 'questions' },
+  { id: 'pyq-word-usage', topic: 'vocab-word-usage', name: 'Word Usage', icon: '📝', color: '#E5484D', unit: 'questions' },
+  { id: 'pyq-spelling', topic: 'vocab-spelling', name: 'Spelling', icon: '✏️', color: '#F5A623', unit: 'questions' },
+  { id: 'pyq-foreign', topic: 'vocab-foreign-words', name: 'Foreign Words', icon: '🌍', color: '#E5484D', unit: 'questions' },
+  { id: 'pyq-phrasal', topic: 'vocab-phrasal-verbs', name: 'Phrasal Verbs', icon: '🔗', color: '#2F6FDB', unit: 'questions' },
+  { id: 'pyq-rearranging', topic: 'vocab-rearranging', name: 'Rearranging', icon: '🔀', color: '#7C5CFF', unit: 'questions' },
+  { id: 'pyq-literary', topic: 'gr-literary-devices', name: 'Literary Devices', icon: '🎭', color: '#7C5CFF', unit: 'questions' },
+]
+
+export async function fetchPyqVocabQuestions() {
+  /* PostgREST caps a response at 1000 rows, so page through the table. */
+  let all = []
+  let from = 0
+  for (;;) {
+    const { data, error } = await supabase
+      .from('pyq_vocab_questions')
+      .select('id, topic, question, options, answer_index, difficulty, source, explanation')
+      .range(from, from + 999)
+    if (error || !data || data.length === 0) break
+    all = all.concat(data)
+    if (data.length < 1000) break
+    from += 1000
+  }
+  if (all.length === 0) return { data: null, error: null }
+  const byTopic = {}
+  for (const r of all) (byTopic[r.topic] ||= []).push(r)
+  const categories = PYQ_VOCAB_TOPICS.map(d => ({
+    id: d.id, name: d.name, icon: d.icon, color: d.color, unit: d.unit, pyq: true,
+    items: (byTopic[d.topic] || []).map(r => ({
+      id: r.id, q: r.question, opts: r.options || [], answer: r.answer_index,
+      diff: r.difficulty, source: r.source, explain: r.explanation,
+    })),
+  })).filter(c => c.items.length > 0)
+  return { data: categories, error: null }
+}
+
 /* Cheat Sheets — 28 English quick-revision sheets (RC / Vocabulary / Grammar),
    three pages each (rules → memory hacks → exam traps → practice → recap).
    Lightweight list (no blocks) for the picker, full sheet on demand. */
