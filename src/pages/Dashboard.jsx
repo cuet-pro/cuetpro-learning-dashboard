@@ -133,8 +133,14 @@ function RcQuestion({ q, n }) {
       <div className="rc-opts">
         {(q.options || []).map(o => {
           let cls = 'rc-opt'
-          if (pick !== null) { if (o.key === q.answer) cls += ' correct'; else if (o.key === pick) cls += ' wrong' }
-          return <button key={o.key} className={cls} onClick={() => { if (pick === null) setPick(o.key) }}>{o.key}. {o.text}</button>
+          const isCorrect = o.key === q.answer
+          if (pick !== null) { if (isCorrect) cls += ' correct'; else if (o.key === pick) cls += ' wrong' }
+          return (
+            <button key={o.key} className={cls} onClick={() => { if (pick === null) setPick(o.key) }}>
+              {o.key}. {o.text}
+              {pick !== null && isCorrect && <span className="rc-opt-tick">✓ Correct</span>}
+            </button>
+          )
         })}
       </div>
       {pick !== null && <div className="rc-ans">{pick === q.answer ? '✓ Correct!' : '✗ Correct answer: ' + q.answer}</div>}
@@ -237,8 +243,10 @@ export default function Dashboard({ onNavigate }) {
     : { word: WORD_Q.word, lead: 'What does "', trail: '" mean?', options: WORD_Q.options, answer: WORD_Q.answer, pts: 10 }
 
   const quizQ = quizData
-    ? quizData.map(q => ({ topic: q.topic, q: q.question, options: q.options || [], answer: q.answer_index }))
+    ? quizData.map(q => ({ topic: q.topic, q: q.question, options: q.options || [], answer: q.answer_index, subject: q.subjects?.name || 'English' }))
     : QUIZ
+
+  const quizSubject = quizQ.length ? (quizQ[0].subject || 'English') : 'English'
 
   const quizHeading = q => {
     if (!q.topic) return q.q
@@ -319,6 +327,7 @@ export default function Dashboard({ onNavigate }) {
         {chTab === 'quiz' && (
           <div className="ch-panel">
             {!quizDone ? (<>
+              <div className="ch-subject"><BookOpen size={13} /> {quizSubject}</div>
               <div className="ch-q">{quizHeading(quizQ[quizIdx])}</div>
               <div className="ch-opts">
                 {quizQ[quizIdx].options.map((o, i) => {
@@ -329,7 +338,7 @@ export default function Dashboard({ onNavigate }) {
               </div>
               <div className="ch-pts">{quizPick !== null ? (quizPick === quizQ[quizIdx].answer ? <span className="ok">✓ Correct!</span> : <span className="no">Wrong — correct answer is highlighted green</span>) : `Question ${quizIdx + 1}/${quizQ.length}`}</div>
             </>) : (
-              <div className="quiz-done"><b>{quizScore}/{quizQ.length} correct!</b><p>English · Vocabulary & Grammar — next quiz tomorrow.</p><span className="ok">+{quizScore * 5} pts added</span></div>
+              <div className="quiz-done"><b>{quizScore}/{quizQ.length} correct!</b><p>{quizSubject} · Vocabulary & Grammar — next quiz tomorrow.</p><span className="ok">+{quizScore * 5} pts added</span></div>
             )}
           </div>
         )}

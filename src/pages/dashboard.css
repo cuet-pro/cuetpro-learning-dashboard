@@ -330,6 +330,7 @@ button.hero-chip:hover { border-color: var(--primary); }
 .ch-tab.on { background: var(--primary-soft); color: var(--primary); }
 .ch-pts-total { margin-left: auto; font-size: 11.5px; font-weight: 800; color: var(--warning); background: var(--warning-soft); padding: 5px 12px; border-radius: var(--r-full); }
 .ch-panel { padding-top: var(--sp-4); display: flex; flex-direction: column; gap: 12px; animation: ch-slide .18s ease; }
+.ch-subject { display: inline-flex; align-items: center; gap: 6px; align-self: flex-start; font-size: 11.5px; font-weight: 700; color: var(--primary); background: var(--primary-soft); padding: 4px 11px; border-radius: var(--r-full); }
 @keyframes ch-slide { from { opacity: 0; transform: translateY(-3px); } to { opacity: 1; transform: none; } }
 .ch-q { font-size: 15px; font-weight: 700; color: var(--text); font-family: var(--font-display); }
 .ch-q b { color: var(--primary); }
@@ -830,7 +831,8 @@ button.hero-chip:hover { border-color: var(--primary); }
 .rc-opts { display: flex; flex-direction: column; gap: 8px; }
 .rc-opt { text-align: left; padding: 10px 12px; border: 1px solid var(--border); border-radius: 10px; background: transparent; font: 500 13.5px/1.4 var(--font-body); color: var(--text); cursor: pointer; transition: background .15s, border-color .15s; }
 .rc-opt:hover:not(:disabled) { border-color: var(--primary); background: color-mix(in srgb, var(--primary) 6%, transparent); }
-.rc-opt.correct { border-color: var(--success); background: color-mix(in srgb, var(--success) 12%, transparent); color: var(--success); }
+.rc-opt.correct { border-color: var(--success); background: var(--success-soft); color: var(--success); font-weight: 600; box-shadow: 0 0 0 1px var(--success) inset; }
+.rc-opt.correct .rc-opt-tick { font-weight: 800; color: var(--success); margin-left: 8px; }
 .rc-opt.wrong { border-color: var(--error); background: color-mix(in srgb, var(--error) 10%, transparent); color: var(--error); }
 .rc-opt:disabled { cursor: default; opacity: .85; }
 .rc-ans { font: 600 13px var(--font-body); margin-top: 10px; color: var(--muted); }

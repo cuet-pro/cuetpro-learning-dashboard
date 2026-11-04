@@ -58,7 +58,7 @@ export async function fetchWordOfTheDay() {
 export async function fetchDailyQuiz(count = 3) {
   const { data, error } = await supabase
     .from('quiz_questions')
-    .select('id, topic, question, options, answer, answer_index, explanation')
+    .select('id, topic, question, options, answer, answer_index, explanation, subject_id, subjects(name)')
     .in('topic', ['synonyms', 'antonyms', 'direct-indirect-speech', 'voice', 'tenses'])
     .limit(500)
   if (error || !data || data.length < count) return { data: null, error }
