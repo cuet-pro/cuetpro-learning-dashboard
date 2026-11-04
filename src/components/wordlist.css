@@ -11,6 +11,15 @@
 .wlx-search input { flex: 1; border: none; background: none; outline: none; font: 500 13px var(--font-body); color: var(--text); }
 .wlx-bmlink { display: inline-flex; align-items: center; gap: 6px; background: none; border: 1px solid var(--border); border-radius: var(--r-full); padding: 7px 12px; font: 600 12px var(--font-body); color: var(--text-secondary); cursor: pointer; }
 .wlx-bmlink:hover { border-color: var(--primary); color: var(--primary); }
+.wlx-ctrl { display: flex; align-items: center; gap: 10px; }
+.wlx-ctrl .wlx-search { flex: 1; }
+.wlx-num-h { width: 40px; }
+.wlx-star { color: #F5A623; fill: #F5A623; margin: 0 3px; vertical-align: -1px; }
+.wlx-btn { display: inline-flex; align-items: center; gap: 4px; padding: 4px 9px; border-radius: 7px; border: 1px solid var(--border); background: none; color: var(--text-secondary); font: 600 11px var(--font-body); cursor: pointer; white-space: nowrap; }
+.wlx-btn:hover { border-color: var(--primary); color: var(--primary); }
+.wlx-btn.on { color: var(--success); border-color: var(--success); background: var(--success-soft); }
+.wlx-tabs { overflow-x: auto; flex-wrap: nowrap; }
+.wlx-tabs button { white-space: nowrap; flex: none; }
 
 /* categories grid */
 .wlx-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 10px; }
