@@ -212,11 +212,11 @@ export default function StudyKit({ onNavigate }) {
           <div className="sk-detail-body">
             {selected === 'notes' && <NotesView stream={stream} subject={subject} record={record} />}
             {selected === 'ncert' && <NcertView stream={stream} subject={subject} />}
-            {selected === 'flashcards' && <FlashView record={record} />}
+            {selected === 'flashcards' && <FlashView record={record} subject={subject} />}
             {selected === 'quizzes' && <QuizView />}
             {selected === 'pyqs' && <PyqView subject={subject} stream={stream} weakOnly={weakOnly} setWeakOnly={setWeakOnly} onNavigate={onNavigate} />}
-            {selected === 'mocks' && <MockView examMode={examMode} setExamMode={setExamMode} />}
-            {selected === 'cheats' && <CheatSheetView record={record} />}
+            {selected === 'mocks' && <MockView examMode={examMode} setExamMode={setExamMode} subject={subject} />}
+            {selected === 'cheats' && <CheatSheetView record={record} subject={subject} />}
             {selected === 'videos' && (
               <div className="sk-placeholder">
                 <PlayCircle size={30} />
@@ -717,7 +717,7 @@ function FrontContent({ front }) {
   return <div className="q">{front}</div>
 }
 
-function FlashView({ record }) {
+function FlashView({ record, subject }) {
   const gate = useGuestGate()
   const toast = useToast()
   const [topics, setTopics] = useState([])
@@ -730,11 +730,11 @@ function FlashView({ record }) {
 
   useEffect(() => {
     let alive = true
-    fetchFlashcardTopics().then(({ data }) => {
+    fetchFlashcardTopics(subject).then(({ data }) => {
       if (alive && data && data.length) { setTopics(data); setTopic(data[0].topic) }
     })
     return () => { alive = false }
-  }, [])
+  }, [subject])
 
   useEffect(() => {
     if (!topic) return
@@ -850,7 +850,7 @@ function FlashView({ record }) {
 
 /* ── Cheat Sheets — 28 quick-revision sheets, 3 pages each ─────────────── */
 
-const CHEAT_CATS = ['Reading Comprehension', 'Vocabulary', 'Grammar']
+/* Category tabs are derived live from the fetched sheets (per subject). */
 
 function CheatCard({ cell }) {
   const lines = (cell || '').split('\n').map(l => l.trim()).filter(Boolean)
@@ -952,17 +952,23 @@ function CheatSheetDoc({ sheet, onBack }) {
   )
 }
 
-function CheatSheetView({ record }) {
+function CheatSheetView({ record, subject }) {
   const [sheets, setSheets] = useState([])
-  const [cat, setCat] = useState('Grammar')
+  const [cat, setCat] = useState(null)
   const [open, setOpen] = useState(null)
   const [busy, setBusy] = useState(false)
 
   useEffect(() => {
     let alive = true
-    fetchCheatSheets().then(({ data }) => { if (alive && data) setSheets(data) })
+    fetchCheatSheets(subject === 'all' ? null : subject).then(({ data }) => {
+      if (alive && data) {
+        setSheets(data)
+        const cats = [...new Set(data.map(s => s.category))]
+        setCat(cats[0] || null)
+      }
+    })
     return () => { alive = false }
-  }, [])
+  }, [subject])
 
   const openSheet = num => {
     setBusy(true)
@@ -975,11 +981,12 @@ function CheatSheetView({ record }) {
 
   if (open) return <CheatSheetDoc sheet={open} onBack={() => setOpen(null)} />
 
-  const shown = sheets.filter(s => s.category === cat)
+  const cats = [...new Set(sheets.map(s => s.category))]
+  const shown = cat ? sheets.filter(s => s.category === cat) : sheets
   return (
     <div className="cs">
       <div className="cs-cats">
-        {CHEAT_CATS.map(c => (
+        {cats.map(c => (
           <button key={c} className={'cs-cat' + (cat === c ? ' on' : '')} onClick={() => setCat(c)}>{c}</button>
         ))}
       </div>
@@ -1149,7 +1156,7 @@ function PyqRow({ p, onAttempt }) {
   )
 }
 
-function PyqView({ onNavigate }) {
+function PyqView({ subject, onNavigate }) {
   const gate = useGuestGate()
   const toast = useToast()
   const [papers, setPapers] = useState([])
@@ -1170,6 +1177,8 @@ function PyqView({ onNavigate }) {
     })
     return () => { alive = false }
   }, [])
+
+  const visible = subject === 'all' ? papers : papers.filter(p => p.subject === subject)
 
   const openPaper = p => {
     gate('PYQ Papers', 'attempt this paper', () => {
@@ -1209,7 +1218,7 @@ function PyqView({ onNavigate }) {
   }
 
 
-  const years = [...new Set(papers.map(p => p.year))].sort((a, b) => b - a)
+  const years = [...new Set(visible.map(p => p.year))].sort((a, b) => b - a)
   const yearsToShow = year === 'all' ? years : [year]
   const toggleYear = y => setOpenYears(s => { const n = new Set(s); if (n.has(y)) n.delete(y); else n.add(y); return n })
 
@@ -1238,12 +1247,12 @@ function PyqView({ onNavigate }) {
       </div>
 
       <div className="pyq-summary">
-        <span className="pyq-summary-num">{papers.length}</span>
-        <span className="pyq-summary-lbl">papers · CUET English · {years.join(' · ')}</span>
+        <span className="pyq-summary-num">{visible.length}</span>
+        <span className="pyq-summary-lbl">papers · {subject === 'all' ? 'All subjects' : subject} · {years.join(' · ')}</span>
       </div>
 
       {yearsToShow.map(y => {
-        const ps = papers.filter(p => p.year === y)
+        const ps = visible.filter(p => p.year === y)
         const open = year !== 'all' ? true : openYears.has(y)
         return (
           <div className={'pyq-yearblock' + (open ? ' open' : '')} key={y}>
@@ -1260,7 +1269,7 @@ function PyqView({ onNavigate }) {
           </div>
         )
       })}
-      {!papers.length && <p className="muted-empty">{loading ? 'Loading papers…' : 'No PYQ papers yet.'}</p>}
+      {!visible.length && <p className="muted-empty">{loading ? 'Loading papers…' : 'No PYQ papers yet for this subject.'}</p>}
     </div>
   )
 }
@@ -1271,7 +1280,7 @@ const MK_CORRECT = 5
 const MK_WRONG = -1
 const LETTERS = 'ABCD'
 
-function MockView({ examMode, setExamMode }) {
+function MockView({ examMode, setExamMode, subject }) {
   const gate = useGuestGate()
   const toast = useToast()
   const [list, setList] = useState([])
@@ -1284,9 +1293,9 @@ function MockView({ examMode, setExamMode }) {
 
   useEffect(() => {
     let alive = true
-    fetchMocks().then(({ data }) => { if (alive && data) setList(data) })
+    fetchMocks(subject === 'all' ? null : subject).then(({ data }) => { if (alive && data) setList(data) })
     return () => { alive = false }
-  }, [])
+  }, [subject])
 
   const tally = () => {
     const qs = (mock && mock.questions) || []

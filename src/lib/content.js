@@ -90,7 +90,19 @@ const FLASHCARD_TOPICS = [
   { topic: 'reading-comprehension', name: 'Reading Comprehension' },
 ]
 
-export async function fetchFlashcardTopics() {
+export async function fetchFlashcardTopics(subject = null) {
+  /* General Test (GAT) has its own topic set — read it live from the syllabus
+     tree + flashcard counts, keyed by the topic `key`. */
+  if (subject === 'General Test') {
+    const { data: subj, error: se } = await supabase.from('subjects').select('id').eq('key', 'general-test').single()
+    if (se || !subj) return { data: [], error: se }
+    const { data: secs } = await supabase.from('sections').select('topics(key, name)').eq('subject_id', subj.id)
+    const topics = (secs || []).flatMap(s => s.topics || [])
+    const { data: cards } = await supabase.from('flashcards').select('topic').eq('subject_id', subj.id)
+    const counts = {}
+    for (const r of cards || []) counts[r.topic] = (counts[r.topic] || 0) + 1
+    return { data: topics.map(t => ({ topic: t.key, name: t.name, n: counts[t.key] || 0 })), error: null }
+  }
   const { data, error } = await supabase.from('flashcards').select('topic')
   if (error || !data) return { data: FLASHCARD_TOPICS, error }
   const counts = {}
@@ -220,11 +232,13 @@ export async function fetchVocabEntries() {
 /* Cheat Sheets — 28 English quick-revision sheets (RC / Vocabulary / Grammar),
    three pages each (rules → memory hacks → exam traps → practice → recap).
    Lightweight list (no blocks) for the picker, full sheet on demand. */
-export async function fetchCheatSheets() {
-  const { data, error } = await supabase
+export async function fetchCheatSheets(subject = null) {
+  let q = supabase
     .from('cheat_sheets')
     .select('num, category, title, short, tagline')
-    .order('num')
+  if (subject) q = q.eq('subject', subject)
+  q = q.order('num')
+  const { data, error } = await q
   return { data, error }
 }
 
@@ -238,11 +252,13 @@ export async function fetchCheatSheet(num) {
 }
 
 /* Mock Tests — list (no questions) + full paper on demand. */
-export async function fetchMocks() {
-  const { data, error } = await supabase
+export async function fetchMocks(subject = null) {
+  let q = supabase
     .from('mock_tests')
     .select('num, name, total_questions, duration_min, sections')
-    .order('num')
+  if (subject) q = q.eq('subject', subject)
+  q = q.order('num')
+  const { data, error } = await q
   return { data, error }
 }
 
