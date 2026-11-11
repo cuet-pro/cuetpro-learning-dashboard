@@ -246,13 +246,14 @@ export default function Dashboard({ onNavigate }) {
     ? quizData.map(q => ({ topic: q.topic, q: q.question, options: q.options || [], answer: q.answer_index, subject: q.subjects?.name || 'English' }))
     : QUIZ
 
-  const quizSubject = quizQ.length ? (quizQ[0].subject || 'English') : 'English'
+  const quizSubject = quizQ.length ? (quizQ[quizIdx]?.subject || 'English') : 'English'
 
   const quizHeading = q => {
     if (!q.topic) return q.q
     if (q.topic === 'synonyms') return <span>Choose the word closest in meaning to: <b>{q.q}</b></span>
     if (q.topic === 'antonyms') return <span>Choose the word opposite in meaning to: <b>{q.q}</b></span>
-    return <span>Convert to indirect speech: <b>{q.q}</b></span>
+    if (q.topic === 'direct-indirect-speech') return <span>Convert to indirect speech: <b>{q.q}</b></span>
+    return q.q
   }
 
   const rcTitle = rcPassage?.title || RC.title

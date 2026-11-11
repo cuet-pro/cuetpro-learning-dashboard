@@ -213,7 +213,7 @@ export default function StudyKit({ onNavigate }) {
             {selected === 'notes' && <NotesView stream={stream} subject={subject} record={record} />}
             {selected === 'ncert' && <NcertView stream={stream} subject={subject} />}
             {selected === 'flashcards' && <FlashView record={record} subject={subject} />}
-            {selected === 'quizzes' && <QuizView />}
+            {selected === 'quizzes' && <QuizView subject={subject} key={subject} />}
             {selected === 'pyqs' && <PyqView subject={subject} stream={stream} weakOnly={weakOnly} setWeakOnly={setWeakOnly} onNavigate={onNavigate} />}
             {selected === 'mocks' && <MockView examMode={examMode} setExamMode={setExamMode} subject={subject} />}
             {selected === 'cheats' && <CheatSheetView record={record} subject={subject} />}
@@ -1017,6 +1017,15 @@ const QUIZ_TOPICS = [
   { key: 'tenses', name: 'Tenses' },
   { key: 'direct-indirect-speech', name: 'Direct & Indirect Speech' },
 ]
+const QUIZ_TOPICS_GAT = [
+  { key: 'mixed', name: 'Mixed' },
+  { key: 'gk', name: 'General Knowledge' },
+  { key: 'numerical', name: 'Numerical Ability' },
+  { key: 'reasoning', name: 'Reasoning' },
+  { key: 'current-affairs', name: 'Current Affairs' },
+  { key: 'science', name: 'General Science' },
+  { key: 'environment', name: 'Environment' },
+]
 const QUIZ_LEN = 8
 
 /* what the question asks — the stem is just the word, so name the task */
@@ -1028,9 +1037,10 @@ const QZ_TASK = {
   'direct-indirect-speech': 'Choose the correct option',
 }
 
-function QuizView() {
+function QuizView({ subject }) {
   const gate = useGuestGate()
   const toast = useToast()
+  const topics = subject === 'General Test' ? QUIZ_TOPICS_GAT : QUIZ_TOPICS
   const [topic, setTopic] = useState('mixed')
   const [phase, setPhase] = useState('setup')
   const [questions, setQuestions] = useState([])
@@ -1042,7 +1052,8 @@ function QuizView() {
   const start = () => {
     gate('Quick Quizzes', 'take a quick quiz', () => {
       setLoading(true)
-      const p = topic === 'mixed' ? fetchDailyQuiz(QUIZ_LEN) : fetchQuiz(topic, 200)
+      const subj = subject === 'General Test' ? 'General Test' : 'English'
+      const p = topic === 'mixed' ? fetchDailyQuiz(QUIZ_LEN, subj) : fetchQuiz(topic, 200)
       p.then(({ data }) => {
         setLoading(false)
         if (!data || !data.length) { toast('No questions in this topic yet'); return }
@@ -1074,7 +1085,7 @@ function QuizView() {
             <span>8 questions · instant feedback · repeat anytime</span>
           </div>
           <div className="qz-topics">
-            {QUIZ_TOPICS.map(t => (
+            {topics.map(t => (
               <button key={t.key} className={'qz-topic' + (topic === t.key ? ' on' : '')} onClick={() => setTopic(t.key)}>{t.name}</button>
             ))}
           </div>
@@ -1106,7 +1117,7 @@ function QuizView() {
     <div className="sk-subgrid">
       <div className="sk-subcard">
         <div className="qz-top">
-          <span className="qz-tag">{QUIZ_TOPICS.find(t => t.key === topic)?.name}</span>
+          <span className="qz-tag">{topics.find(t => t.key === topic)?.name}</span>
           <span className="qz-prog">{idx + 1} / {questions.length} · Score {score}</span>
         </div>
         <div className="qz-bar"><i style={{ width: (((idx + (pick !== null ? 1 : 0)) / questions.length) * 100) + '%' }} /></div>

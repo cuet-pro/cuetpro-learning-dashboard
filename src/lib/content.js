@@ -54,13 +54,20 @@ export async function fetchWordOfTheDay() {
   return { data: pick, error: null }
 }
 
-/* Daily Subject Quiz — a small shuffled set of MCQs across vocab & grammar topics. */
-export async function fetchDailyQuiz(count = 3) {
-  const { data, error } = await supabase
+/* Daily Subject Quiz — a small shuffled set of MCQs. Subject-aware: 'General
+   Test' serves GAT topics, 'English' the grammar/vocab topics, null mixes both. */
+const DAILY_TOPICS_ENGLISH = ['synonyms', 'antonyms', 'direct-indirect-speech', 'voice', 'tenses']
+const DAILY_TOPICS_GAT = ['gk', 'current-affairs', 'science', 'environment', 'numerical', 'reasoning']
+
+export async function fetchDailyQuiz(count = 3, subject = null) {
+  let q = supabase
     .from('quiz_questions')
     .select('id, topic, question, options, answer, answer_index, explanation, subject_id, subjects(name)')
-    .in('topic', ['synonyms', 'antonyms', 'direct-indirect-speech', 'voice', 'tenses'])
-    .limit(500)
+  if (subject === 'General Test') q = q.in('topic', DAILY_TOPICS_GAT)
+  else if (subject === 'English') q = q.in('topic', DAILY_TOPICS_ENGLISH)
+  else q = q.in('topic', [...DAILY_TOPICS_ENGLISH, ...DAILY_TOPICS_GAT])
+  q = q.limit(500)
+  const { data, error } = await q
   if (error || !data || data.length < count) return { data: null, error }
   const shuffled = [...data].sort(() => Math.random() - 0.5)
   return { data: shuffled.slice(0, count), error: null }
