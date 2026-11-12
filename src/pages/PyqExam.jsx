@@ -66,8 +66,9 @@ export default function PyqExam({ paper, onFinish }) {
   const markedSet = useMemo(() => new Set(marked), [marked])
   const visitedSet = useMemo(() => new Set(visited), [visited])
   const counts = useMemo(() => countStatuses(qs, answers, markedSet, visitedSet), [qs, answers, markedSet, visitedSet])
+  const flat = !!paper?.flat
   const activeSection = qs[idx]?.section
-  const sectionQuestions = useMemo(() => qs.filter(q => q.section === activeSection), [qs, activeSection])
+  const sectionQuestions = useMemo(() => flat ? qs : qs.filter(q => q.section === activeSection), [qs, activeSection, flat])
   const remaining = phase === 'test' && startedAt
     ? Math.max(0, duration - Math.floor((now - startedAt) / 1000))
     : duration
@@ -392,7 +393,7 @@ export default function PyqExam({ paper, onFinish }) {
 
   const paletteGrid = (
     <>
-      <div className="ex-secname">{activeSection}</div>
+      {!flat && <div className="ex-secname">{activeSection}</div>}
       <div className="ex-grid">
         {sectionQuestions.map(qq => {
           const st = statusOf(qq.num, answers, markedSet, visitedSet)
@@ -441,7 +442,7 @@ export default function PyqExam({ paper, onFinish }) {
         <section className="ex-main">
           <div className="ex-toolbar">
             <div className="ex-tabs">
-              {sections.map(s => (
+              {!flat && sections.map(s => (
                 <button key={s.name} className={'ex-tab' + (s.name === activeSection ? ' on' : '')}
                   onClick={() => { const f = qs.findIndex(x => x.section === s.name); if (f >= 0) go(f) }}>
                   {s.name}
