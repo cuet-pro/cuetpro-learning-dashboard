@@ -252,7 +252,7 @@ export async function fetchCheatSheets(subject = null) {
 export async function fetchCheatSheet(num) {
   const { data, error } = await supabase
     .from('cheat_sheets')
-    .select('id, num, category, title, short, tagline, intro, pages')
+    .select('id, num, category, title, short, tagline, intro, pages, html')
     .eq('num', num)
     .single()
   return { data, error }

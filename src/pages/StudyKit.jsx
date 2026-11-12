@@ -12,8 +12,10 @@ import { startExam } from '../lib/examSession'
 import { loadPyqAttempts, fmtClock, markingScheme, PQ_LETTERS } from '../lib/examEngine'
 import { useResult, clearResult } from '../lib/resultStore'
 import { addMistakes } from '../lib/mistakes'
+import { initGatCheat } from '../lib/gatCheat'
 import PyqResult from './PyqResult'
 import './studykit.css'
+import './gat-cheat.css'
 
 const NOTES_BY_STREAM = {
   Commerce: [
@@ -924,30 +926,45 @@ function CheatBlock({ b }) {
   }
 }
 
+function GatCheatSheet({ sheet }) {
+  const ref = useRef(null)
+  useEffect(() => { if (ref.current) initGatCheat(ref.current) }, [sheet.num])
+  return (
+    <div className="gat-cx" ref={ref} dangerouslySetInnerHTML={{ __html: sheet.html }} />
+  )
+}
+
 function CheatSheetDoc({ sheet, onBack }) {
+  const isGat = !!sheet.html
   return (
     <div className="cs-doc">
       <button className="sk-back" onClick={onBack}><ArrowLeft size={15} /> All cheat sheets</button>
-      <header className="cs-doc-head">
-        <span className="cs-doc-cat">{sheet.category}</span>
-        <h3>{sheet.num}. {sheet.title}</h3>
-        {sheet.tagline && <p className="cs-doc-tag">{sheet.tagline}</p>}
-        {sheet.intro && <p className="cs-doc-intro">{sheet.intro}</p>}
-      </header>
-      {sheet.pages.map(p => (
-        <section className="cs-page" key={p.n}>
-          <div className="cs-page-head">
-            <span className="cs-page-n">{p.n}</span>
-            <div>
-              <b>{p.title}</b>
-              {p.subtitle && <em>{p.subtitle}</em>}
+      {!isGat && (
+        <header className="cs-doc-head">
+          <span className="cs-doc-cat">{sheet.category}</span>
+          <h3>{sheet.num}. {sheet.title}</h3>
+          {sheet.tagline && <p className="cs-doc-tag">{sheet.tagline}</p>}
+          {sheet.intro && <p className="cs-doc-intro">{sheet.intro}</p>}
+        </header>
+      )}
+      {isGat ? (
+        <GatCheatSheet sheet={sheet} />
+      ) : (
+        sheet.pages.map(p => (
+          <section className="cs-page" key={p.n}>
+            <div className="cs-page-head">
+              <span className="cs-page-n">{p.n}</span>
+              <div>
+                <b>{p.title}</b>
+                {p.subtitle && <em>{p.subtitle}</em>}
+              </div>
             </div>
-          </div>
-          <div className="cs-blocks">
-            {p.blocks.map((b, i) => <CheatBlock b={b} key={i} />)}
-          </div>
-        </section>
-      ))}
+            <div className="cs-blocks">
+              {p.blocks.map((b, i) => <CheatBlock b={b} key={i} />)}
+            </div>
+          </section>
+        ))
+      )}
     </div>
   )
 }
