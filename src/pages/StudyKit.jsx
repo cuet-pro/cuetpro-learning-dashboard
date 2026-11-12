@@ -1371,7 +1371,7 @@ function MockView({ examMode, setExamMode, subject }) {
   }
 
   return (
-    <div className="sk-subgrid">
+    <div>
       <div className="mk-top">
         <div className="mk-top-t">
           <b>CUET mock tests</b>

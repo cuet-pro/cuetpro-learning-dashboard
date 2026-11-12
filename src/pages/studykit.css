@@ -716,7 +716,7 @@
 .mk-top-t b { font: 700 15px var(--font-body); color: var(--text); }
 .mk-top-t span { font: 500 12px var(--font-body); color: var(--text-muted); }
 
-.mk-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(330px, 1fr)); gap: 12px; }
+.mk-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 12px; }
 .mk-card { display: flex; align-items: center; gap: 14px; padding: 14px 16px; border-radius: var(--r-lg);
   border: 1px solid var(--border); background: var(--surface); text-align: left; cursor: pointer; position: relative; overflow: hidden;
   transition: transform .18s ease, box-shadow .22s ease, border-color .22s ease; }
