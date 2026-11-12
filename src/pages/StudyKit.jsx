@@ -1010,7 +1010,7 @@ function CheatSheetView({ record, subject }) {
       <div className="cs-grid">
         {shown.map(s => (
           <button key={s.num} className="cs-sheet" onClick={() => openSheet(s.num)}>
-            <span className="cs-sheet-num">{s.num}</span>
+            {s.category !== 'General Test' && <span className="cs-sheet-num">{s.num}</span>}
             <span className="cs-sheet-t">
               <b>{s.title}</b>
               {s.tagline && <em>{s.tagline}</em>}
