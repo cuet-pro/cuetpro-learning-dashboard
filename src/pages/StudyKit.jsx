@@ -1304,6 +1304,21 @@ function PyqView({ subject, onNavigate }) {
 
 /* ── Mock Tests — live papers from Supabase, full-screen CBT (same as PYQ) ── */
 
+function shortSection(name) {
+  const map = {
+    'General Knowledge, Current Affairs, Science & Environment': 'GK & Science',
+    'Numerical Ability': 'Numerical',
+    'Logical Reasoning (text)': 'Reasoning',
+    'Visual / Figure-based Reasoning': 'Visual',
+    'Reading Comprehension (RC)': 'RC',
+    'Vocabulary & Linguistic Nuance': 'Vocabulary',
+    'Vocabulary': 'Vocabulary',
+    'Grammar, Structure & Logic': 'Grammar',
+    'Grammar': 'Grammar',
+  }
+  return map[name] || name
+}
+
 function mockToPaper(mock) {
   const questions = (mock.questions || []).map(q => {
     const p = q.passage
@@ -1371,12 +1386,23 @@ function MockView({ examMode, setExamMode, subject }) {
       <div className="mk-grid">
         {list.map(m => (
           <button key={m.num} className="mk-card" onClick={() => startMock(m.num)} disabled={busy}>
-            <span className="mk-card-top"><b>{m.name}</b><span className="mk-badge">{m.total_questions} Q</span></span>
-            <span className="mk-card-meta"><Clock size={12} /> {m.duration_min} min</span>
-            <span className="mk-card-secs">
-              {(m.sections || []).map(s => <em key={s.name}>{s.name} · {s.count}</em>)}
+            <span className={'mk-card-ico' + (m.subject === 'General Test' ? ' gat' : '')}>
+              <FileQuestion size={18} />
             </span>
-            <span className="mk-card-cta">{busy ? 'Loading…' : 'Start test'} <ArrowRight size={13} /></span>
+            <span className="mk-card-main">
+              <span className="mk-card-head">
+                <b>{m.name}</b>
+                <span className="mk-badge">{m.total_questions} Q</span>
+              </span>
+              <span className="mk-card-subj">{m.subject || 'English'}</span>
+              <span className="mk-card-chips">
+                {(m.sections || []).map(s => <em key={s.name}>{shortSection(s.name)} <i>{s.count}</i></em>)}
+              </span>
+            </span>
+            <span className="mk-card-right">
+              <span className="mk-card-meta"><Clock size={13} /> {m.duration_min}m</span>
+              <span className="mk-card-cta">{busy ? 'Loading…' : 'Start'} <ArrowRight size={14} /></span>
+            </span>
           </button>
         ))}
         {list.length === 0 && <p className="muted-empty">Loading mock tests…</p>}
