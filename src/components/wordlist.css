@@ -154,8 +154,7 @@
 td.emph { font-weight: 600; color: var(--text); }
 
 /* ── action buttons ── */
-.wlx-actions { display: flex; gap: 6px; white-space: nowrap; position: sticky; right: 0; background: var(--surface); box-shadow: -10px 0 14px -10px rgba(20,23,31,.18); padding-left: 4px; }
-.wlx-table thead th:last-child { position: sticky; right: 0; background: var(--surface); box-shadow: -10px 0 14px -10px rgba(20,23,31,.12); z-index: 2; }
+.wlx-actions { display: flex; gap: 6px; white-space: nowrap; }
 .wlx-btn {
   display: inline-flex; align-items: center; gap: 5px; padding: 5px 11px;
   border: 1px solid var(--border); border-radius: var(--r-sm); background: none;
