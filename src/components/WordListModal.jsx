@@ -54,8 +54,10 @@ export default function WordListModal({ onClose }) {
   const [q, setQ] = useState('')
   const [filter, setFilter] = useState('All')
   const [showBm, setShowBm] = useState(false)
+  const [visible, setVisible] = useState(200)
 
   useEffect(() => { fetchVocabEntries().then(({ data }) => setEntries(data || [])) }, [])
+  useEffect(() => { setVisible(200) }, [catId, filter, q])
 
   const bySource = useMemo(() => {
     const m = {}
@@ -87,6 +89,8 @@ export default function WordListModal({ onClose }) {
     return true
   })
 
+  const shown = filtered.slice(0, visible)
+
   /* ── My bookmarks ── */
   if (showBm) {
     const bmIds = Object.keys(bookmarks.entry || {})
@@ -104,7 +108,7 @@ export default function WordListModal({ onClose }) {
           bmItems.map(e => (
             <div key={e.id} className="wlx-bm-row">
               <b>{e.term}</b>
-              <span>{e.meaning}</span>
+              <span>{e.category === 'spelling' ? (e.tip || '—') : (e.meaning || '—')}</span>
               <button className="wlx-act on" onClick={() => toggleBm('entry', e.id)}><Bookmark size={15} /></button>
             </div>
           ))
@@ -125,11 +129,13 @@ export default function WordListModal({ onClose }) {
         <button className="wlx-bmlink" onClick={() => setShowBm(true)}><Bookmark size={14} /> Saved</button>
       </div>
 
-      <div className="wlx-chips">
-        {FILTERS.map(f => (
-          <button key={f} className={filter === f ? 'on' : ''} onClick={() => setFilter(f)}>{f}</button>
-        ))}
-      </div>
+      {(isSyn || isAnt) && (
+        <div className="wlx-chips">
+          {FILTERS.map(f => (
+            <button key={f} className={filter === f ? 'on' : ''} onClick={() => setFilter(f)}>{f}</button>
+          ))}
+        </div>
+      )}
 
       <div className="wlx-tabs">
         {WORD_CATEGORIES.map(c => (
@@ -140,29 +146,40 @@ export default function WordListModal({ onClose }) {
       </div>
 
       <div className="wlx-table-card">
-        <div className="wlx-table-wrap">
-          <table className="wlx-table">
-            <thead>
-              <tr>
-                {cols.map(k => (
-                  <th key={k} className={k === 'num' ? 'num' : ''}>{k === 'term' ? TERM_LABEL[catId] : HEADER[k]}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.map((e, i) => (
-                <tr key={e.id}>
-                  {cols.map(k => (
-                    <Cell key={k} k={k} e={e} i={i} isSyn={isSyn} isAnt={isAnt}
-                      learned={isLearned(learned, e.id)} saved={isBookmarked(bookmarks, 'entry', e.id)}
-                      onLearned={() => toggleLn(e.id)} onSave={() => toggleBm('entry', e.id)} />
+        {entries === null ? (
+          <div className="wlx-loading"><span className="wlx-spinner" /> Loading vocabulary…</div>
+        ) : (
+          <>
+            <div className="wlx-table-wrap">
+              <table className="wlx-table">
+                <thead>
+                  <tr>
+                    {cols.map(k => (
+                      <th key={k} className={k === 'num' ? 'num' : ''}>{k === 'term' ? TERM_LABEL[catId] : HEADER[k]}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {shown.map((e, i) => (
+                    <tr key={e.id}>
+                      {cols.map(k => (
+                        <Cell key={k} k={k} e={e} i={i} isSyn={isSyn} isAnt={isAnt}
+                          learned={isLearned(learned, e.id)} saved={isBookmarked(bookmarks, 'entry', e.id)}
+                          onLearned={() => toggleLn(e.id)} onSave={() => toggleBm('entry', e.id)} />
+                      ))}
+                    </tr>
                   ))}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-        {filtered.length === 0 && <p className="wlx-empty">No words match this search or filter.</p>}
+                </tbody>
+              </table>
+            </div>
+            {filtered.length === 0 && <p className="wlx-empty">No words match this search or filter.</p>}
+            {shown.length < filtered.length && (
+              <button className="wlx-more" onClick={() => setVisible(v => v + 200)}>
+                Show more · {filtered.length - shown.length} more
+              </button>
+            )}
+          </>
+        )}
       </div>
     </div>
   )
