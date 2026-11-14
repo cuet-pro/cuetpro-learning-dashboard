@@ -363,10 +363,18 @@
 .syl-sec-num { font: 700 12px var(--font-body); color: var(--primary); background: var(--primary-soft); padding: 5px 10px; border-radius: 8px; letter-spacing: .03em; }
 .syl-sec-name { font: 700 15.5px var(--font-body); color: var(--text); flex: 1; }
 .syl-sec-count { font: 500 12px var(--font-body); color: var(--text-muted); }
-.syl-topics { display: flex; flex-wrap: wrap; gap: 8px; }
-.syl-topic { display: inline-flex; align-items: center; gap: 8px; padding: 8px 13px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); font: 500 13px var(--font-body); color: var(--text); transition: transform .15s, border-color .15s, box-shadow .15s; }
-.syl-topic:hover { border-color: var(--violet); transform: translateY(-2px); box-shadow: 0 8px 18px -8px color-mix(in srgb, var(--violet) 40%, transparent); }
-.syl-topic i { font-style: normal; font: 700 11px var(--font-body); color: var(--violet); background: var(--violet-soft); padding: 3px 7px; border-radius: 6px; }
+.syl-topics { display: flex; flex-direction: column; gap: 6px; }
+.syl-topic { display: flex; align-items: center; gap: 11px; padding: 9px 14px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); font: 500 13.5px var(--font-body); color: var(--text); transition: border-color .15s, background .15s, transform .15s; }
+.syl-topic:hover { border-color: var(--violet); background: var(--violet-soft); transform: translateX(3px); }
+.syl-topic i { flex: 0 0 auto; font-style: normal; font: 700 11px var(--font-body); color: var(--violet); background: var(--violet-soft); padding: 4px 8px; border-radius: 6px; min-width: 36px; text-align: center; }
+
+/* animated download-PDF button */
+.syl-pdf { display: inline-flex; align-items: center; gap: 7px; padding: 9px 17px; border: none; border-radius: var(--r-full); background: linear-gradient(120deg, var(--primary), var(--secondary)); color: #fff; font: 700 13px var(--font-body); cursor: pointer; position: relative; overflow: hidden; box-shadow: var(--shadow-md); transition: transform .18s ease, box-shadow .2s ease; }
+.syl-pdf:hover { transform: translateY(-2px); box-shadow: var(--shadow-lg); }
+.syl-pdf:active { transform: scale(.97); }
+.syl-pdf::after { content: ''; position: absolute; top: 0; left: -80%; width: 45%; height: 100%; background: linear-gradient(100deg, transparent, rgba(255,255,255,.35), transparent); animation: syl-shine 2.8s ease-in-out infinite; }
+@keyframes syl-shine { 0% { left: -80%; } 55%, 100% { left: 130%; } }
+@media (prefers-reduced-motion: reduce) { .syl-pdf::after { animation: none; } }
 
 /* Syllabus subject selector chips */
 .syl-subs { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }

@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import {
   Swords, List, Layers, TrendingUp,
   FileText, BarChart3, ListChecks, Files, CheckCircle2, Users, Flame, Award, Zap,
-  Compass, Target, Timer, Trophy, Video, Sparkles, ArrowLeft, ChevronRight, ArrowRight,
+  Compass, Target, Timer, Trophy, Video, Sparkles, ArrowLeft, ChevronRight, ArrowRight, Download,
 } from 'lucide-react'
 import { fetchVocabEntries, fetchAllSyllabus } from '../lib/content'
 import { setExplorerRoute } from '../lib/explorerRoute'
@@ -12,6 +12,21 @@ import { useGuestGate } from '../lib/guestGate'
 import WordListModal from '../components/WordListModal.jsx'
 import { loadBookmarks } from '../lib/vocabProgress'
 import './widgets.css'
+
+/* Subject → official CUET syllabus PDF (Google Drive). Download link format:
+   https://drive.google.com/uc?export=download&id=<FILE_ID>  */
+const SYLLABUS_PDFS = {
+  '101': '', // English
+  '301': '', // Accountancy
+  '305': '', // Business Studies
+  '309': '', // Economics
+  '313': '', // Geography
+  '314': '', // History
+  '319': '', // Mathematics
+  '323': '', // Political Science
+  '324': '', // Psychology
+  '501': '', // General Test
+}
 
 /* ── motion helpers (respect prefers-reduced-motion) ── */
 function usePrefersReducedMotion() {
@@ -261,6 +276,21 @@ export default function DashboardTiles({ onNavigate }) {
   const sylSubjCount = syl.length
   const curSubjTopics = curSubj ? (curSubj.sections || []).reduce((s, x) => s + (x.topics?.length || 0), 0) : 0
 
+  const downloadSyllabus = subj => {
+    const url = SYLLABUS_PDFS[subj.code]
+    if (url) {
+      const a = document.createElement('a')
+      a.href = url
+      a.target = '_blank'
+      a.rel = 'noopener'
+      document.body.appendChild(a)
+      a.click()
+      a.remove()
+    } else {
+      toast('Syllabus PDF link coming soon')
+    }
+  }
+
   /* grouped bento: Play / Learn / Plan (data + labels + handlers unchanged) */
   const groups = [
     {
@@ -334,6 +364,9 @@ export default function DashboardTiles({ onNavigate }) {
                 <div className="syl-head">
                   <span className="syl-badge">{curSubj.name} · CUET {curSubj.code}</span>
                   <span className="syl-meta">{curSubj.sections?.length || 0} sections · {curSubjTopics} topics</span>
+                  <button className="syl-pdf" onClick={() => downloadSyllabus(curSubj)}>
+                    <Download size={16} /> Download PDF
+                  </button>
                 </div>
                 <div className="syl-secs">
                   {(curSubj.sections || []).map((sec, i) => (
