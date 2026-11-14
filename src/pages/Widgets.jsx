@@ -16,16 +16,16 @@ import './widgets.css'
 /* Subject → official CUET syllabus PDF (Google Drive). Download link format:
    https://drive.google.com/uc?export=download&id=<FILE_ID>  */
 const SYLLABUS_PDFS = {
-  '101': '', // English
-  '301': '', // Accountancy
-  '305': '', // Business Studies
-  '309': '', // Economics
-  '313': '', // Geography
-  '314': '', // History
-  '319': '', // Mathematics
-  '323': '', // Political Science
-  '324': '', // Psychology
-  '501': '', // General Test
+  '101': 'https://drive.google.com/uc?export=download&id=1C1jmltXJ15VifOyZyb5qAuEBErdNS6II', // English
+  '301': 'https://drive.google.com/uc?export=download&id=1KVhU2DfL6oG7nZ-cbsW5OMGvnr5UcjXO', // Accountancy
+  '305': 'https://drive.google.com/uc?export=download&id=1r_dR6PxeSbFDhDuzcudYL7zF2uNTiAXZ', // Business Studies
+  '309': 'https://drive.google.com/uc?export=download&id=1hzqAXecH9R7BCPViDT6GHXEFiAqDfYXX', // Economics
+  '313': 'https://drive.google.com/uc?export=download&id=1SUHI1AFRJJyOqbimPrd5EvIk-tkszhZ3', // Geography
+  '314': 'https://drive.google.com/uc?export=download&id=1QjywXJ9traFttzwvRTNROJkxUpp_ogLY', // History
+  '319': 'https://drive.google.com/uc?export=download&id=1pqpJ6uagmyVKSzMebeANnqvuyHqyq5kd', // Mathematics
+  '323': 'https://drive.google.com/uc?export=download&id=1P9VVFvw2mFpSWz8ElL63_fTqyIvUCRql', // Political Science
+  '324': 'https://drive.google.com/uc?export=download&id=1_KrebM7SYcjDiKVBT0f9gNvl2W40rl9n', // Psychology
+  '501': 'https://drive.google.com/uc?export=download&id=1Ma2Ry8AfIVY5DQ9tPxLqK5-PnsYD3uTa', // General Test (General Aptitude Test)
 }
 
 /* ── motion helpers (respect prefers-reduced-motion) ── */
