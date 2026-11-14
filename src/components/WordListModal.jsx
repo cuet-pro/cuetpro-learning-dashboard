@@ -38,7 +38,7 @@ const COLS = {
 const TERM_LABEL = {
   'synonyms': 'Word', 'antonyms': 'Word', 'idioms': 'Idiom', 'spelling': 'Word',
   'phrasal-verbs': 'Phrasal verb', 'foreign-words': 'Expression',
-  'literary-devices': 'Device', 'prefix-suffix': 'Affix', 'root-words': 'Root',
+  'literary-devices': 'Device', 'prefix-suffix': 'Prefix / Suffix', 'root-words': 'Root',
 }
 const HEADER = {
   num: '#', term: 'Word', meaning: 'Meaning', syn: 'Synonyms', ant: 'Antonyms',
@@ -155,7 +155,7 @@ export default function WordListModal({ onClose }) {
                 <thead>
                   <tr>
                     {cols.map(k => (
-                      <th key={k} className={k === 'num' ? 'num' : ''}>{k === 'term' ? TERM_LABEL[catId] : HEADER[k]}</th>
+                      <th key={k} className={'c-' + k}>{k === 'term' ? TERM_LABEL[catId] : HEADER[k]}</th>
                     ))}
                   </tr>
                 </thead>
@@ -203,8 +203,8 @@ function Cell({ k, e, i, isSyn, isAnt, learned, saved, onLearned, onSave }) {
           {e.meaning || '—'}
         </td>
       )
-    case 'syn': return <td className={isAnt ? '' : 'emph'}>{e.synonyms && e.synonyms.length ? e.synonyms.join(', ') : '—'}</td>
-    case 'ant': return <td className={isSyn ? '' : 'emph'}>{e.antonyms && e.antonyms.length ? e.antonyms.join(', ') : '—'}</td>
+    case 'syn': return <td className={'wlx-list' + (isAnt ? '' : ' emph')}>{e.synonyms && e.synonyms.length ? e.synonyms.join(', ') : '—'}</td>
+    case 'ant': return <td className={'wlx-list' + (isSyn ? '' : ' emph')}>{e.antonyms && e.antonyms.length ? e.antonyms.join(', ') : '—'}</td>
     case 'level':
       return <td>{e.level ? <span className={'wlx-level ' + e.level.toLowerCase()}>{e.level}</span> : '—'}</td>
     case 'example': return <td className="wlx-mean">{e.example || '—'}</td>
