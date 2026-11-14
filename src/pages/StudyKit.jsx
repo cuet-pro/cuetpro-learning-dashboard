@@ -13,6 +13,7 @@ import { loadPyqAttempts, fmtClock, markingScheme, PQ_LETTERS } from '../lib/exa
 import { useResult, clearResult } from '../lib/resultStore'
 import { addMistakes } from '../lib/mistakes'
 import { initGatCheat } from '../lib/gatCheat'
+import EnglishNotes from '../components/EnglishNotes'
 import PyqResult from './PyqResult'
 import './studykit.css'
 import './gat-cheat.css'
@@ -648,6 +649,9 @@ function NoteDashboard({ src, title, subject, record }) {
 }
 
 function NotesView({ stream, subject, record }) {
+  if (subject === 'English') {
+    return <EnglishNotes />
+  }
   if (subject === 'Economics') {
     return <NotesBreakdown units={ECON_UNITS} base="/econ-notes/index.html" label="Economics" record={record} />
   }
