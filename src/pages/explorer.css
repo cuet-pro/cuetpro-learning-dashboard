@@ -1,80 +1,71 @@
-/* ═══════════ DU Admissions Explorer — full-bleed iframe embed ═══════════
-   The Explorer page drops the normal shell padding and fills the entire
-   content area (topbar → bottom edge) so the embedded tool gets maximum
-   height and there's no dead space to scroll past. */
+/* ═══════════ DU Admissions Explorer — native dashboard module ═══════════
+   The framed tool renders with ?embed=1 (no chrome/hero, themed). This page
+   supplies the dashboard's own frame: page header, stat tiles, tab strip,
+   and the postMessage bridge (theme / context / auto-height). */
 
-/* remove the page padding for the Explorer page only */
-.shell-main-inner:has(.du-embed) {
-  padding: 0;
+.du-page .page-head { align-items: center; gap: 14px; margin-bottom: 18px; }
+.page-head-ico {
+  display: grid; place-items: center; width: 42px; height: 42px; flex: none;
+  border-radius: 12px; background: var(--primary-soft); color: var(--primary);
 }
+.page-head-t { flex: 1; min-width: 0; }
+.page-head-t h1 { font-size: 20px; }
+.page-head-t p { margin-top: 2px; }
+.du-open { flex: none; }
 
-.du-embed {
-  position: relative;
-  /* below the 60px topbar, down to the viewport bottom */
-  height: calc(100vh - 60px);
+/* compact header block: chip + line + target + 4 stat tiles */
+.du-headblock {
+  display: flex; align-items: flex-end; justify-content: space-between; gap: 18px;
+  flex-wrap: wrap; margin-bottom: 16px;
 }
-
-.du-embed-frame {
-  position: absolute;
-  inset: 0;
-  overflow: hidden;
-  background: var(--surface);
-}
-.du-embed-frame iframe {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  border: 0;
-  background: #f8fafc; /* match the DU tool's own bg while it loads */
-}
-
-/* floating "open in new tab" — sits in the DU tool's empty top strip */
-.du-embed-open {
-  position: absolute;
-  top: 12px;
-  right: 14px;
-  z-index: 6;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 7px 13px;
-  border: 1px solid var(--border-strong);
-  border-radius: var(--r-full);
-  font: 700 11.5px var(--font-body);
-  color: var(--text-secondary);
-  background: var(--surface);
-  box-shadow: var(--shadow-md);
-  text-decoration: none;
-  transition: border-color .18s ease, color .18s ease, background .18s ease, transform .18s ease;
-}
-.du-embed-open:hover {
-  border-color: var(--primary);
-  color: var(--primary);
+.du-headblock-t { display: flex; flex-direction: column; gap: 6px; max-width: 480px; }
+.du-chip {
+  align-self: flex-start; display: inline-flex; align-items: center; gap: 6px;
+  padding: 5px 12px; border-radius: var(--r-full); font: 700 11px var(--font-body);
+  letter-spacing: .04em; text-transform: uppercase; color: var(--primary);
   background: var(--primary-soft);
-  transform: translateY(-1px);
 }
+.du-headblock-t p { font-size: 13px; color: var(--text-secondary); line-height: 1.5; }
+.du-target-chip {
+  align-self: flex-start; display: inline-flex; align-items: center; gap: 6px;
+  padding: 5px 12px; border-radius: var(--r-full); font: 700 12px var(--font-body);
+  color: var(--secondary); background: var(--secondary-soft);
+}
+.du-target-chip::before { content: '🎯'; font-size: 12px; }
 
-.du-embed-loading,
-.du-embed-fail {
-  position: absolute;
-  inset: 0;
-  z-index: 2;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  background: var(--surface);
-  color: var(--text-muted);
-  font: 600 13px var(--font-body);
+/* stat tiles — same style as the Analysis page */
+.metric-strip { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; flex: 1; min-width: 320px; }
+.metric-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px; display: flex; flex-direction: column; gap: 3px; }
+.metric-label { font-size: 11px; font-weight: 600; color: var(--text-muted); }
+.metric-value { font-family: var(--font-display); font-size: 24px; color: var(--text); }
+
+/* tab strip — same segmented control as Analysis */
+.an-tabs { display: flex; gap: 4px; background: var(--border); padding: 4px; border-radius: 12px; margin-bottom: 16px; width: fit-content; max-width: 100%; overflow-x: auto; scrollbar-width: none; }
+.an-tabs::-webkit-scrollbar { display: none; }
+.an-tabs button { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; font-weight: 700; padding: 9px 16px; border-radius: 9px; color: var(--text-muted); white-space: nowrap; transition: all .15s; background: none; }
+.an-tabs button.on { background: var(--surface); color: var(--text); box-shadow: 0 1px 4px rgba(14,27,48,.12); }
+
+/* iframe: borderless, auto-height via the resize message */
+.du-frame { position: relative; min-height: 640px; border-radius: 14px; overflow: hidden; }
+.du-frame iframe { display: block; width: 100%; height: 640px; min-height: 640px; border: 0; background: var(--bg); }
+
+.du-skeleton, .du-fail {
+  position: absolute; inset: 0; z-index: 2; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 10px;
+  background: var(--bg); color: var(--text-muted); font: 600 13px var(--font-body);
 }
-.du-embed-fail p { font-size: 13px; color: var(--text-secondary); }
+.du-fail p { font-size: 13px; color: var(--text-secondary); }
+.du-fail-actions { display: flex; gap: 10px; }
 .du-spin { animation: du-spin 1s linear infinite; color: var(--primary); }
 @keyframes du-spin { to { transform: rotate(360deg); } }
 
-@media (max-width: 880px) {
-  /* topbar 60px + fixed bottom-nav 66px */
-  .du-embed { height: calc(100vh - 126px); }
-  .du-embed-open { top: 10px; right: 10px; }
+.du-attribution { margin-top: 12px; font-size: 11.5px; color: var(--text-muted); text-align: center; }
+
+/* mobile */
+@media (max-width: 768px) {
+  .du-page .page-head { flex-wrap: wrap; }
+  .du-open { margin-left: auto; }
+  .du-headblock { flex-direction: column; align-items: stretch; }
+  .metric-strip { grid-template-columns: repeat(2, 1fr); min-width: 0; }
+  .an-tabs { width: 100%; }
 }
