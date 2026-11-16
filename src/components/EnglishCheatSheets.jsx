@@ -1,35 +1,28 @@
 import { useMemo, useState } from 'react'
 import { ChevronRight, ChevronDown, ChevronLeft, ArrowLeft, Menu, Download, Sparkles } from 'lucide-react'
-import { getEnglishCheatIndex, loadEnglishCheat, printCheatHtml } from '../lib/englishCheats'
+import { getEnglishCheatIndex } from '../lib/englishCheats'
 import { importanceOf } from '../lib/englishNotes'
 import './englishNotes.css'
 import './englishCheats.css'
-import '../pages/cheat-print.css'
 
 const IMP_CLASS = { HIGH: 'high', MED: 'med', LOW: 'low' }
+const PDF_URL = '/english-cheats/cuet-ug-english-cheat-sheets.pdf'
 
-/* English Cheat Sheets — 3 chapters × 28 visual cheat sheets (3 pages each). */
+/* English Cheat Sheets — 3 chapters × 28 visual cheat sheets, displayed
+   exactly as the source document (self-contained HTML per topic). */
 export default function EnglishCheatSheets() {
   const idx = useMemo(() => getEnglishCheatIndex(), [])
   const chapters = useMemo(() => idx.order.map(cid => ({ id: cid, ...idx.chapters[cid] })), [idx])
-  const allTopics = useMemo(() => chapters.flatMap(c => c.topics.map(t => ({ ...t, chapterId: c.id, chapterTitle: c.title, chapterNo: c.num }))), [chapters])
 
   const [openCh, setOpenCh] = useState(() => new Set(chapters.map(c => c.id)))
   const [active, setActive] = useState(null)
-  const [html, setHtml] = useState('')
-  const [busy, setBusy] = useState(false)
   const [showTree, setShowTree] = useState(false)
 
-  const open = t => {
-    const full = allTopics.find(x => x.id === t.id) || t
-    setActive(full); setShowTree(false); setBusy(true); setHtml('')
-    loadEnglishCheat(full.chapterId, full.id).then(d => { setHtml(d?.html || ''); setBusy(false) })
-  }
-
+  const open = t => { setActive(t); setShowTree(false) }
   const toggleChapter = id => setOpenCh(s => { const n = new Set(s); n.has(id) ? n.delete(id) : n.add(id); return n })
 
   return (
-    <div className="en">
+    <div className="en ecs">
       <aside className={'en-tree' + (showTree ? ' open' : '')}>
         <div className="en-tree-head">
           <span className="en-group-label">English Cheat Sheets</span>
@@ -48,7 +41,7 @@ export default function EnglishCheatSheets() {
               {isOpen && (
                 <div className="en-topics">
                   {c.topics.map(t => (
-                    <button key={t.id} className={'en-topic' + (active?.id === t.id ? ' on' : '')} onClick={() => open(t)}>
+                    <button key={t.id} className={'en-topic' + (active?.id === t.id ? ' on' : '')} onClick={() => open({ ...t, chapterId: c.id, chapterTitle: c.title, chapterNo: c.num })}>
                       <span className="en-t-num">{c.num}.{t.num}</span>
                       <span className="en-t-title">{t.title}</span>
                       <span className={'en-pill ' + IMP_CLASS[importanceOf(t.frequency)]}>{importanceOf(t.frequency)}</span>
@@ -72,14 +65,12 @@ export default function EnglishCheatSheets() {
               <h2 className="en-title">{active.title}</h2>
               <div className="en-chips">
                 <span className={'en-pill ' + IMP_CLASS[importanceOf(active.frequency)]}>{importanceOf(active.frequency)} importance</span>
-                <button className="ec-dl" onClick={() => printCheatHtml(html, active.title)}><Download size={14} /> Download PDF</button>
+                <a className="ec-dl" href={PDF_URL} download="CUET-UG-English-Cheat-Sheets.pdf"><Download size={14} /> Download PDF</a>
               </div>
             </header>
-            {busy ? (
-              <p className="muted-empty">Loading cheat sheet…</p>
-            ) : (
-              <div className="ec-cheat" dangerouslySetInnerHTML={{ __html: html }} />
-            )}
+            <div className="ecs-frame">
+              <iframe src={`/english-cheats/${active.id}.html`} title={active.title} className="ecs-iframe" />
+            </div>
           </>
         ) : (
           <p className="muted-empty"><Sparkles size={14} /> Pick a topic to open its cheat sheet.</p>
