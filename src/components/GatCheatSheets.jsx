@@ -6,6 +6,7 @@ import { fetchCheatSheet } from '../lib/content'
 import { initGatCheat } from '../lib/gatCheat'
 import './englishNotes.css'
 import '../pages/gat-cheat.css'
+import '../pages/cheat-print.css'
 
 const PRIO_LABEL = { HIGH: 'high', MED: 'med', LOW: 'low' }
 

@@ -22,7 +22,7 @@ export function initGatCheat(root){
   root.addEventListener('click', function(e){
     var t = e.target.closest('[data-cx]'); if (!t) return;
     var rc = t.closest('.cx'), a = t.getAttribute('data-cx'); if (!rc) return;
-    if (a === 'pdf'){ window.print(); }
+    if (a === 'pdf'){ printCheatSheet(rc.getAttribute('data-tid')); }
     else if (a === 'cover'){
       var on = !rc.classList.contains('cx-cover'); rc.classList.toggle('cx-cover', on); t.setAttribute('aria-pressed', on ? 'true' : 'false');
       rc.querySelectorAll('.cx-ans.shown').forEach(function(x){ x.classList.remove('shown'); });
@@ -82,4 +82,19 @@ export function initGatCheat(root){
     root.querySelectorAll('.cx-sec').forEach(function(s){ if (st[s.getAttribute('data-key')]) s.classList.add('done'); });
     cxRing(root);
   }
+}
+
+/* ── Download as PDF: build a clean revision-sheet print root and print it ── */
+export async function printCheatSheet(tid) {
+  let sheets
+  try { sheets = (await import('../data/gatNotes/print-sheets.json')).default } catch { return }
+  const html = sheets && sheets[tid]
+  if (!html) { window.print(); return }
+  let root = document.getElementById('printRoot')
+  if (!root) { root = document.createElement('div'); root.id = 'printRoot'; document.body.appendChild(root) }
+  root.innerHTML = html
+  document.body.classList.add('printing')
+  const done = () => { document.body.classList.remove('printing'); root.innerHTML = ''; window.removeEventListener('afterprint', done) }
+  window.addEventListener('afterprint', done)
+  setTimeout(() => window.print(), 80)
 }
