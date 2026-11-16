@@ -14,6 +14,7 @@ import { useResult, clearResult } from '../lib/resultStore'
 import { addMistakes } from '../lib/mistakes'
 import { initGatCheat } from '../lib/gatCheat'
 import EnglishNotes from '../components/EnglishNotes'
+import GatNotes from '../components/GatNotes'
 import WordListModal from '../components/WordListModal'
 import PyqResult from './PyqResult'
 import './studykit.css'
@@ -669,6 +670,9 @@ function NotesView({ stream, subject, record }) {
         {vbank && <WordListModal onClose={() => setVbank(null)} initialCategory={VBANK_CAT[vbank] || vbank} />}
       </>
     )
+  }
+  if (subject === 'General Test') {
+    return <GatNotes />
   }
   if (subject === 'Economics') {
     return <NotesBreakdown units={ECON_UNITS} base="/econ-notes/index.html" label="Economics" record={record} />

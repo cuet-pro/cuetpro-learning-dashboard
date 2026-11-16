@@ -1,0 +1,431 @@
+{
+ "meta": {
+  "subject": "CUET General Test (GAT)",
+  "source": "CUET Pro General Test web app",
+  "sourceUrl": "https://script.google.com/macros/s/AKfycbz59EIMPSzrNJgFyFI_HE-kHL1NOZvyBkCRlBTMe7VoY-Msg3H5o4CaOAP0yKzlJXxw/exec",
+  "extractedOn": "2026-11-16"
+ },
+ "order": [
+  "general-knowledge",
+  "quantitative-aptitude",
+  "logical-reasoning"
+ ],
+ "sections": {
+  "general-knowledge": {
+   "id": "general-knowledge",
+   "no": 1,
+   "title": "General Knowledge",
+   "icon": "🌏",
+   "topicCount": 13,
+   "topics": [
+    {
+     "id": "gk-01",
+     "no": 1,
+     "priority": "HIGH",
+     "title": "Indian History & Freedom Struggle",
+     "cheatNum": 111
+    },
+    {
+     "id": "gk-02",
+     "no": 2,
+     "priority": "HIGH",
+     "title": "Indian Polity & the Constitution",
+     "cheatNum": 122
+    },
+    {
+     "id": "gk-03",
+     "no": 3,
+     "priority": "MED",
+     "title": "World & Indian Geography + Economy Basics",
+     "cheatNum": 109
+    },
+    {
+     "id": "gk-04",
+     "no": 4,
+     "priority": "HIGH",
+     "title": "Building a National Current Affairs Habit",
+     "cheatNum": 119
+    },
+    {
+     "id": "gk-05",
+     "no": 5,
+     "priority": "MED",
+     "title": "International Affairs & Organisations",
+     "cheatNum": 114
+    },
+    {
+     "id": "gk-06",
+     "no": 6,
+     "priority": "MED",
+     "title": "Sports & National Awards",
+     "cheatNum": 128
+    },
+    {
+     "id": "gk-07",
+     "no": 7,
+     "priority": "MED",
+     "title": "Books, Authors & Important Days",
+     "cheatNum": 105
+    },
+    {
+     "id": "gk-08",
+     "no": 8,
+     "priority": "MED",
+     "title": "Motion, Force & Energy",
+     "cheatNum": 117
+    },
+    {
+     "id": "gk-09",
+     "no": 9,
+     "priority": "MED",
+     "title": "Light, Sound & Electricity",
+     "cheatNum": 115
+    },
+    {
+     "id": "gk-10",
+     "no": 10,
+     "priority": "MED",
+     "title": "Matter, Elements & the Periodic Table",
+     "cheatNum": 116
+    },
+    {
+     "id": "gk-11",
+     "no": 11,
+     "priority": "MED",
+     "title": "Acids, Bases & Everyday Chemistry",
+     "cheatNum": 100
+    },
+    {
+     "id": "gk-12",
+     "no": 12,
+     "priority": "MED",
+     "title": "Human Body & Health",
+     "cheatNum": 112
+    },
+    {
+     "id": "gk-13",
+     "no": 13,
+     "priority": "HIGH",
+     "title": "Environment, Ecology & Biodiversity",
+     "cheatNum": 108
+    }
+   ]
+  },
+  "quantitative-aptitude": {
+   "id": "quantitative-aptitude",
+   "no": 2,
+   "title": "Quantitative Aptitude",
+   "icon": "📐",
+   "topicCount": 14,
+   "topics": [
+    {
+     "id": "qa-01",
+     "no": 1,
+     "priority": "HIGH",
+     "title": "Number System, LCM & HCF",
+     "cheatNum": 120
+    },
+    {
+     "id": "qa-02",
+     "no": 2,
+     "priority": "HIGH",
+     "title": "Simplification, Approximation & Surds",
+     "cheatNum": 127
+    },
+    {
+     "id": "qa-03",
+     "no": 3,
+     "priority": "HIGH",
+     "title": "Percentage & Its Applications",
+     "cheatNum": 121
+    },
+    {
+     "id": "qa-04",
+     "no": 4,
+     "priority": "HIGH",
+     "title": "Profit, Loss & Discount",
+     "cheatNum": 123
+    },
+    {
+     "id": "qa-05",
+     "no": 5,
+     "priority": "HIGH",
+     "title": "Simple & Compound Interest",
+     "cheatNum": 113
+    },
+    {
+     "id": "qa-06",
+     "no": 6,
+     "priority": "HIGH",
+     "title": "Ratio, Proportion & Average",
+     "cheatNum": 124
+    },
+    {
+     "id": "qa-07",
+     "no": 7,
+     "priority": "HIGH",
+     "title": "Time, Speed & Distance",
+     "cheatNum": 132
+    },
+    {
+     "id": "qa-08",
+     "no": 8,
+     "priority": "MED",
+     "title": "Time & Work",
+     "cheatNum": 131
+    },
+    {
+     "id": "qa-09",
+     "no": 9,
+     "priority": "MED",
+     "title": "Basic Algebra & Equations",
+     "cheatNum": 101
+    },
+    {
+     "id": "qa-10",
+     "no": 10,
+     "priority": "MED",
+     "title": "Arithmetic & Geometric Progressions",
+     "cheatNum": 103
+    },
+    {
+     "id": "qa-11",
+     "no": 11,
+     "priority": "MED",
+     "title": "Lines, Angles & Triangles",
+     "cheatNum": 110
+    },
+    {
+     "id": "qa-12",
+     "no": 12,
+     "priority": "HIGH",
+     "title": "Mensuration — Area, Perimeter & Volume",
+     "cheatNum": 118
+    },
+    {
+     "id": "qa-13",
+     "no": 13,
+     "priority": "MED",
+     "title": "Mean, Median & Mode",
+     "cheatNum": 129
+    },
+    {
+     "id": "qa-14",
+     "no": 14,
+     "priority": "HIGH",
+     "title": "Data Interpretation (Tables, Bar & Pie Charts)",
+     "cheatNum": 107
+    }
+   ]
+  },
+  "logical-reasoning": {
+   "id": "logical-reasoning",
+   "no": 3,
+   "title": "Logical Reasoning",
+   "icon": "🧩",
+   "topicCount": 7,
+   "topics": [
+    {
+     "id": "lr-01",
+     "no": 1,
+     "priority": "HIGH",
+     "title": "Number & Alphabet Series",
+     "cheatNum": 126
+    },
+    {
+     "id": "lr-02",
+     "no": 2,
+     "priority": "HIGH",
+     "title": "Analogy & Classification",
+     "cheatNum": 102
+    },
+    {
+     "id": "lr-03",
+     "no": 3,
+     "priority": "HIGH",
+     "title": "Coding-Decoding",
+     "cheatNum": 106
+    },
+    {
+     "id": "lr-04",
+     "no": 4,
+     "priority": "HIGH",
+     "title": "Blood Relations & Direction Sense",
+     "cheatNum": 104
+    },
+    {
+     "id": "lr-05",
+     "no": 5,
+     "priority": "HIGH",
+     "title": "Seating Arrangement & Puzzles",
+     "cheatNum": 125
+    },
+    {
+     "id": "lr-06",
+     "no": 6,
+     "priority": "HIGH",
+     "title": "Syllogisms & Statement-Conclusion",
+     "cheatNum": 130
+    },
+    {
+     "id": "lr-07",
+     "no": 7,
+     "priority": "MED",
+     "title": "Venn Diagrams & Data Sufficiency",
+     "cheatNum": 133
+    }
+   ]
+  }
+ },
+ "overview": {
+  "examPattern2026": {
+   "compulsory": 50,
+   "durationMin": 60,
+   "marksCorrect": 5,
+   "marksWrong": -1,
+   "maxMarks": 250,
+   "note": "Exam pattern for 2026 is confirmed from the official CUET General Test syllabus (NTA).",
+   "questions": 50,
+   "year": 2026
+  },
+  "difficultySplit": {
+   "byYear": [
+    {
+     "difficult": 25,
+     "easy": 25,
+     "moderate": 50,
+     "year": 2022
+    },
+    {
+     "difficult": 15,
+     "easy": 35,
+     "moderate": 50,
+     "year": 2023
+    },
+    {
+     "difficult": 15,
+     "easy": 40,
+     "moderate": 45,
+     "year": 2024
+    },
+    {
+     "difficult": 20,
+     "easy": 30,
+     "moderate": 50,
+     "year": 2025
+    },
+    {
+     "difficult": 20,
+     "easy": 30,
+     "moderate": 50,
+     "year": 2026
+    }
+   ],
+   "note": "Editorial estimate, not an official NTA statistic — NTA doesn't publish an exact Easy/Moderate/Difficult split."
+  },
+  "highestMarks": [
+   {
+    "note": "not published",
+    "score": null,
+    "year": 2022
+   },
+   {
+    "note": "not published",
+    "score": null,
+    "year": 2023
+   },
+   {
+    "outOf": 300,
+    "score": 244,
+    "year": 2024
+   },
+   {
+    "note": "not published",
+    "score": null,
+    "year": 2025
+   },
+   {
+    "note": "not published",
+    "score": null,
+    "year": 2026
+   }
+  ],
+  "prepChecklist": [
+   "Master Numerical Ability + Quantitative Reasoning formulas",
+   "Drill Logical & Analytical Reasoning daily",
+   "Build a weekly-revised current-affairs summary",
+   "Revise General Science at NCERT Class 9-10 conceptual level",
+   "Attempt every chapter's Test Zone at least twice under timed conditions before the exam"
+  ],
+  "syllabusMap": {
+   "note": "Official CUET(UG) General Test-501 syllabus (NTA) — the same 34 topics re-grouped under the 5 official NTA areas. Grouping differs from the dashboard's 3 sections: science topics (gk-08 to gk-13) sit under General Science here, and qa-09 to qa-14 sit under Reasoning — Quantitative.",
+   "areas": [
+    {
+     "area": "General Knowledge & Current Affairs",
+     "topicIds": [
+      "gk-01",
+      "gk-02",
+      "gk-03",
+      "gk-04",
+      "gk-05",
+      "gk-06",
+      "gk-07"
+     ],
+     "count": 7
+    },
+    {
+     "area": "General Mental Ability & Numerical Ability",
+     "topicIds": [
+      "qa-01",
+      "qa-02",
+      "qa-03",
+      "qa-04",
+      "qa-05",
+      "qa-06",
+      "qa-07",
+      "qa-08"
+     ],
+     "count": 8
+    },
+    {
+     "area": "Reasoning — Quantitative (Arithmetic / Algebra / Geometry / Mensuration / Statistics)",
+     "topicIds": [
+      "qa-09",
+      "qa-10",
+      "qa-11",
+      "qa-12",
+      "qa-13",
+      "qa-14"
+     ],
+     "count": 6
+    },
+    {
+     "area": "Logical and Analytical Reasoning",
+     "topicIds": [
+      "lr-01",
+      "lr-02",
+      "lr-03",
+      "lr-04",
+      "lr-05",
+      "lr-06",
+      "lr-07"
+     ],
+     "count": 7
+    },
+    {
+     "area": "General Science and Environment Literacy",
+     "topicIds": [
+      "gk-08",
+      "gk-09",
+      "gk-10",
+      "gk-11",
+      "gk-12",
+      "gk-13"
+     ],
+     "count": 6
+    }
+   ],
+   "sumCheck": "7 + 8 + 6 + 7 + 6 = 34"
+  }
+ }
+}
