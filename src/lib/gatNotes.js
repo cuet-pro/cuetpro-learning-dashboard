@@ -9,7 +9,22 @@ export function getGatIndex() {
   return index
 }
 
-export async function loadGatTopicNotes(cheatNum) {
+/* real notes content — split per section, lazy-loaded */
+const notesLoaders = {
+  'general-knowledge': () => import('../data/gatNotes/notes-general-knowledge.json'),
+  'quantitative-aptitude': () => import('../data/gatNotes/notes-quantitative-aptitude.json'),
+  'logical-reasoning': () => import('../data/gatNotes/notes-logical-reasoning.json'),
+}
+
+export async function loadGatTopicNotes(sectionId, topicId) {
+  const loader = notesLoaders[sectionId]
+  if (!loader) return ''
+  const m = await loader()
+  return m.default[topicId] || ''
+}
+
+/* cheat sheet (interactive) — still available as a second tab */
+export async function loadGatCheatSheet(cheatNum) {
   if (!cheatNum) return ''
   const { data } = await fetchCheatSheet(cheatNum)
   return data?.html || ''
@@ -19,6 +34,17 @@ export function priorityClass(priority) {
   if (priority === 'HIGH') return 'high'
   if (priority === 'MED') return 'med'
   return 'low'
+}
+
+/* strip sprite-icon <svg> refs (need a sprite sheet we don't ship),
+   keep self-contained <svg class="br-map"> topic maps. */
+export function sanitizeGatNotesHtml(html) {
+  return String(html || '')
+    .replace(/<svg class="ico[^"]*"[\s\S]*?<\/svg>/gi, '')
+    .replace(/<script[\s\S]*?<\/script>/gi, '')
+    .replace(/<style[\s\S]*?<\/style>/gi, '')
+    .replace(/\son\w+\s*=\s*("[^"]*"|'[^']*'|[^\s>]+)/gi, '')
+    .replace(/\s(href|src)\s*=\s*("javascript:[^"]*"|'javascript:[^']*')/gi, '')
 }
 
 /* ── progress (per-topic done + resume) — localStorage ── */
