@@ -1241,7 +1241,7 @@ function PyqView({ subject, onNavigate }) {
   const openPaper = p => {
     gate('PYQ Papers', 'attempt this paper', () => {
       setLoading(true)
-      fetchPyqPaper(p.id).then(({ data }) => { setLoading(false); if (data) startExam({ paper: data }) })
+      fetchPyqPaper(p.id).then(({ data }) => { setLoading(false); if (data) startExam({ paper: { ...data, flat: true } }) })
     })
   }
 
