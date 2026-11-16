@@ -138,7 +138,7 @@ export default function GatNotes() {
 }
 
 /* ── Overview ── */
-function Overview({ ov, topics, onOpen }) {
+export function Overview({ ov, topics, onOpen }) {
   const pat = ov.examPattern2026
   const diff = ov.difficultySplit
   const marks = ov.highestMarks

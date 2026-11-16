@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { ChevronRight, ChevronDown, ChevronLeft, ArrowLeft, Menu, Sparkles } from 'lucide-react'
+import { ChevronRight, ChevronDown, ChevronLeft, ArrowLeft, Menu, Sparkles, Info } from 'lucide-react'
 import { getGatIndex } from '../lib/gatNotes'
+import { Overview } from './GatNotes'
 import { fetchCheatSheet } from '../lib/content'
 import { initGatCheat } from '../lib/gatCheat'
 import './englishNotes.css'
@@ -16,6 +17,7 @@ export default function GatCheatSheets() {
   const allTopics = useMemo(() => sections.flatMap(s => s.topics.map(t => ({ ...t, sectionId: s.id, sectionTitle: s.title, sectionNo: s.no }))), [sections])
 
   const [openSec, setOpenSec] = useState(() => new Set(sections.map(s => s.id)))
+  const [view, setView] = useState('overview')
   const [active, setActive] = useState(null)
   const [html, setHtml] = useState('')
   const [busy, setBusy] = useState(false)
@@ -24,7 +26,7 @@ export default function GatCheatSheets() {
 
   const open = t => {
     const full = allTopics.find(x => x.id === t.id) || t
-    setActive(full); setShowTree(false); setBusy(true); setHtml('')
+    setActive(full); setView('topic'); setShowTree(false); setBusy(true); setHtml('')
     fetchCheatSheet(full.cheatNum).then(({ data }) => { setHtml(data?.html || ''); setBusy(false) })
   }
 
@@ -39,6 +41,11 @@ export default function GatCheatSheets() {
           <span className="en-group-label">GAT Cheat Sheets</span>
           <button className="en-tree-close" onClick={() => setShowTree(false)} aria-label="Close"><ChevronLeft size={16} /></button>
         </div>
+        <button className={'en-chapter-row' + (view === 'overview' ? ' on' : '')} onClick={() => { setView('overview'); setShowTree(false) }}>
+          <span className="en-ch-num">ℹ</span>
+          <span className="en-ch-title">Overview</span>
+          <Info size={14} />
+        </button>
         {sections.map(s => {
           const isOpen = openSec.has(s.id)
           return (
@@ -68,9 +75,11 @@ export default function GatCheatSheets() {
       <div className="en-main">
         <button className="en-chapters-btn" onClick={() => setShowTree(true)}><Menu size={14} /> Chapters</button>
 
-        {active ? (
+        {view === 'overview' ? (
+          <Overview ov={idx.overview} topics={allTopics} onOpen={open} />
+        ) : active ? (
           <>
-            <button className="sk-back" onClick={() => setActive(null)}><ArrowLeft size={15} /> All cheat sheets</button>
+            <button className="sk-back" onClick={() => setView('overview')}><ArrowLeft size={15} /> All cheat sheets</button>
             <header className="en-head">
               <span className="en-chapter-chip">{String(active.sectionNo).padStart(2, '0')} {active.sectionTitle}</span>
               <h2 className="en-title">{active.title}</h2>
