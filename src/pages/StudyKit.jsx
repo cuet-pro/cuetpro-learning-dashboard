@@ -14,9 +14,21 @@ import { useResult, clearResult } from '../lib/resultStore'
 import { addMistakes } from '../lib/mistakes'
 import { initGatCheat } from '../lib/gatCheat'
 import EnglishNotes from '../components/EnglishNotes'
+import WordListModal from '../components/WordListModal'
 import PyqResult from './PyqResult'
 import './studykit.css'
 import './gat-cheat.css'
+
+/* maps English notes' word-bank trigger (data-topic) → Word List category */
+const VBANK_CAT = {
+  'vocab-antonyms': 'antonyms',
+  'vocab-synonyms': 'synonyms',
+  'vocab-idioms': 'idioms',
+  'vocab-spelling': 'spelling',
+  'vocab-phrasal-verbs': 'phrasal-verbs',
+  'vocab-foreign-words': 'foreign-words',
+  'gr-literary-devices': 'literary-devices',
+}
 
 const NOTES_BY_STREAM = {
   Commerce: [
@@ -649,8 +661,14 @@ function NoteDashboard({ src, title, subject, record }) {
 }
 
 function NotesView({ stream, subject, record }) {
+  const [vbank, setVbank] = useState(null)
   if (subject === 'English') {
-    return <EnglishNotes />
+    return (
+      <>
+        <EnglishNotes onOpenWordBank={cat => setVbank(cat)} />
+        {vbank && <WordListModal onClose={() => setVbank(null)} initialCategory={VBANK_CAT[vbank] || vbank} />}
+      </>
+    )
   }
   if (subject === 'Economics') {
     return <NotesBreakdown units={ECON_UNITS} base="/econ-notes/index.html" label="Economics" record={record} />

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { ChevronRight, ChevronDown, ChevronLeft, BookOpen, Star, Bookmark, ArrowRight, ArrowLeft, Menu } from 'lucide-react'
-import { getEnglishIndex, loadEnglishChapter, importanceOf, chapterWeight, sanitizeNotesHtml } from '../lib/englishNotes'
+import { ChevronRight, ChevronDown, ChevronLeft, BookOpen, Star, Bookmark, ArrowRight, ArrowLeft, Menu, Check, CheckCircle2, Circle } from 'lucide-react'
+import { getEnglishIndex, loadEnglishChapter, importanceOf, chapterWeight, sanitizeNotesHtml, readEnglishProgress, writeEnglishProgress, toggleTopicDone, englishDeepLink, consumeEnglishDeepLink } from '../lib/englishNotes'
+import EnglishPractice from './EnglishPractice'
 import './englishNotes.css'
 
 const IMP_CLASS = { HIGH: 'high', MED: 'med', LOW: 'low' }
@@ -12,10 +13,30 @@ export default function EnglishNotes({ onOpenWordBank }) {
   const chapters = useMemo(() => idx.order.map(cid => ({ id: cid, ...idx.chapters[cid] })), [idx])
 
   const firstTopic = chapters[0]?.topics?.[0]
-  const [active, setActive] = useState(() => ({ chapterId: chapters[0]?.id, topicId: firstTopic?.id }))
+
+  /* progress: completed topics (✓) + resume last-read topic */
+  const [done, setDone] = useState(() => new Set(readEnglishProgress().done || []))
+
+  /* initial topic: deep link (?subject=English&topic=X) > resume > first topic */
+  const initial = useMemo(() => {
+    const dl = englishDeepLink()
+    if (dl) {
+      consumeEnglishDeepLink()
+      const ch = chapters.find(c => c.topics.some(t => t.id === dl.topic))
+      if (ch) return { chapterId: ch.id, topicId: dl.topic }
+    }
+    const last = readEnglishProgress().last
+    if (last) {
+      const ch = chapters.find(c => c.topics.some(t => t.id === last))
+      if (ch) return { chapterId: ch.id, topicId: last }
+    }
+    return { chapterId: chapters[0]?.id, topicId: firstTopic?.id }
+  }, [chapters])
+
+  const [active, setActive] = useState(initial)
   const [tab, setTab] = useState('notes')
   const [data, setData] = useState(null)
-  const [openCh, setOpenCh] = useState(() => new Set([chapters[0]?.id]))
+  const [openCh, setOpenCh] = useState(() => new Set([initial.chapterId]))
   const [showTree, setShowTree] = useState(false)
   const notesRef = useRef(null)
 
@@ -37,6 +58,12 @@ export default function EnglishNotes({ onOpenWordBank }) {
     setActive({ chapterId, topicId })
     setTab('notes')
     setShowTree(false)
+    writeEnglishProgress({ done: [...done], last: topicId })
+  }
+
+  const toggleDone = () => {
+    const now = toggleTopicDone(active.topicId)
+    setDone(s => { const n = new Set(s); now ? n.add(active.topicId) : n.delete(active.topicId); return n })
   }
 
   /* prev / next topic across the flattened tree */
@@ -79,7 +106,7 @@ export default function EnglishNotes({ onOpenWordBank }) {
       {/* chapter tree */}
       <aside className={'en-tree' + (showTree ? ' open' : '')}>
         <div className="en-tree-head">
-          <span className="en-group-label">CUET English</span>
+          <span className="en-group-label">CUET English · {done.size}/{flatTopics.length}</span>
           <button className="en-tree-close" onClick={() => setShowTree(false)} aria-label="Close chapters"><ChevronLeft size={16} /></button>
         </div>
         {chapters.map(c => {
@@ -98,6 +125,7 @@ export default function EnglishNotes({ onOpenWordBank }) {
                     <button key={t.id} className={'en-topic' + (active.topicId === t.id ? ' on' : '')} onClick={() => goto(c.id, t.id)}>
                       <span className="en-t-num">{c.num}.{t.num}</span>
                       <span className="en-t-title">{t.title}</span>
+                      {done.has(t.id) && <Check size={13} className="en-done-ic" />}
                       <span className={'en-pill ' + IMP_CLASS[importanceOf(t.frequency)]}>{importanceOf(t.frequency)}</span>
                     </button>
                   ))}
@@ -124,6 +152,10 @@ export default function EnglishNotes({ onOpenWordBank }) {
               <div className="en-chips">
                 <span className="en-chip">{topic.frequency != null ? topic.frequency + ' avg Q / paper' : '—'}</span>
                 <span className={'en-pill ' + IMP_CLASS[importanceOf(topic.frequency)]}>{importanceOf(topic.frequency)} importance</span>
+                <button className={'en-done-btn' + (done.has(active.topicId) ? ' on' : '')} onClick={toggleDone}>
+                  {done.has(active.topicId) ? <CheckCircle2 size={14} /> : <Circle size={14} />}
+                  {done.has(active.topicId) ? 'Completed' : 'Mark done'}
+                </button>
               </div>
             </header>
 
@@ -135,13 +167,7 @@ export default function EnglishNotes({ onOpenWordBank }) {
             {tab === 'notes' ? (
               <div className="en-notes" ref={notesRef} dangerouslySetInnerHTML={{ __html: sanitizeNotesHtml(notesHtml) }} />
             ) : (
-              <div className="en-practice">
-                {data?.pyqBank?.[active.topicId]?.length ? (
-                  <p className="en-practice-note">Practice for this topic is being built — {data.pyqBank[active.topicId].length} questions available.</p>
-                ) : (
-                  <p className="en-practice-note">No practice questions for this topic yet.</p>
-                )}
-              </div>
+              <EnglishPractice data={data} topicId={active.topicId} topic={topic} />
             )}
 
             <div className="en-pager">

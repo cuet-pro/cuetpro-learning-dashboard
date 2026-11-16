@@ -47,3 +47,39 @@ export function sanitizeNotesHtml(html) {
     .replace(/\son\w+\s*=\s*("[^"]*"|'[^']*'|[^\s>]+)/gi, '')
     .replace(/\s(href|src)\s*=\s*("javascript:[^"]*"|'javascript:[^']*')/gi, '')
 }
+
+/* ── progress (per-topic done + resume) — localStorage ── */
+const EN_PROG_KEY = 'cp_english_progress'
+
+export function readEnglishProgress() {
+  try { return JSON.parse(localStorage.getItem(EN_PROG_KEY) || 'null') || {} } catch { return {} }
+}
+export function writeEnglishProgress(prog) {
+  try { localStorage.setItem(EN_PROG_KEY, JSON.stringify(prog)) } catch { /* ignore */ }
+}
+export function isTopicDone(topicId) {
+  const p = readEnglishProgress()
+  return Array.isArray(p.done) && p.done.includes(topicId)
+}
+export function toggleTopicDone(topicId) {
+  const p = readEnglishProgress()
+  const done = Array.isArray(p.done) ? [...p.done] : []
+  const i = done.indexOf(topicId)
+  i >= 0 ? done.splice(i, 1) : done.push(topicId)
+  writeEnglishProgress({ ...p, done })
+  return !(i >= 0)
+}
+
+/* one-shot deep link: ?subject=English&topic=<topicId> (or &ch=<chapterId>&topic=) */
+let enLinkConsumed = false
+export function englishDeepLink() {
+  if (enLinkConsumed) return null
+  try {
+    const p = new URLSearchParams(window.location.search)
+    if (p.get('subject') !== 'English') return null
+    const topic = p.get('topic')
+    if (!topic) return null
+    return { topic, chapter: p.get('ch') || null }
+  } catch { return null }
+}
+export function consumeEnglishDeepLink() { enLinkConsumed = true }

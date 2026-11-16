@@ -46,11 +46,11 @@ const HEADER = {
   type: 'Type', origin: 'Origin', examples: 'Examples', action: 'Action',
 }
 
-export default function WordListModal({ onClose }) {
+export default function WordListModal({ onClose, initialCategory }) {
   const [entries, setEntries] = useState(null)
   const [bookmarks, setBookmarks] = useState(loadBookmarks)
   const [learned, setLearned] = useState(loadLearned)
-  const [catId, setCatId] = useState('antonyms')
+  const [catId, setCatId] = useState(() => WORD_CATEGORIES.some(c => c.id === initialCategory) ? initialCategory : 'antonyms')
   const [q, setQ] = useState('')
   const [filter, setFilter] = useState('All')
   const [showBm, setShowBm] = useState(false)
