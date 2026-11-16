@@ -1,0 +1,41 @@
+/* ── English cheat sheets (ec-* classes from the parsed doc) ── */
+
+.ec-dl { display: inline-flex; align-items: center; gap: 6px; margin-left: auto; padding: 7px 14px; border-radius: var(--r-full); background: var(--primary); color: #fff; font: 700 12px var(--font-body); transition: all .15s; }
+.ec-dl:hover { filter: brightness(1.05); }
+
+.ec-cheat { font-size: 14px; line-height: 1.65; color: var(--text-secondary); }
+.ec-badge { display: inline-flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; font: 700 11px var(--font-body); color: var(--secondary); background: var(--secondary-soft); padding: 5px 12px; border-radius: var(--r-full); }
+.ec-intro { font-size: 14.5px; color: var(--text); border-left: 3px solid var(--primary); padding-left: 14px; margin: 0 0 16px; }
+
+/* page divider */
+.ecp { border-top: 1px solid var(--border); margin: 18px 0 6px; padding-top: 12px; }
+.ecp-num { display: inline-block; font: 700 10px var(--font-mono); letter-spacing: .1em; color: var(--primary); background: var(--primary-soft); padding: 3px 10px; border-radius: var(--r-full); margin-bottom: 10px; }
+
+/* sub-headings */
+.ec-h4 { font: 700 14px var(--font-display); color: var(--text); margin: 16px 0 8px; }
+.ec-sub-n { color: var(--primary); font-family: var(--font-mono); font-size: 12px; margin-right: 4px; }
+
+/* term tables */
+.ec-table { border: 1px solid var(--border); border-radius: 10px; overflow: hidden; margin: 8px 0 14px; }
+.ec-row { display: flex; gap: 12px; padding: 8px 12px; border-bottom: 1px solid var(--border); }
+.ec-row:last-child { border-bottom: none; }
+.ec-row b { flex: 0 0 190px; font: 700 11.5px var(--font-body); color: var(--text); letter-spacing: .02em; }
+.ec-row span { flex: 1; font-size: 13px; color: var(--text-secondary); }
+
+/* callout boxes */
+.ec-box { margin: 12px 0; padding: 10px 14px; border-radius: 10px; font-size: 13px; }
+.ec-box b { font-family: var(--font-mono); font-size: 10.5px; letter-spacing: .08em; text-transform: uppercase; }
+.ec-hack { background: var(--warning-soft); border-left: 3px solid var(--warning); }
+.ec-hack b { color: #9a6a00; }
+.ec-trap { background: var(--error-soft); border-left: 3px solid var(--error); }
+.ec-trap b { color: var(--error); }
+.ec-recap { background: var(--success-soft); border-left: 3px solid var(--success); }
+.ec-recap b { color: var(--success); }
+
+/* print: clean cheat sheet */
+@media print {
+  body.printing #printRoot .ec-cheat { color: #1a2c49; }
+  body.printing #printRoot .ec-table { border-color: #e5e9f0; }
+  body.printing #printRoot .ec-row { border-color: #e5e9f0; }
+  body.printing #printRoot .ecp { border-color: #e5e9f0; }
+}
