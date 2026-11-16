@@ -15,6 +15,7 @@ import { addMistakes } from '../lib/mistakes'
 import { initGatCheat } from '../lib/gatCheat'
 import EnglishNotes from '../components/EnglishNotes'
 import GatNotes from '../components/GatNotes'
+import GatCheatSheets from '../components/GatCheatSheets'
 import WordListModal from '../components/WordListModal'
 import PyqResult from './PyqResult'
 import './studykit.css'
@@ -996,6 +997,7 @@ function CheatSheetDoc({ sheet, onBack }) {
 }
 
 function CheatSheetView({ record, subject }) {
+  if (subject === 'General Test') return <GatCheatSheets />
   const [sheets, setSheets] = useState([])
   const [cat, setCat] = useState(null)
   const [open, setOpen] = useState(null)

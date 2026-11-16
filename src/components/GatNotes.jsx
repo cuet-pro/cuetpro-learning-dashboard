@@ -1,10 +1,8 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { ChevronRight, ChevronDown, ChevronLeft, BookOpen, ArrowRight, ArrowLeft, Menu, Check, CheckCircle2, Circle, Info, ListChecks, BarChart3, Trophy } from 'lucide-react'
-import { getGatIndex, loadGatTopicNotes, loadGatCheatSheet, sanitizeGatNotesHtml, priorityClass, readGatProgress, writeGatProgress, toggleGatTopicDone, gatDeepLink, consumeGatDeepLink } from '../lib/gatNotes'
-import { initGatCheat } from '../lib/gatCheat'
+import { getGatIndex, loadGatTopicNotes, sanitizeGatNotesHtml, priorityClass, readGatProgress, writeGatProgress, toggleGatTopicDone, gatDeepLink, consumeGatDeepLink } from '../lib/gatNotes'
 import './englishNotes.css'
 import './gatNotes.css'
-import '../pages/gat-cheat.css'
 
 const PRIO_LABEL = { HIGH: 'high', MED: 'med', LOW: 'low' }
 
@@ -21,18 +19,14 @@ export default function GatNotes() {
   const [openSec, setOpenSec] = useState(() => new Set(sections.map(s => s.id)))
   const [showTree, setShowTree] = useState(false)
   const [notesHtml, setNotesHtml] = useState('')
-  const [cheatHtml, setCheatHtml] = useState('')
-  const [tab, setTab] = useState('notes')
   const [loading, setLoading] = useState(false)
-  const cheatRef = useRef(null)
 
   const active = allTopics.find(t => t.id === activeId)
 
   const openTopic = t => {
     const full = allTopics.find(x => x.id === t.id) || t
-    setActiveId(full.id); setView('topic'); setShowTree(false); setTab('notes'); setLoading(true); setNotesHtml(''); setCheatHtml('')
+    setActiveId(full.id); setView('topic'); setShowTree(false); setLoading(true); setNotesHtml('')
     loadGatTopicNotes(full.sectionId, full.id).then(html => { setNotesHtml(html); setLoading(false) })
-    loadGatCheatSheet(full.cheatNum).then(html => setCheatHtml(html))
     writeGatProgress({ done: [...done], last: full.id })
   }
 
@@ -45,10 +39,7 @@ export default function GatNotes() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  /* cheat-sheet interactivity (collapsibles, self-test, progress ring) */
-  useEffect(() => {
-    if (cheatRef.current && cheatHtml) initGatCheat(cheatRef.current)
-  }, [cheatHtml, activeId])
+  /* cheat-sheet interactivity removed — Notes module shows real notes only */
 
   const toggleDone = () => {
     const now = toggleGatTopicDone(activeId)
@@ -124,20 +115,13 @@ export default function GatNotes() {
             </header>
 
             <div className="en-tabs">
-              <button className={tab === 'notes' ? 'on' : ''} onClick={() => setTab('notes')}><BookOpen size={14} /> Notes</button>
-              <button className={tab === 'cheat' ? 'on' : ''} onClick={() => setTab('cheat')}>⚡ Cheat Sheet</button>
+              <button className="on"><BookOpen size={14} /> Notes</button>
             </div>
 
-            {tab === 'notes' ? (
-              loading ? (
-                <p className="muted-empty">Loading notes…</p>
-              ) : (
-                <div className="gat-notes" dangerouslySetInnerHTML={{ __html: sanitizeGatNotesHtml(notesHtml) }} />
-              )
+            {loading ? (
+              <p className="muted-empty">Loading notes…</p>
             ) : (
-              cheatHtml
-                ? <div className="gat-cx" ref={cheatRef} dangerouslySetInnerHTML={{ __html: cheatHtml }} />
-                : <p className="muted-empty">Loading cheat sheet…</p>
+              <div className="gat-notes" dangerouslySetInnerHTML={{ __html: sanitizeGatNotesHtml(notesHtml) }} />
             )}
 
             <div className="en-pager">
