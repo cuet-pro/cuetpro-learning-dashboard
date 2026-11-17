@@ -234,7 +234,7 @@ export default function StudyKit({ onNavigate }) {
             {selected === 'quizzes' && <QuizView subject={subject} key={subject} />}
             {selected === 'pyqs' && <PyqView subject={subject} stream={stream} weakOnly={weakOnly} setWeakOnly={setWeakOnly} onNavigate={onNavigate} />}
             {selected === 'mocks' && <MockView examMode={examMode} setExamMode={setExamMode} subject={subject} />}
-            {selected === 'cheats' && <CheatSheetView record={record} subject={subject} />}
+            {selected === 'cheats' && <CheatSheetView record={record} subject={subject} key={subject} />}
             {selected === 'videos' && (
               <div className="sk-placeholder">
                 <PlayCircle size={30} />
@@ -1049,7 +1049,7 @@ function CheatSheetView({ record, subject }) {
           </button>
         ))}
       </div>
-      {shown.length === 0 && <p className="muted-empty">{busy ? 'Opening…' : 'Loading cheat sheets…'}</p>}
+      {shown.length === 0 && <p className="muted-empty">{busy ? 'Loading cheat sheets…' : 'No cheat sheets for this subject yet.'}</p>}
     </div>
   )
 }

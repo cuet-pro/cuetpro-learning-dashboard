@@ -16,9 +16,10 @@ export default function EnglishCheatSheets() {
 
   const [openCh, setOpenCh] = useState(() => new Set(chapters.map(c => c.id)))
   const [active, setActive] = useState(null)
+  const [loading, setLoading] = useState(false)
   const [showTree, setShowTree] = useState(false)
 
-  const open = t => { setActive(t); setShowTree(false) }
+  const open = t => { setActive(t); setShowTree(false); setLoading(true) }
   const toggleChapter = id => setOpenCh(s => { const n = new Set(s); n.has(id) ? n.delete(id) : n.add(id); return n })
 
   return (
@@ -69,7 +70,8 @@ export default function EnglishCheatSheets() {
               </div>
             </header>
             <div className="ecs-frame">
-              <iframe src={`/english-cheats/${active.id}.html`} title={active.title} className="ecs-iframe" />
+              {loading && <div className="ecs-loading">Loading cheat sheet…</div>}
+              <iframe src={`/english-cheats/${active.id}.html`} title={active.title} className="ecs-iframe" onLoad={() => setLoading(false)} />
             </div>
           </>
         ) : (

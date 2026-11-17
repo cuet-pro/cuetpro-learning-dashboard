@@ -3,8 +3,9 @@
 .ec-dl { display: inline-flex; align-items: center; gap: 6px; margin-left: auto; padding: 7px 14px; border-radius: var(--r-full); background: var(--primary); color: #fff; font: 700 12px var(--font-body); text-decoration: none; transition: all .15s; }
 .ec-dl:hover { filter: brightness(1.05); }
 
-.ecs-frame { margin-top: 8px; border: 1px solid var(--border); border-radius: 14px; overflow: hidden; background: #fff; height: calc(100vh - 220px); min-height: 480px; }
+.ecs-frame { position: relative; margin-top: 8px; border: 1px solid var(--border); border-radius: 14px; overflow: hidden; background: #fff; height: calc(100vh - 220px); min-height: 480px; }
 .ecs-iframe { width: 100%; height: 100%; border: 0; display: block; }
+.ecs-loading { position: absolute; inset: 0; display: grid; place-items: center; font: 600 13px var(--font-body); color: var(--text-muted); background: #fff; z-index: 2; }
 
 @media (max-width: 1024px) {
   .ecs-frame { height: calc(100vh - 180px); }
